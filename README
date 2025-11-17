@@ -1,3 +1,33 @@
+# Kamband 2.1 (Termux Port)
+
+Kamband is a classic roguelike descended from Angband, now patched and running smoothly on Android via [Termux](https://termux.dev/).  
+This repository contains source code and notes for building and playing Kamband on modern systems.
+
+---
+
+## ✨ What's New in This Port
+
+- **Fixed RNG hang**:  
+  The original `rand_div()` implementation could enter an infinite loop under certain conditions.  
+  - Patched `rand_div()` to return `rand()` directly.  
+  - Preserved the `rand_int()` macro for modular compatibility.  
+  - RNG seeded with `srand(time(NULL))` for entropy.
+
+- **Termux compatibility**:  
+  Runs cleanly with curses interface on Android devices.
+
+- **Minimal disruption**:  
+  Original architecture respected; only internals swapped for portability.
+
+---
+
+## 🔧 Building on Termux
+
+1. Install required packages:
+   ```bash
+   pkg install clang make ncurses
+
+## Credit: Ivan Tkatchev
 
 ---- Release 0.1 ----
 

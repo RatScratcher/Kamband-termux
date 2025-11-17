@@ -1,0 +1,17 @@
+# Object files
+*.o
+*.obj
+
+# Libraries
+*.so
+*.a
+*.lib
+
+# Executables
+kamband
+*.exe
+*.out
+
+# Debug files
+*.dSYM/
+*.stackdump

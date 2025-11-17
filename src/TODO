@@ -1,0 +1,59 @@
+
+- Scripting.
+
+- *Complete* kobold race, with a kobold town.
+- Technological "junk".
+
+- ARTIFACTS NOT UNIQUE!!!!????
+
+- More specialized classes; preferrably based on real-life stuff.
+
+? - Sorceror class, with spells formed from syllables.
+? - Add pr_info.txt and pc_info.txt, for player races/classes.
+? - A few non-combat spells for corrupteds.
+? - Show mutation effects in 'C' screen.
+? - Upgrade to 2.8.3 (Wait for 2.8.4?)
+? - Improve weaponsmaster
+? - Some sort of extension language?
+? - Remove the town-level restriction for ghosts, and make religion
+    prohibited for Ghosts.
+? - ts_info.txt for tvals/svals.
+
+- (More) Vaults for the wilderness.
+- Monster AI. (That is, for interactivity)
+- Twiddle with the wilderness.
+
+- Shopkeepers.
+- Corrupted weapons.
+
+- Make social class more important.
+
+- More quests
+- More neat tricks with corpses.
+- More exploding monsters.
+
+- Truly persistent dungeons.
+
+- Add more useful parchements (Alchemy, sacred/cursed monsters,
+  weapon/monster immunities)
+- Friendly monsters shouldn't attack.
+- Add ``Corrogue'', like corrupted but with utility spells.
+- ``Base items'' for alchemy -- i.e. bottle, ring, twig.
+- More layouts
+- Cool quest types
+- Generators in quests
+- Add more spell area effects:
+  a) Cone/Breath
+  b) Fissure
+  c) Chain lighting
+  d) Bouncing beam
+  e) Mini-blasts
+
+- More info in the buildings, i.e. library
+
+- Monk class, with new ``Mysticism'' realm.
+- Madman class, with new ``Wild Magic'' realm.
+- Shaman class, weird/nature magic.
+- Some sort of skill system.
+
+

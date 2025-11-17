@@ -1,0 +1,899 @@
+# File: e_info.txt
+
+
+# This file is used to initialize the "lib/raw/e_info.raw" file, which is
+# used to initialize the "ego-item" information for the Angband game.
+
+# Do not modify this file unless you know exactly what you are doing,
+# unless you wish to risk possible system crashes and broken savefiles.
+# After modifying this file, delete the "lib/raw/e_info.raw" file.
+
+# The ego-item indexes are defined in "defines.h", and must not be changed.
+
+# Ego-items 1-63 are "armor", and 64-127 are "weapons"
+
+# Note that every "ego-item" type has a different "index", and can only be
+# created from items that belong to a certain "slot" in the equipment, if
+# one assumes that "ammo" belongs to an imaginary slot (23).
+#
+# Note that several "ego-item" types may share the same "textual name",
+# such as with "Armor of Resistance" and "Shield of Resistance".
+#
+#
+# Format:
+#
+# N:number:name
+# X:tval:sval
+# W:level:rarity:rating:cost
+# C:to-hit:to-dam:to-ac:pval
+# F:flags
+#
+# You can use 0 for tval/sval when any one will do.
+
+# Version stamp (required)
+
+V:2.1.0
+
+
+### Body Armor ###
+
+N:1:of Resist Acid
+X:37:0
+W:15:2:3:1000
+M:17
+F:RES_ACID | TRANSMUTE
+
+N:2:of Resist Lightning
+X:37:0
+W:6:2:3:400
+M:17
+F:RES_ELEC | TRANSMUTE
+
+N:3:of Resist Fire
+X:37:0
+W:6:2:3:400
+M:17
+F:RES_FIRE | TRANSMUTE
+
+N:4:of Resist Cold
+X:37:0
+W:8:2:3:600
+M:17
+F:RES_COLD | TRANSMUTE
+
+N:5:of Resistance
+X:37:0
+W:20:2:4:12500
+C:0:0:10:0
+M:11
+F:RES_ACID | RES_ELEC | RES_FIRE | RES_COLD | TRANSMUTE
+
+
+# OnePower
+
+N:6:of Elvenkind
+X:36:0
+W:20:3:4:15000
+C:0:0:10:3
+M:20
+F:STEALTH | TRANSMUTE |
+F:RES_ACID | RES_ELEC | RES_FIRE | RES_COLD | 
+R:RES_POIS | RES_FEAR | RES_LITE | RES_DARK | RES_BLIND | RES_CONFU
+
+
+N:7:of Insanity
+X:36:0
+W:1:4:0:250
+C:0:0:0:7
+M:5
+F:WEIRD_ATTACK | RES_CHAOS | WIS | LIGHT_CURSE | TRANSMUTE
+
+N:8:of Insanity
+X:37:0
+W:1:4:0:250
+C:0:0:0:7
+M:5
+F:WEIRD_ATTACK | RES_CHAOS | WIS | LIGHT_CURSE | TRANSMUTE
+
+# OnePower
+
+N:11:of Permanence
+X:36:2
+W:25:3:10:30000
+C:0:0:10:0
+M:24
+F:SUST_STR | SUST_DEX | SUST_CON | SUST_INT | SUST_WIS | SUST_CHR | 
+F:HOLD_LIFE | RES_ACID | RES_ELEC | RES_FIRE | RES_COLD | TRANSMUTE
+R:RES_POIS | RES_FEAR | RES_LITE | RES_DARK | RES_BLIND | RES_CONFU
+
+
+N:12:of the Jesters
+X:36:0
+W:10:3:6:2500
+C:0:0:10:0
+M:3
+F:WEIRD_ATTACK | RES_CHAOS | RES_FEAR | TRANSMUTE
+
+# 13 (unused)
+
+# 14 (unused)
+
+# 15 (unused)
+
+
+### Shields ###
+
+N:16:of Resist Acid
+X:34:0
+W:15:2:3:1000
+M:17
+F:RES_ACID | TRANSMUTE
+
+N:17:of Resist Lightning
+X:34:0
+W:10:2:3:400
+M:17
+F:RES_ELEC | TRANSMUTE
+
+N:18:of Resist Fire
+X:34:0
+W:13:2:3:800
+M:17
+F:RES_FIRE | TRANSMUTE
+
+N:19:of Resist Cold
+X:34:0
+W:12:2:3:600
+M:17
+F:RES_COLD | TRANSMUTE
+
+N:20:of Resistance
+X:34:0
+W:20:3:5:12500
+C:0:0:10:0
+M:20
+F:RES_ACID | RES_ELEC | RES_FIRE | RES_COLD | TRANSMUTE
+
+N:21:of Insanity
+X:34:0
+W:1:4:1:250
+C:0:0:0:7
+M:5
+F:WEIRD_ATTACK | RES_CHAOS | WIS | LIGHT_CURSE | TRANSMUTE
+
+N:22:of the Jesters
+X:34:0
+W:10:3:6:2500
+C:0:0:10:0
+M:3
+F:WEIRD_ATTACK | RES_CHAOS | RES_FEAR | TRANSMUTE
+
+# 23 (unused)
+
+
+### Crowns and Helms ###
+
+N:24:of Intelligence
+X:33:0
+C:0:0:0:2
+W:10:2:2:500
+M:19
+F:INT | SUST_INT | TRANSMUTE
+
+N:25:of Wisdom
+X:33:0
+W:10:2:2:500
+C:0:0:0:2
+M:19
+F:WIS | SUST_WIS | TRANSMUTE
+
+N:26:of Beauty
+X:33:0
+W:10:2:2:1000
+C:0:0:0:4
+M:10
+F:CHR | SUST_CHR | TRANSMUTE
+
+# OneAbility
+
+N:27:of the Magi
+X:33:0
+W:23:2:8:7500
+C:0:0:0:3
+M:10
+F:INT | SUST_INT | TRANSMUTE |
+F:RES_ACID | RES_ELEC | RES_FIRE | RES_COLD | 
+R:SLOW_DIGEST | FEATHER | LITE | REGEN | TELEPATHY | SEE_INVIS | FREE_ACT |
+R:HOLD_LIFE
+
+N:28:of Might
+X:32:0
+W:25:3:8:2000
+C:0:0:0:3
+M:11
+F:STR | DEX | CON | SUST_STR | SUST_DEX | SUST_CON | FREE_ACT | TRANSMUTE
+
+N:29:of Lordliness
+X:33:0
+W:23:2:6:2000
+C:0:0:0:3
+M:18
+F:WIS | CHR | SUST_WIS | SUST_CHR | TRANSMUTE
+
+N:30:of Seeing
+X:32:0
+W:20:2:5:1000
+C:0:0:0:5
+M:23
+F:SEARCH | RES_BLIND | SEE_INVIS | TRANSMUTE
+
+N:31:of Infravision
+X:32:0
+W:17:2:5:500
+C:0:0:0:5
+M:22
+F:INFRA | HIDE_TYPE | TRANSMUTE
+
+N:32:of Light
+X:33:0
+W:15:2:5:500
+M:7
+F:LITE | RES_LITE | TRANSMUTE
+
+N:33:of Telepathy
+X:32:0
+W:27:3:8:50000
+M:5
+F:TELEPATHY | TRANSMUTE
+
+N:34:of Regeneration
+X:32:0
+W:20:2:7:1500
+M:12
+F:REGEN | TRANSMUTE
+
+N:35:of Teleportation
+X:32:0
+W:1:1:1:0
+M:18
+F:TELEPORT | LIGHT_CURSE | TRANSMUTE
+
+N:36:of Stupidity
+X:32:0
+C:0:0:0:5
+W:1:1:1:0
+M:19
+F:INT | LIGHT_CURSE | TRANSMUTE
+
+N:37:of Naivety
+X:32:0
+C:0:0:0:5
+W:1:1:1:0
+M:19
+F:WIS | LIGHT_CURSE | TRANSMUTE
+
+N:38:of Ugliness
+X:32:0
+C:0:0:0:5
+W:1:1:1:0
+M:19
+F:CHR | LIGHT_CURSE | TRANSMUTE
+
+N:39:of Sickliness
+X:32:0
+C:0:0:0:5
+W:1:1:1:0
+M:19
+F:STR | DEX | CON | LIGHT_CURSE | TRANSMUTE
+
+
+### Cloaks ###
+
+N:40:of Protection
+X:35:0
+W:16:2:5:500
+C:0:0:10:0
+M:14
+F:TRANSMUTE
+
+N:41:of Stealth
+X:35:0
+W:10:2:2:500
+C:0:0:0:3
+F:STEALTH | TRANSMUTE
+
+# OnePower
+
+N:42:of Aman
+X:35:0
+W:15:3:3:4000
+C:0:0:20:3
+M:11
+F:STEALTH | TRANSMUTE
+R:RES_POIS | RES_FEAR | RES_LITE | RES_DARK | RES_BLIND | RES_CONFU
+
+
+# 43 (unused)
+
+N:44:of Enveloping
+X:35:0
+W:1:1:1:0
+C:10:10:0:0
+M:11
+F:SHOW_MODS | LIGHT_CURSE | TRANSMUTE
+
+N:45:of Vulnerability
+X:35:0
+W:1:1:1:0
+C:0:0:50:0
+M:11
+F:AGGRAVATE | LIGHT_CURSE | TRANSMUTE
+
+N:46:of Irritation
+X:35:0
+W:1:1:1:0
+C:15:15:0:0
+M:11
+F:AGGRAVATE | SHOW_MODS | LIGHT_CURSE | TRANSMUTE
+
+# 47 (unused)
+
+
+### Gloves ###
+
+N:48:of Free Action
+X:31:0
+M:5
+F:FREE_ACT | TRANSMUTE
+W:17:2:2:1000
+
+N:49:of Slaying
+X:31:0
+W:25:2:7:25000
+C:5:5:0:0
+F:SHOW_MODS | SLAY_ANIMAL | SLAY_ORC | SLAY_TROLL | SLAY_DRAGON
+
+N:50:of Agility
+X:31:0
+W:12:2:2:1000
+C:0:0:0:5
+F:DEX | HIDE_TYPE
+
+N:51:of Power
+X:31:0
+W:12:2:2:2500
+C:5:5:0:5
+F:STR | SHOW_MODS | HIDE_TYPE
+
+N:52:of the Jesters
+X:31:0
+W:19:2:3:2500
+M:3
+F:WEIRD_ATTACK | RES_CHAOS | RES_FEAR | TRANSMUTE
+
+# 53 (unused)
+
+N:54:of Weakness
+X:31:0
+W:1:1:1:0
+C:0:0:0:10
+F:STR | LIGHT_CURSE
+
+N:55:of Clumsiness
+X:31:0
+W:1:1:1:0
+C:0:0:0:10
+F:DEX | LIGHT_CURSE
+
+
+### Boots ###
+
+N:56:of Slow Descent
+X:30:0
+W:2:1:1:250
+F:FEATHER
+
+N:57:of Stealth
+X:30:2
+W:6:1:1:500
+C:0:0:0:3
+F:STEALTH
+
+N:58:of Free Action
+X:30:0
+W:15:3:5:1000
+F:FREE_ACT
+
+N:59:of Speed
+X:30:0
+W:30:6:25:200000
+C:0:0:0:10
+F:SPEED | HIDE_TYPE
+
+N:60:of the Jesters
+X:35:12
+W:20:3:4:2500
+M:3
+F:WEIRD_ATTACK | RES_CHAOS | RES_FEAR | TRANSMUTE
+
+N:61:of Noise
+X:30:0
+W:1:1:1:0
+M:8
+F:AGGRAVATE | LIGHT_CURSE | TRANSMUTE
+
+N:62:of Slowness
+X:30:0
+W:1:1:1:0
+C:0:0:0:5
+M:24
+F:SPEED | LIGHT_CURSE | TRANSMUTE
+
+N:63:of Annoyance
+X:30:0
+W:1:1:1:0
+C:0:0:0:10
+F:SPEED | AGGRAVATE | LIGHT_CURSE
+
+
+### Weapons ###
+
+# OneSustain
+
+N:64:(Holy Avenger)
+X:23:0
+W:20:3:7:20000
+C:6:6:4:4
+M:24
+F:WIS | TRANSMUTE |
+F:SLAY_EVIL | SLAY_UNDEAD | SLAY_DEMON | 
+F:SEE_INVIS | BLESSED
+R:SUST_STR | SUST_INT | SUST_WIS | SUST_DEX | SUST_CON | SUST_CHR
+
+# OneSustain
+
+N:65:(Defender)
+X:21:0
+W:27:3:8:15000
+C:4:4:8:4
+M:11
+F:STEALTH | TRANSMUTE |
+F:FREE_ACT | SEE_INVIS | FEATHER | REGEN | 
+F:RES_ACID | RES_ELEC | RES_FIRE | RES_COLD | 
+R:SUST_STR | SUST_INT | SUST_WIS | SUST_DEX | SUST_CON | SUST_CHR
+
+# OneAbility
+
+N:66:Blessed
+X:23:0
+W:10:2:2:5000
+C:0:0:0:3
+F:WIS | 
+F:BLESSED | PREFIX_NAME
+R:SLOW_DIGEST | FEATHER | LITE | REGEN | TELEPATHY | SEE_INVIS | FREE_ACT |
+R:HOLD_LIFE
+
+N:67:of the Jesters
+X:23:0
+W:20:2:6:2500
+M:7
+F:WEIRD_ATTACK | RES_CHAOS | RES_FEAR | TRANSMUTE
+
+N:68:of Westernesse
+X:23:0
+W:18:4:10:20000
+C:5:5:0:2
+M:24
+F:STR | DEX | CON | TRANSMUTE |
+F:SLAY_ORC | SLAY_TROLL | SLAY_GIANT | 
+F:FREE_ACT | SEE_INVIS
+
+N:69:of Extra Attacks
+X:23:0
+W:18:3:7:10000
+C:0:0:0:1
+F:BLOWS
+
+N:70:of Extra Attacks
+X:21:0
+W:18:3:7:10000
+C:0:0:0:1
+F:BLOWS
+
+N:71:of Insanity
+X:23:0
+W:1:4:1:250
+C:0:0:0:7
+M:5
+F:WEIRD_ATTACK | WIS | LIGHT_CURSE | TRANSMUTE
+
+# The "Elemental" brands (4)
+
+N:72:of Melting
+X:23:0
+W:16:2:2:8000
+M:23
+F:BRAND_ACID | RES_ACID | TRANSMUTE
+
+N:73:of Shocking
+X:23:0
+W:16:2:2:4500
+M:22
+F:BRAND_ELEC | RES_ELEC | TRANSMUTE
+
+N:74:of Burning
+X:23:0
+W:16:2:2:3000
+M:21
+F:BRAND_FIRE | RES_FIRE | TRANSMUTE
+
+N:75:of Freezing
+X:23:0
+W:16:2:2:2500
+M:25
+F:BRAND_COLD | RES_COLD | TRANSMUTE
+
+# Giving this RES_POIS would probably be too powerful. (From -GJW-) -KMW-
+N:76:of Venom
+X:23:0
+W:16:2:2:2500
+M:26
+F:BRAND_POIS | TRANSMUTE
+
+N:77:of Vampirism
+X:23:0
+W:24:3:2:20000
+F:VAMPIRIC
+
+N:78:Orcish
+X:23:15
+W:17:1:2:3000
+C:4:7:2:0
+F:REGEN | PREFIX_NAME
+
+N:79:Elven
+X:19:13
+W:17:1:2:8000
+C:0:0:7:3
+M:20
+F:DEX | WIS | SLAY_ORC | PREFIX_NAME | TRANSMUTE
+
+
+# The "Slay" brands (8)
+
+N:80:of Slay Animal
+X:21:0
+W:16:2:2:3500
+F:SLAY_ANIMAL
+
+N:81:of Slay Evil
+X:21:0
+W:16:2:2:3500
+F:SLAY_EVIL
+
+N:82:of Slay Undead
+X:21:0
+W:16:2:2:3500
+M:18
+F:SLAY_UNDEAD | TRANSMUTE
+
+N:83:of Slay Demon
+X:21:0
+W:16:2:2:2500
+M:10
+F:SLAY_DEMON | TRANSMUTE
+
+N:84:of Slay Orc
+X:21:0
+W:16:2:2:2500
+F:SLAY_ORC
+
+N:85:of Slay Troll
+X:22:0
+W:16:2:2:2500
+F:SLAY_TROLL
+
+N:86:of Slay Giant
+X:22:0
+W:16:2:2:2500
+F:SLAY_GIANT
+
+N:87:of Slay Dragon
+X:22:0
+W:16:2:2:3500
+M:24
+F:SLAY_DRAGON | TRANSMUTE
+
+# The "Kill" brands (8)
+
+N:88:of *Slay* Animal
+X:21:0
+W:23:2:2:6000
+C:0:0:0:2
+F:INT | SLAY_ANIMAL | REGEN
+
+N:89:of *Slay* Evil
+X:21:0
+W:23:2:2:5000
+C:0:0:0:2
+F:WIS | SLAY_EVIL | BLESSED
+
+N:90:of *Slay* Undead
+X:21:0
+W:23:2:2:8000
+C:0:0:0:2
+M:18
+F:WIS | SLAY_UNDEAD | SEE_INVIS | TRANSMUTE
+
+N:91:of *Slay* Demon
+X:21:0
+W:23:2:2:4000
+C:0:0:0:2
+M:10
+F:INT | SLAY_DEMON | TRANSMUTE
+
+N:92:of *Slay* Orc
+X:21:0
+W:23:2:2:4000
+C:0:0:0:2
+F:DEX | SLAY_ORC
+
+N:93:of *Slay* Troll
+X:22:0
+W:23:2:2:4000
+C:0:0:0:2
+F:STR | SLAY_TROLL
+
+N:94:of *Slay* Giant
+X:22:0
+W:23:2:2:4000
+C:0:0:0:2
+F:STR | SLAY_GIANT
+
+N:95:of *Slay* Dragon
+X:22:0
+W:23:2:2:6000
+C:0:0:0:2
+M:24
+F:CON | SLAY_DRAGON | KILL_DRAGON | TRANSMUTE
+
+N:96:Demonic
+X:22:17
+W:21:1:2:6000
+C:0:14:9:3
+F:STR | CON | SLAY_ANIMAL | PREFIX_NAME
+
+N:97:Dwarven
+X:21:8
+W:18:1:2:8000
+C:0:0:0:5
+M:20
+F:TUNNEL | SEE_INVIS | SLAY_ORC | SLAY_TROLL | PREFIX_NAME | TRANSMUTE
+
+N:98:Elemental
+X:35:0
+W:23:2:2:7500
+C:0:0:13:5
+M:20
+F:PREFIX_NAME | TRANSMUTE
+R:RES_ACID | RES_ELEC | RES_FIRE | RES_COLD | WIS | INT | STR | DEX | CON | 
+R:CHR
+
+N:99:of Angmar
+X:35:0
+W:23:6:2:100000
+C:45:45:45:15
+M:14
+F:STR | CON | CHR | TRANSMUTE |
+F:MUNCHKINISH | LIGHT_CURSE | HEAVY_CURSE | PERMA_CURSE | SEE_INVIS
+
+N:100:of Digging
+X:20:0
+W:13:2:2:500
+C:0:0:0:5
+M:24
+F:TUNNEL | BRAND_ACID | TRANSMUTE
+
+N:101:of Morgul
+X:21:0
+W:20:2:6:0
+C:20:20:10:0
+M:14
+F:SEE_INVIS | AGGRAVATE | HEAVY_CURSE | LIGHT_CURSE | TRANSMUTE
+
+N:102:of Morgul
+X:22:0
+W:20:2:6:0
+C:20:20:10:0
+M:14
+F:SEE_INVIS | AGGRAVATE | HEAVY_CURSE | LIGHT_CURSE | TRANSMUTE
+
+N:103:of Morgul
+X:23:0
+W:20:2:6:0
+C:20:20:10:0
+M:14
+F:SEE_INVIS | AGGRAVATE | HEAVY_CURSE | LIGHT_CURSE | TRANSMUTE
+
+
+
+### Missile Launchers ###
+
+N:104:of Accuracy
+X:19:0
+W:13:2:2:1000
+C:15:5:0:0
+
+N:105:of Velocity
+X:19:0
+W:13:2:2:1000
+C:5:15:0:0
+
+# 106 (unused)
+
+# 107 (unused)
+
+N:108:of Extra Might
+X:19:0
+W:18:2:6:10000
+C:5:10:0:2
+F:MIGHT
+
+N:109:of Extra Shots
+X:19:0
+C:10:5:0:1
+W:18:2:6:10000
+F:SHOTS
+
+# 110 (unused)
+
+# 111 (unused)
+
+
+### Ammo ###
+
+N:112:of Hurt Animal
+X:17:0
+W:10:2:1:25
+F:SLAY_ANIMAL
+
+N:113:of Hurt Evil
+X:18:0
+W:10:2:1:25
+F:SLAY_EVIL
+
+N:114:of Hurt Undead
+X:18:0
+W:10:2:1:25
+M:18
+F:SLAY_UNDEAD | TRANSMUTE
+
+N:115:of Hurt Demon
+X:18:10
+W:15:2:1:15
+M:10
+F:SLAY_DEMON | TRANSMUTE
+
+N:116:of Hurt Orc
+X:17:10
+W:10:2:1:15
+F:SLAY_ORC
+
+N:117:of Hurt Troll
+X:18:10
+W:15:2:1:15
+F:SLAY_TROLL
+
+N:118:of Hurt Giant
+X:18:10
+W:15:2:1:15
+F:SLAY_GIANT
+
+N:119:of Hurt Dragon
+X:17:10
+W:15:2:1:35
+M:24
+F:SLAY_DRAGON | TRANSMUTE
+
+#### Boots of Levitation ####
+
+N:120:of Levitation
+X:30:0
+W:12:2:3:1000
+F:FLYING
+
+# (Arrows)
+
+# (From GJW)  -KMW-
+N:121:of Venom
+X:17:0
+F:BRAND_POIS
+W:12:2:3:20
+
+N:122:of Flame
+X:17:0
+F:BRAND_FIRE
+W:12:2:3:30
+
+N:123:of Frost
+X:17:0
+F:BRAND_COLD
+W:12:2:3:25
+
+N:124:of Venom
+X:18:0
+F:BRAND_POIS
+W:12:2:3:20
+
+N:125:of Flame
+X:18:0
+F:BRAND_FIRE
+W:12:2:3:30
+
+N:126:of Frost
+X:18:0
+F:BRAND_COLD
+W:12:2:3:25
+
+N:127:of Wounding
+X:17:0
+W:12:2:3:20
+C:5:5:0:0
+
+N:128:of Backbiting
+X:17:0
+W:1:1:1:0
+C:50:50:0:0
+F:LIGHT_CURSE
+
+### Special Broken Items ###
+
+# Destroyed Weapon
+N:129:Shattered
+X:21:0
+W:1:1:1:0
+C:5:5:0:0
+F:PREFIX_NAME
+
+N:130:Shattered
+X:22:0
+W:1:1:1:0
+C:5:5:0:0
+F:PREFIX_NAME
+
+N:131:Shattered
+X:23:0
+W:1:1:1:0
+C:5:5:0:0
+F:PREFIX_NAME
+
+# Destroyed Body Armor
+
+N:132:Blasted
+X:37:0
+W:1:1:1:0
+C:0:0:10:0
+F:PREFIX_NAME
+
+
+###
+### Note: Special ``damaged'' ego-item for broken items.
+###
+
+N:133:Damaged
+X:0:0
+W:1:1:1:0
+C:5:5:10:0
+F:SPECIAL_GEN | PREFIX_NAME
+
+
+##
+## Arrow of Permanence.
+##
+
+N:134:of Permanence
+X:17:0
+M:28
+W:55:4:7:5000
+F:TRANSMUTE
+

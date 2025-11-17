@@ -1,0 +1,263 @@
+# Automatic option dump
+
+# Option 'Rogue-like commands'
+X:rogue_like_commands
+
+# Option 'Activate quick messages'
+Y:quick_messages
+
+# Option 'Don't prompt if only one item in selection.'
+X:other_query_flag
+
+# Option 'Prompt before picking things up'
+X:carry_query_flag
+
+# Option 'Use old target by default'
+Y:use_old_target
+
+# Option 'Pick things up by default'
+X:always_pickup
+
+# Option 'Repeat obvious commands'
+Y:always_repeat
+
+# Option 'Show dungeon level in feet'
+X:depth_in_feet
+
+# Option 'Merge inscriptions when stacking'
+Y:stack_force_notes
+
+# Option 'Merge discounts when stacking'
+Y:stack_force_costs
+
+# Option 'Show labels in object listings'
+Y:show_labels
+
+# Option 'Show weights in object listings'
+Y:show_weights
+
+# Option 'Show choices in certain sub-windows'
+Y:show_choices
+
+# Option 'Show details in certain sub-windows'
+Y:show_details
+
+# Option 'Audible bell (on errors, etc)'
+Y:ring_bell
+
+# Option 'Use color for inventory listings'
+Y:inventory_colors
+
+# Option 'When running, ignore stairs'
+X:run_ignore_stairs
+
+# Option 'When running, ignore doors'
+Y:run_ignore_doors
+
+# Option 'When running, cut corners'
+Y:run_cut_corners
+
+# Option 'When running, use corners'
+Y:run_use_corners
+
+# Option 'Disturb whenever any monster moves'
+Y:disturb_move
+
+# Option 'Disturb whenever viewable monster moves'
+Y:disturb_near
+
+# Option 'Disturb whenever map panel changes'
+Y:disturb_panel
+
+# Option 'Disturb whenever player state changes'
+Y:disturb_state
+
+# Option 'Disturb whenever boring things happen'
+Y:disturb_minor
+
+# Option 'Disturb whenever various things happen'
+Y:disturb_other
+
+# Option 'Alert user to critical hitpoints'
+Y:alert_hitpoint
+
+# Option 'Alert user to various failures'
+Y:alert_failure
+
+# Option 'Show messages when pets fight'
+X:show_pet_messages
+
+# Option 'Show player races as different symbols'
+Y:race_chars
+
+# Option 'Confirm when attacking sacred monsters'
+Y:confirm_blasphemy
+
+# Option 'Allow open (arena) levels'
+X:allow_open_levels
+
+# Option 'Auto-haggle in stores'
+Y:auto_haggle
+
+# Option 'Auto-scum for good levels'
+Y:auto_scum
+
+# Option 'Don't destroy or steal wielded items.'
+Y:protect_equipment
+
+# Option 'Confirm when wielding cursed items.'
+Y:confirm_cursed
+
+# Option 'Expand the power of the look command'
+Y:expand_look
+
+# Option 'Expand the power of the list commands'
+Y:expand_list
+
+# Option 'Map remembers all perma-lit grids'
+Y:view_perma_grids
+
+# Option 'Map remembers all torch-lit grids'
+Y:view_torch_grids
+
+# Option 'Generate dungeons with aligned rooms'
+Y:dungeon_align
+
+# Option 'Generate dungeons with connected stairs'
+Y:dungeon_stair
+
+# Option 'Monsters chase current location (v.slow)'
+Y:flow_by_sound
+
+# Option 'Monsters chase recent locations (v.slow)'
+Y:flow_by_smell
+
+# Option 'Monsters follow the player (broken)'
+X:track_follow
+
+# Option 'Monsters target the player (broken)'
+X:track_target
+
+# Option 'Monsters learn from their mistakes'
+Y:smart_learn
+
+# Option 'Monsters exploit players weaknesses'
+X:smart_cheat
+
+# Option 'Reduce lite-radius when running'
+X:view_reduce_lite
+
+# Option 'Reduce view-radius in town'
+X:view_reduce_view
+
+# Option 'Avoid checking for user abort'
+X:avoid_abort
+
+# Option 'Avoid processing special colors'
+X:avoid_other
+
+# Option 'Flush input on various failures'
+Y:flush_failure
+
+# Option 'Flush input whenever disturbed'
+X:flush_disturb
+
+# Option 'Flush input before every command'
+X:flush_command
+
+# Option 'Flush output before every command'
+Y:fresh_before
+
+# Option 'Flush output after every command'
+X:fresh_after
+
+# Option 'Flush output after every message'
+X:fresh_message
+
+# Option 'Compress messages in savefiles'
+Y:compress_savefile
+
+# Option 'Hilite the player with the cursor'
+X:hilite_player
+
+# Option 'Use special colors for torch-lit grids'
+Y:view_yellow_lite
+
+# Option 'Use special colors for 'viewable' grids'
+Y:view_bright_lite
+
+# Option 'Use special colors for wall grids (slow)'
+Y:view_granite_lite
+
+# Option 'Use special colors for floor grids (slow)'
+Y:view_special_lite
+
+# Option 'Disallow summoning uniques as pets'
+X:cripple_pets
+
+# Option 'Allow themed vaults to be generated'
+Y:allow_theme_vaults
+
+# Option 'Theme vaults and open levels are rare'
+Y:weirdness_is_rare
+
+# Option 'Give humanoids names'
+Y:named_monsters
+
+# Option 'Show silly messages when fighting'
+X:flavored_attacks
+
+# Option 'Ask for confirmation when praying'
+Y:confirm_prayers
+
+# Option 'Magically light the town'
+Y:wiz_lite_town
+
+# Option 'Let monsters speak insults'
+X:monsters_speak
+
+# Option 'Confirm when commiting crimes'
+Y:confirm_crime
+
+# Option 'Allow unfair monsters to be generated'
+Y:unfair_monsters
+
+# Option 'Show equipment in inventory listing'
+Y:show_inven_equip
+
+# Option 'Allow artifacts to be damaged'
+X:artifact_damage
+
+# Option 'Use special levels for shops'
+X:vault_shops
+
+# Option 'Keep view centered on player (slow)'
+Y:center_player
+
+# Option 'Try to keep stacks of items sorted'
+Y:sort_items
+
+# Option 'Assign letters to inventory items'
+X:conserve_slots
+
+# Option 'Open/Disarm/Close without direction'
+Y:easy_open
+
+# Option 'Open/Disarm doors/traps on movement'
+Y:easy_alter
+
+# Option 'Verify destruction of objects'
+Y:verify_destroy
+
+# Option 'Verify destruction of worthless objects'
+Y:verify_destroy_junk
+
+# Option 'Keep player centered while running (slow)'
+Y:center_running
+
+# Option 'Show messages when hidden pets fight'
+Y:hidden_pet_messages
+
+# Option 'Keep the view closer to centered'
+X:almost_center_player
+

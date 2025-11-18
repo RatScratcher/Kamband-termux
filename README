@@ -15,6 +15,9 @@ This repository contains source code and notes for building and playing Kamband 
 
 - **Termux compatibility**:  
   Runs cleanly with curses interface on Android devices.
+  To run: install proot (pkg install proot). cd to the Kamband-2.1 directory and type proot -0 ./angband.
+  Make sure your screen is set toba minimum of 80x24. 
+  Use 2 fingers to shrink the screen
 
 - **Minimal disruption**:  
   Original architecture respected; only internals swapped for portability.

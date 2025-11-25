@@ -11,6 +11,7 @@ include $(LUA)/config
 
 # primary targets (only "all" and "clean" are useful after distribution)
 all clean co klean:
+	mkdir -p lib bin
 	cd include; $(MAKE) $@
 	cd src; $(MAKE) $@
 	cd src/luac; $(MAKE) $@

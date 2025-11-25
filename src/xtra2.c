@@ -2374,9 +2374,11 @@ bool mon_take_hit(int m_idx, int dam, bool * fear, cptr note,
 		p_ptr->redraw |= (PR_HEALTH);
 
 
-	/* Wake it up if it's hurt */
-	if (dam > 0)
+	/* Wake it up if it's hurt, or if it is a pet */
+	if (dam > 0 || (m_ptr->is_pet && m_ptr->csleep))
+	{
 		m_ptr->csleep = 0;
+	}
 
 	/* Hurt it */
 	m_ptr->hp -= dam;

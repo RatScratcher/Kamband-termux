@@ -2385,6 +2385,16 @@ bool mon_take_hit(int m_idx, int dam, bool * fear, cptr note,
 	god_liked = sacred_monster(r_ptr);
 	god_hated = despised_monster(r_ptr);
 
+	if (m_ptr->is_pet && m_ptr->csleep) {
+		m_ptr->csleep = 0;
+		if (m_ptr->ml)
+		{
+			char m_name[80];
+			monster_desc(m_name, m_ptr, 0);
+			msg_format("%^s wakes up.", m_name);
+		}
+	}
+
 	/* It is dead now */
 	if (m_ptr->hp < 0)
 	{

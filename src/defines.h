@@ -3289,7 +3289,7 @@
  * Does the grid allow light to pass through?
  */
 #define cave_floor_bold_los(Y,X) \
-     (cave_floor_bold(Y, X) && cave_feat[Y][X] != FEAT_FOG)
+     (cave_floor_bold(Y, X) && cave_feat[Y][X] != FEAT_FOG && cave_feat[Y][X] != FEAT_CHAOS_FOG)
 
 /*
  * Determine if a "legal" grid is a "clean" floor grid

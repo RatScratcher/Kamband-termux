@@ -3036,6 +3036,10 @@ bool target_able(int m_idx)
 	/* Get monster */
 	m_ptr = &m_list[m_idx];
 
+	/* Do not target pets */
+	if (m_ptr->is_pet)
+		return (FALSE);
+
 	/* Monster must be alive */
 	if (!m_ptr->r_idx)
 		return (FALSE);

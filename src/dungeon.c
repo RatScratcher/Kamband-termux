@@ -1217,22 +1217,23 @@ static void process_world(void)
 			}
 
 			/* Determine the level */
-			if (p_ptr->depth && 
-			    p_ptr->inside_special != SPECIAL_WILD)
+			if (p_ptr->depth || p_ptr->inside_special == SPECIAL_WILD)
 			{
 				mprint(MSG_BONUS, "You feel yourself yanked upwards!");
-				p_ptr->inside_special = SPECIAL_WILD;
-				p_ptr->leaving = TRUE;
-			}
-			else
-			{
-				mprint(MSG_BONUS, "You feel yourself yanked downwards!");
 
 				if (p_ptr->inside_special == SPECIAL_WILD) {
 				  p_ptr->wilderness_px = p_ptr->px;
 				  p_ptr->wilderness_py = p_ptr->py;
 				  p_ptr->wilderness_depth = p_ptr->depth;
 				}
+
+				p_ptr->depth = 0;
+				p_ptr->inside_special = 0;
+				p_ptr->leaving = TRUE;
+			}
+			else
+			{
+				mprint(MSG_BONUS, "You feel yourself yanked downwards!");
 
 				/* New depth */
 				p_ptr->depth = p_ptr->max_depth;

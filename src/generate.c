@@ -3825,17 +3825,20 @@ static void terrain_gen(void) {
        randint(4));
 
   /* Put some monsters in the dungeon */
-  for (i = i + k; i > 0; i--) {
-    alloc_monster(0, 0);
-  }
+  /* But not in the town! */
+  if (p_ptr->depth > 0 || p_ptr->wild_x != 0 || p_ptr->wild_y != 0) {
+    for (i = i + k; i > 0; i--) {
+      alloc_monster(0, 0);
+    }
 
-  /* Put some water dwellers. 
-   * Yes, that's right -- this code assumes that all aquatic 
-   * monsters are nocturnal. */
-  i = MIN_M_ALLOC_WILD_NIGHT + randint(4);
+    /* Put some water dwellers.
+     * Yes, that's right -- this code assumes that all aquatic
+     * monsters are nocturnal. */
+    i = MIN_M_ALLOC_WILD_NIGHT + randint(4);
 
-  for (i = i + k; i > 0; i--) {
-    alloc_monster(0, MON_ALLOC_AQUATIC);
+    for (i = i + k; i > 0; i--) {
+      alloc_monster(0, MON_ALLOC_AQUATIC);
+    }
   }
 
   /* Put some objects in rooms */

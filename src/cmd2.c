@@ -49,6 +49,12 @@ void do_cmd_go_up(void)
 
 		/* New depth */
 		p_ptr->depth--;
+
+		/* If we reached the surface, go to town */
+		if (p_ptr->depth == 0) {
+			p_ptr->wild_x = 0;
+			p_ptr->wild_y = 0;
+		}
 	}
 
 	/* Leaving */

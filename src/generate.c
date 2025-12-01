@@ -567,7 +567,7 @@ static void place_random_door(int y, int x)
 /*
  * Places some staircases near walls
  */
-static void alloc_stairs(int feat, int num, int walls)
+static void alloc_stairs(int feat, int num, int walls, bool force_room)
 {
 	int y, x, i, j, flag;
 
@@ -588,6 +588,10 @@ static void alloc_stairs(int feat, int num, int walls)
 
 				/* Require "naked" floor grid */
 				if (!cave_naked_bold(y, x))
+					continue;
+
+				/* Force room if requested */
+				if (force_room && !(cave_info[y][x] & CAVE_ROOM))
 					continue;
 
 				/* Require a certain number of adjacent walls */
@@ -3677,7 +3681,7 @@ static void terrain_gen(void) {
 
   /* Place a stairway down, sometimes. */
   if (rand_int(100) < DUN_WILD_STAIRS) {
-    alloc_stairs(FEAT_SHAFT, 1, 0);
+    alloc_stairs(FEAT_SHAFT, 1, 0, FALSE);
   }
 
 
@@ -4206,10 +4210,10 @@ static void cave_gen(void)
 	}
 
 	/* Place 3 or 4 down stairs near some walls */
-	alloc_stairs(FEAT_MORE, rand_range(3, 4), 3);
+	alloc_stairs(FEAT_MORE, rand_range(3, 4), 3, (level_bg == FEAT_FOG || level_bg == FEAT_CHAOS_FOG));
 
 	/* Place 1 or 2 up stairs near some walls */
-	alloc_stairs(FEAT_LESS, rand_range(1, 2), 3);
+	alloc_stairs(FEAT_LESS, rand_range(1, 2), 3, (level_bg == FEAT_FOG || level_bg == FEAT_CHAOS_FOG));
 
 	/* Determine the character location */
 	new_player_spot();

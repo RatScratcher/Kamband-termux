@@ -454,6 +454,15 @@ G:+:W
 N:102:nothing
 G: :d
 
+N:103:pool of oil
+G:#:y
+
+N:104:sheet of ice
+G:#:W
+
+N:105:pool of acid
+G:#:g
+
 ####
 ####  128-160 some additional ``floor'' features.
 ####

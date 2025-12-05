@@ -906,7 +906,7 @@ void mon_hit_trap(int m_idx, int y, int x)
 
 			if (m_ptr->ml)
 				msg_format("%^s falls into a pit!", m_name);
-			mon_take_hit(m_idx, damroll(2, 6), &fear, " splatters.", FALSE,
+			mon_take_hit(m_idx, damroll(1, 2) + p_ptr->depth, &fear, " splatters.", FALSE,
 				FALSE);
 
 			break;
@@ -920,7 +920,7 @@ void mon_hit_trap(int m_idx, int y, int x)
 
 			if (m_ptr->ml)
 				msg_format("%^s falls into a pit!", m_name);
-			mon_take_hit(m_idx, damroll(4, 6), &fear, " dies.", FALSE,
+			mon_take_hit(m_idx, (damroll(1, 2) + p_ptr->depth) * 2, &fear, " dies.", FALSE,
 				FALSE);
 
 			break;
@@ -963,7 +963,7 @@ void mon_hit_trap(int m_idx, int y, int x)
 			if (!(r_ptr->flags3 & RF3_IM_FIRE))
 			{
 				bool fear = FALSE;
-				int dam = damroll(2, 6);
+				int dam = damroll(2, 2) + p_ptr->depth;
 
 				if (r_ptr->flags3 & RF3_HURT_FIRE)
 					dam *= 2;
@@ -983,7 +983,7 @@ void mon_hit_trap(int m_idx, int y, int x)
 			if (!(r_ptr->flags3 & RF3_IM_ACID))
 			{
 				bool fear = FALSE;
-				int dam = damroll(2, 6);
+				int dam = damroll(2, 2) + p_ptr->depth;
 
 				mon_take_hit(m_idx, dam, &fear, " melts.", FALSE, FALSE);
 			}
@@ -1039,7 +1039,7 @@ void mon_hit_trap(int m_idx, int y, int x)
 			if (!(r_ptr->flags3 & RF3_IM_POIS))
 			{
 				bool fear = FALSE;
-				int dam = randint(20) + 10;
+				int dam = damroll(1, 2) + p_ptr->depth;
 
 				mon_take_hit(m_idx, dam, &fear, " dies.", FALSE, FALSE);
 			}
@@ -1084,7 +1084,7 @@ void hit_trap(int y, int x)
 			}
 			else
 			{
-				dam = damroll(2, 8);
+				dam = damroll(1, 2) + p_ptr->depth;
 				take_hit(dam, name);
 			}
 			
@@ -1108,7 +1108,7 @@ void hit_trap(int y, int x)
 			}
 			else
 			{
-				dam = damroll(2, 6);
+				dam = damroll(1, 2) + p_ptr->depth;
 				take_hit(dam, name);
 			}
 			break;
@@ -1127,7 +1127,7 @@ void hit_trap(int y, int x)
 			else
 			{
 				/* Base damage */
-				dam = damroll(2, 6);
+				dam = damroll(1, 2) + p_ptr->depth;
 
 				/* Extra spike damage */
 				if (rand_int(100) < 50)
@@ -1157,7 +1157,7 @@ void hit_trap(int y, int x)
 			else
 			{
 				/* Base damage */
-				dam = damroll(2, 6);
+				dam = damroll(1, 2) + p_ptr->depth;
 
 				/* Extra spike damage */
 				if (rand_int(100) < 50)
@@ -1210,7 +1210,7 @@ void hit_trap(int y, int x)
 		case FEAT_TRAP_HEAD + 0x06:
 		{
 			mprint(MSG_STUPID, "You are enveloped in flames!");
-			dam = damroll(4, 6);
+			dam = damroll(2, 2) + p_ptr->depth;
 			fire_dam(dam, "a fire trap");
 			break;
 		}
@@ -1218,7 +1218,7 @@ void hit_trap(int y, int x)
 		case FEAT_TRAP_HEAD + 0x07:
 		{
 			mprint(MSG_STUPID, "You are splashed with acid!");
-			dam = damroll(4, 6);
+			dam = damroll(2, 2) + p_ptr->depth;
 			acid_dam(dam, "an acid trap");
 			break;
 		}
@@ -1228,7 +1228,7 @@ void hit_trap(int y, int x)
 			if (check_hit(125))
 			{
 				mprint(MSG_STUPID, "A small dart hits you!");
-				dam = damroll(1, 4);
+				dam = damroll(1, 2) + (p_ptr->depth / 5);
 				take_hit(dam, name);
 				(void) set_slow(p_ptr->slow + rand_int(20) + 20);
 			}
@@ -1244,7 +1244,7 @@ void hit_trap(int y, int x)
 			if (check_hit(125))
 			{
 				mprint(MSG_STUPID, "A small dart hits you!");
-				dam = damroll(1, 4);
+				dam = damroll(1, 2) + (p_ptr->depth / 5);
 				take_hit(dam, name);
 				(void) do_dec_stat(A_STR);
 			}
@@ -1260,7 +1260,7 @@ void hit_trap(int y, int x)
 			if (check_hit(125))
 			{
 				mprint(MSG_STUPID, "A small dart hits you!");
-				dam = damroll(1, 4);
+				dam = damroll(1, 2) + (p_ptr->depth / 5);
 				take_hit(dam, name);
 				(void) do_dec_stat(A_DEX);
 			}
@@ -1276,7 +1276,7 @@ void hit_trap(int y, int x)
 			if (check_hit(125))
 			{
 				mprint(MSG_STUPID, "A small dart hits you!");
-				dam = damroll(1, 4);
+				dam = damroll(1, 2) + (p_ptr->depth / 5);
 				take_hit(dam, name);
 				(void) do_dec_stat(A_CON);
 			}
@@ -1949,6 +1949,32 @@ void move_player(int dir, int jumping)
 		{
 			disturb(0, 0);
 			hit_trap(y, x);
+		}
+
+		/* Landed on acid */
+		else if (cave_feat[y][x] == FEAT_ACID && !p_ptr->flying &&
+			!p_ptr->immune_acid)
+		{
+			acid_dam(damroll(2, 4), "a pool of acid");
+		}
+
+		/* Landed on oil */
+		else if (cave_feat[y][x] == FEAT_OIL && !p_ptr->flying)
+		{
+			if (randint(2) == 1) {
+				mprint(MSG_WARNING, "You slip on the oil.");
+				set_stun(p_ptr->stun + 5);
+			}
+		}
+
+		/* Landed on ice */
+		else if (cave_feat[y][x] == FEAT_ICE && !p_ptr->flying &&
+			!p_ptr->immune_cold)
+		{
+			if (randint(2) == 1) {
+				mprint(MSG_WARNING, "You slip on the ice.");
+				set_stun(p_ptr->stun + 5);
+			}
 		}
 	}
 }

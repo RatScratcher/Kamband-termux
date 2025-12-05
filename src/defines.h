@@ -874,6 +874,10 @@
 
 #define FEAT_STORE_EXIT         101
 
+#define FEAT_OIL                103
+#define FEAT_ICE                104
+#define FEAT_ACID               105
+
 #define FEAT_DEEP_WATER		199
 #define FEAT_SHAL_WATER		200
 #define FEAT_DEEP_LAVA		201

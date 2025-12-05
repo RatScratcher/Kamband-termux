@@ -2839,6 +2839,18 @@ static bool project_o(int who, int r, int y, int x, int dam, int typ)
 				/* Fire -- Flammable objects */
 			case GF_FIRE:
 			{
+				/* Melt ice, burn oil */
+				if (cave_feat[y][x] == FEAT_ICE)
+				{
+					cave_set_feat(y, x, FEAT_SHAL_WATER);
+					obvious = TRUE;
+				}
+				else if (cave_feat[y][x] == FEAT_OIL)
+				{
+					cave_set_feat(y, x, FEAT_SHAL_LAVA);
+					obvious = TRUE;
+				}
+
 				if (hates_fire(o_ptr))
 				{
 					do_kill = TRUE;
@@ -2850,6 +2862,14 @@ static bool project_o(int who, int r, int y, int x, int dam, int typ)
 				/* Cold -- potions and flasks */
 			case GF_COLD:
 			{
+				/* Freeze water */
+				if (cave_feat[y][x] == FEAT_SHAL_WATER ||
+					cave_feat[y][x] == FEAT_DEEP_WATER)
+				{
+					cave_set_feat(y, x, FEAT_ICE);
+					obvious = TRUE;
+				}
+
 				if (hates_cold(o_ptr))
 				{
 					note_kill = "shattered";
@@ -2882,6 +2902,23 @@ static bool project_o(int who, int r, int y, int x, int dam, int typ)
 
 				/* Hack -- break potions and such */
 			case GF_ICE:
+			{
+				/* Freeze water */
+				if (cave_feat[y][x] == FEAT_SHAL_WATER ||
+					cave_feat[y][x] == FEAT_DEEP_WATER)
+				{
+					cave_set_feat(y, x, FEAT_ICE);
+					obvious = TRUE;
+				}
+
+				if (hates_shards(o_ptr))
+				{
+					note_kill = "shattered";
+					do_kill = TRUE;
+				}
+				break;
+			}
+
 			case GF_SHARD:
 			{
 				if (hates_shards(o_ptr))

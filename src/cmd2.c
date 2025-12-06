@@ -328,7 +328,7 @@ static void chest_trap(int y, int x, object_type * o_ptr)
 		mprint(MSG_STUPID, "There is a sudden explosion!");
 		mprint(MSG_STUPID, "Everything inside the chest is destroyed!");
 		o_ptr->pval = 0;
-		take_hit(damroll(5, 8), "an exploding chest");
+		take_hit(damroll(2, 2) + p_ptr->depth, "an exploding chest");
 	}
 }
 

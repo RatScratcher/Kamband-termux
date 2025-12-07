@@ -628,8 +628,8 @@ void spell_generate_new(int plev)
 	if (dice > 10)
 		dice = 10;
 
-	if (sides < 1)
-		sides = 1;
+	if (sides < 4)
+		sides = 4;
 	if (sides > 100)
 		sides = 100;
 

@@ -892,7 +892,13 @@ static void get_extra(void)
 	/* Hack -- Start with a Corrupted spell. */
 	if (p_ptr->pclass == CLASS_CORRUPTED)
 	{
-		spell_generate_new(1);
+		int i;
+		int num = rand_range(1, 2);
+
+		for (i = 0; i < num; i++)
+		{
+			spell_generate_new(1);
+		}
 	}
 
 	/* Hack -- Start with some mutations. */

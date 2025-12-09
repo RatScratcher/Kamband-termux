@@ -447,14 +447,25 @@ static void find_target_nearest(monster_type * m_ptr, monster_race * r_ptr,
 
 	/* Default target */
 
-	*ry = p_ptr->py;
-	*rx = p_ptr->px;
+	if (m_ptr->ty == 0 && m_ptr->tx == 0) {
+		m_ptr->ty = m_ptr->fy;
+		m_ptr->tx = m_ptr->fx;
+	}
+
+	*ry = m_ptr->ty;
+	*rx = m_ptr->tx;
 
 	/* Either the player can be seen, or there are no pets to track */
 
 	if (m_ptr->is_pet == FALSE && !gooddude &&
 	    (player_has_los_bold(m_ptr->fy, m_ptr->fx) || m_pet_num == 0))
 	{
+		if (player_has_los_bold(m_ptr->fy, m_ptr->fx)) {
+			m_ptr->ty = p_ptr->py;
+			m_ptr->tx = p_ptr->px;
+			*ry = p_ptr->py;
+			*rx = p_ptr->px;
+		}
 		return;
 	}
 
@@ -2311,21 +2322,40 @@ bool make_attack_spell(int m_idx)
 	for (k = 0; k < 32; k++)
 	{
 		if (f4 & (1L << k))
+		{
+			/* Check ammo for arrows */
+			if (k >= 4 && k <= 7) {
+				if (m_ptr->ammo <= 0) continue;
+			}
+			/* Check mana */
+			/* Breath weapons cost 20 mana */
+			if (k >= 8 && k <= 28) {
+				if (m_ptr->mana < 20) continue;
+			}
 			spell[num++] = k + 32 * 3;
+		}
 	}
 
 	/* Extract the "normal" spells */
 	for (k = 0; k < 32; k++)
 	{
 		if (f5 & (1L << k))
+		{
+			/* Normal spells cost 5 mana */
+			if (m_ptr->mana < 5) continue;
 			spell[num++] = k + 32 * 4;
+		}
 	}
 
 	/* Extract the "bizarre" spells */
 	for (k = 0; k < 32; k++)
 	{
 		if (f6 & (1L << k))
+		{
+			/* Bizarre spells cost 10 mana */
+			if (m_ptr->mana < 10) continue;
 			spell[num++] = k + 32 * 5;
+		}
 	}
 
 	/* No spells left */
@@ -2351,17 +2381,28 @@ bool make_attack_spell(int m_idx)
 	if (!clear_shot && thrown_spell < 32 * 5 &&
 		!(r_ptr->flags2 & RF2_STUPID)) return FALSE;
 
-
+	/* Deduct costs */
 	if (thrown_spell < 128)
 	{
+		int spell_idx = thrown_spell - 96;
+		/* Arrows use ammo */
+		if (spell_idx >= 4 && spell_idx <= 7) {
+			m_ptr->ammo--;
+		}
+		/* Breaths use mana */
+		else if (spell_idx >= 8 && spell_idx <= 28) {
+			m_ptr->mana -= 20;
+		}
 		cast_inate_spell(m_idx, thrown_spell, direct, py, px);
 	}
 	else if (thrown_spell < 160)
 	{
+		m_ptr->mana -= 5;
 		cast_normal_spell(m_idx, thrown_spell, direct, py, px);
 	}
 	else
 	{
+		m_ptr->mana -= 10;
 		cast_bizarre_spell(m_idx, thrown_spell, direct, py, px);
 	}
 
@@ -4080,6 +4121,10 @@ void process_monsters(void)
 		/* Give this monster some energy */
 		m_ptr->energy += e;
 
+		/* Regenerate Mana */
+		if (m_ptr->mana < m_ptr->max_mana) {
+			m_ptr->mana++;
+		}
 
 		/* Not enough energy to move */
 		if (m_ptr->energy < 100)

@@ -587,8 +587,6 @@ struct monster_type
 
 	object_type *inventory;	/* Objects being held (if any) */
 
-#ifdef WDT_TRACK_OPTIONS
-
 	byte ty; /* Y location of target */
 	byte tx; /* X location of target */
 
@@ -596,7 +594,9 @@ struct monster_type
 
 	byte t_bit;	/* Up to eight bit flags */
 
-#endif
+	s16b mana;
+	s16b max_mana;
+	s16b ammo;
 
 #ifdef DRS_SMART_OPTIONS
 

@@ -904,16 +904,23 @@ static void get_extra(void)
 	/* Hack -- Start with some mutations. */
 	if (p_ptr->prace == RACE_MUTANT)
 	{
-		int i;
-		int j = rand_range(3, 6);
-
 		p_ptr->mutations1 = 0L;
 		p_ptr->mutations2 = 0L;
 		p_ptr->mutations3 = 0L;
 
-		for (i = 0; i < j; i++)
+		if (p_ptr->pclass == CLASS_CORRUPTED)
 		{
-			generate_mutation();
+			p_ptr->mutations1 |= (1L << MUT_PLUS_INT);
+		}
+		else
+		{
+			int i;
+			int j = rand_range(3, 6);
+
+			for (i = 0; i < j; i++)
+			{
+				generate_mutation();
+			}
 		}
 	}
 

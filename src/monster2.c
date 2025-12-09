@@ -1687,6 +1687,17 @@ static bool place_monster_one(int y, int x, int r_idx, int flags)
 	/* Give a random starting energy */
 	n_ptr->energy = rand_int(100);
 
+	/* Initialize mana */
+	n_ptr->max_mana = r_ptr->level * 10 + 20;
+	n_ptr->mana = n_ptr->max_mana;
+
+	/* Initialize ammo */
+	n_ptr->ammo = 10 + randint(10);
+
+	/* Initialize target location */
+	n_ptr->ty = y;
+	n_ptr->tx = x;
+
 	/* Set to be a pet, if applicable */
 	if (pet)
 	{

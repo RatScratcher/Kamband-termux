@@ -760,6 +760,7 @@
 #define GF_REPAIR           161
 #define GF_TRANSMUTE        162
 #define GF_HEAVY_TRANSMUTE  163
+#define GF_MAKE_PET_SCALING 164
 
 
 /*

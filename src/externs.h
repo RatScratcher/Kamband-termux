@@ -403,6 +403,7 @@ extern void remove_mutation(void);
 
 extern void add_powers(byte class);
 extern void remove_powers(byte class);
+extern void update_dynamic_spell_costs(void);
 
 /* cmd6.c */
 extern bool curse_armor(void);

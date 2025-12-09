@@ -2348,6 +2348,34 @@ static bool project_f(int who, int r, int y, int x, int dam, int typ)
 			break;
 		}
 
+		/* Make scaling pets */
+		case GF_MAKE_PET_SCALING:
+		{
+			int i;
+
+			if (p_ptr->inside_special == SPECIAL_ARENA)
+				break;
+
+			if (p_ptr->number_pets >
+				adj_chr_pet_summon[p_ptr->stat_ind[A_CHR]])
+				break;
+
+			if (dam > 10) dam = 10;
+
+			for (i = 0; i < dam; i++)
+			{
+				if (summon_specific_friendly(y, x, p_ptr->depth, 0))
+				{
+					p_ptr->number_pets++;
+					obvious = TRUE;
+				}
+			}
+
+			/* Update some things */
+			p_ptr->update |= (PU_VIEW | PU_LITE | PU_FLOW | PU_MONSTERS);
+			break;
+		}
+
 			/* Make walls */
 		case GF_MAKE_WALL:
 		{

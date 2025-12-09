@@ -478,6 +478,11 @@ static void find_target_nearest(monster_type * m_ptr, monster_race * r_ptr,
 			*ry = p_ptr->target_row;
 			*rx = p_ptr->target_col;
 		}
+		else if (p_ptr->pets_notice == 1)
+		{
+			*ry = p_ptr->py;
+			*rx = p_ptr->px;
+		}
 
 		return;
 	}
@@ -519,9 +524,14 @@ static void find_target_nearest(monster_type * m_ptr, monster_race * r_ptr,
 		*ry = min_m_ptr->fy;
 		*rx = min_m_ptr->fx;
 	}
+	else if (m_ptr->is_pet)
+	{
+		*ry = p_ptr->py;
+		*rx = p_ptr->px;
+	}
 
 	/* HACK! Handle police. */
-	if (gooddude && *rx == p_ptr->px && *ry == p_ptr->py) {
+	if (!m_ptr->is_pet && gooddude && *rx == p_ptr->px && *ry == p_ptr->py) {
 
 	  /* Track the player without damaging him. */
 	  

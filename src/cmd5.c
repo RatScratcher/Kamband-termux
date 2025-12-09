@@ -558,7 +558,7 @@ static const int destructive_attack_types[13] = {
 	GF_EARTHQUAKE
 };
 
-static const int attack_types[29] = {
+static const int attack_types[30] = {
 	GF_ARROW,
 	GF_MISSILE,
 	GF_MANA,
@@ -587,7 +587,8 @@ static const int attack_types[29] = {
 	GF_DISENCHANT,
 	GF_QUAKE,
 	GF_BRAIN_SMASH,
-	GF_MIND_BLAST
+	GF_MIND_BLAST,
+	GF_MAKE_PET_SCALING
 };
 
 
@@ -730,7 +731,16 @@ void spell_generate_new(int plev)
 	/* Pick a simple spell */
 	if (simple_gen)
 	{
-		pnode->attack_kind = attack_types[rand_int(29)];
+		pnode->attack_kind = attack_types[rand_int(30)];
+
+		if (pnode->attack_kind == GF_MAKE_PET_SCALING)
+		{
+			pnode->dam_dice = 1;
+			pnode->dam_sides = 3;
+			pnode->proj_flags = PROJECT_STOP;
+			pnode->safe = TRUE;
+			pnode->radius = 0;
+		}
 
 		/* Pick a destructive spell */
 	}
@@ -1253,5 +1263,34 @@ void remove_powers(byte class)
 		remove_spells(indexes, num);
 
 		mformat(MSG_WARNING, "You have lost %d of your abilities.", num);
+	}
+}
+
+/*
+ * Update the mana cost of dynamic spells.
+ */
+void update_dynamic_spell_costs(void)
+{
+	int i;
+
+	for (i = 0; i < spell_num; i++)
+	{
+		proj_node *pnode = spells[i].proj_list;
+
+		while (pnode)
+		{
+			if (pnode->attack_kind == GF_MAKE_PET_SCALING)
+			{
+				int mana = p_ptr->depth;
+
+				if (mana < 1) mana = 1;
+				if (mana > 255) mana = 255;
+
+				spells[i].mana = (byte)mana;
+				break;
+			}
+
+			pnode = pnode->next;
+		}
 	}
 }

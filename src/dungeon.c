@@ -489,6 +489,7 @@ static void process_world(void)
 	if (turn % 10)
 		return;
 
+	update_dynamic_spell_costs();
 
 	/*** Check the Time and Load ***/
 

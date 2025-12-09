@@ -905,11 +905,21 @@ static void get_extra(void)
 	if (p_ptr->prace == RACE_MUTANT)
 	{
 		int i;
-		int j = rand_range(3, 6);
+		int j;
 
 		p_ptr->mutations1 = 0L;
 		p_ptr->mutations2 = 0L;
 		p_ptr->mutations3 = 0L;
+
+		if (p_ptr->pclass == CLASS_CORRUPTED)
+		{
+			p_ptr->mutations1 |= (1L << MUT_PLUS_INT);
+			j = rand_range(1, 5);
+		}
+		else
+		{
+			j = rand_range(3, 6);
+		}
 
 		for (i = 0; i < j; i++)
 		{

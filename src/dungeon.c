@@ -744,7 +744,7 @@ static void process_world(void)
 	/*** Check the Food, and Regenerate ***/
 
 	/* Never starve */
-	(void)set_food(PY_FOOD_MAX);
+	(void)set_food(PY_FOOD_MAX - 1);
 
 	/* Digest normally */
 	if (p_ptr->food < PY_FOOD_MAX)

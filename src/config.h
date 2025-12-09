@@ -100,7 +100,7 @@
  *
  * This will handle "gids" correctly once the permissions are set right.
  */
-#define SAFE_SETUID
+/* #define SAFE_SETUID */
 
 
 /*

@@ -357,6 +357,10 @@ bool make_attack_normal(int m_idx)
 	if (r_ptr->flags1 & (RF1_NEVER_BLOW))
 		return (FALSE);
 
+	/* Monsters in walls cannot attack */
+	if (!cave_floor_bold(m_ptr->fy, m_ptr->fx))
+		return (FALSE);
+
 
 	/* Total armor */
 	ac = p_ptr->ac + p_ptr->to_a;

@@ -228,6 +228,103 @@ static s16b attack_effect_to_spell_type(s16b effect)
 
 
 /*
+ * Corruptive Blink (Defensive Spell)
+ *
+ * Triggered manually after an enemy hits you, but before damage is applied.
+ */
+static bool corruptive_blink(void)
+{
+	int i, dir, dis;
+	int y, x, ny, nx;
+	bool blocked = FALSE;
+
+	/* Roll distance 1-3 */
+	dis = randint(3);
+
+	/* Roll random direction */
+	dir = ddd[rand_int(8)];
+
+	/* Starting point */
+	y = p_ptr->py;
+	x = p_ptr->px;
+
+	/* Check path */
+	for (i = 1; i <= dis; i++)
+	{
+		ny = y + ddy[dir] * i;
+		nx = x + ddx[dir] * i;
+
+		/* Check bounds */
+		if (!in_bounds_fully(ny, nx))
+		{
+			blocked = TRUE;
+			break;
+		}
+
+		/* Check blockage: Must be floor, no monster, no deep fluids */
+		if (!cave_floor_bold(ny, nx) || (cave_m_idx[ny][nx] > 0) ||
+			(cave_feat[ny][nx] == FEAT_DEEP_LAVA) ||
+			(cave_feat[ny][nx] == FEAT_DEEP_WATER))
+		{
+			blocked = TRUE;
+			break;
+		}
+
+		/* Check stairs */
+		if (cave_feat[ny][nx] == FEAT_LESS || cave_feat[ny][nx] == FEAT_MORE)
+		{
+			blocked = TRUE;
+			break;
+		}
+	}
+
+	if (blocked)
+	{
+		msg_print("The space is blocked!");
+		take_sanity_hit(damroll(1, 3), "corruption");
+		return (FALSE);
+	}
+
+	/* Move player */
+	/* Use final ny, nx */
+	ny = y + ddy[dir] * dis;
+	nx = x + ddx[dir] * dis;
+
+	monster_swap(y, x, ny, nx);
+
+	/* Update visuals */
+	lite_spot(y, x);
+	lite_spot(ny, nx);
+	verify_panel();
+	p_ptr->update |= (PU_VIEW | PU_LITE | PU_FLOW | PU_MONSTERS | PU_DISTANCE);
+	p_ptr->window |= (PW_OVERHEAD);
+
+	msg_print("You vanish and reappear!");
+
+	/* Trigger traps */
+	if ((cave_feat[ny][nx] >= FEAT_TRAP_HEAD) &&
+		(cave_feat[ny][nx] <= FEAT_TRAP_TAIL))
+	{
+		hit_trap(ny, nx);
+	}
+
+	/* Handle other hazards like acid/lava if we landed on them */
+	if (cave_feat[ny][nx] == FEAT_ACID)
+	{
+		msg_print("You are covered in acid!");
+		acid_dam(damroll(5, 10), "acid");
+	}
+	else if (cave_feat[ny][nx] == FEAT_SHAL_LAVA)
+	{
+		msg_print("You are covered in lava!");
+		fire_dam(damroll(5, 10), "lava");
+	}
+
+	return (TRUE);
+}
+
+
+/*
  * Attack the player via physical attacks.
  */
 bool make_attack_normal(int m_idx)
@@ -420,6 +517,30 @@ bool make_attack_normal(int m_idx)
 		/* Monster hits player */
 		if (!effect || check_hit(power, rlev))
 		{
+			/* Corruptive Blink check */
+			if ((p_ptr->prace == RACE_MUTANT) &&
+				(p_ptr->pclass == CLASS_CORRUPTED) && (p_ptr->csp >= 3))
+			{
+				char prompt[80];
+				/* Hack -- format message */
+				strnfmt(prompt, 80, "%^s hits you! Blink? (3 MP) ", m_name);
+
+				if (get_check(prompt))
+				{
+					/* Spend MP */
+					p_ptr->csp -= 3;
+					p_ptr->redraw |= (PR_MANA);
+
+					/* Attempt Blink */
+					if (corruptive_blink())
+					{
+						/* Success: Blinked away. Skip damage and stop attack loop. */
+						break;
+					}
+					/* Failed: Proceed to take damage */
+				}
+			}
+
 			/* Always disturbing */
 			disturb(1, 0);
 

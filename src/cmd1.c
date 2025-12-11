@@ -1626,6 +1626,12 @@ void py_attack(int y, int x)
 
 			/* Message */
 			msg_format("You miss %s.", m_name);
+
+			/* Wake up pets */
+			if (m_ptr->is_pet)
+			{
+				m_ptr->csleep = 0;
+			}
 		}
 	}
 

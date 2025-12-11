@@ -3786,7 +3786,8 @@ static void process_monster(int m_idx)
 						award_exp = FALSE;
 					}
 
-					if (show_pet_messages && (hidden_pet_messages || m_ptr->ml))
+					if (show_pet_messages && (hidden_pet_messages || m_ptr->ml) &&
+					    (cave_feat[p_ptr->py][p_ptr->px] == FEAT_FLOOR))
 						msg_format("%^s hits %^s.", m_name, n_name);
 
 					if (mon_take_hit(cave_m_idx[ny][nx], dam, &fear,

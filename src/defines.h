@@ -2669,6 +2669,7 @@
 #define MFLAG_MARK	  0x0080 /* Monster is currently memorized */
 #define MFLAG_AVATAR      0x0100 /* Monster is an avatar of a god. */
 #define MFLAG_PACIFIST    0x0200 /* Monster is a pacifist. */
+#define MFLAG_ALPHA       0x0400 /* Monster is a powered-up breeder. */
 
 
 /*

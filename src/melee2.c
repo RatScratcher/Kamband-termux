@@ -4117,6 +4117,20 @@ void process_monsters(void)
 		if (!m_ptr->r_idx)
 			continue;
 
+		/* Handle timed life (e.g. max generation breeders) */
+		if (m_ptr->life_counter > 0)
+		{
+			m_ptr->life_counter--;
+			if (m_ptr->life_counter == 0)
+			{
+				char m_name[80];
+				monster_desc(m_name, m_ptr, 0);
+				msg_format("%^s flees the dungeon!", m_name);
+				delete_monster_idx(i);
+				continue;
+			}
+		}
+
 		if (m_ptr->is_pet)
 		{
 			m_pet_num++;

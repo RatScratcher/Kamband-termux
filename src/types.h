@@ -598,6 +598,9 @@ struct monster_type
 	s16b max_mana;
 	s16b ammo;
 
+	byte generation; /* Breeding generation */
+	s16b life_counter; /* Counter for timed life (e.g. max generation breeder) */
+
 #ifdef DRS_SMART_OPTIONS
 
 	u32b smart;	/* Field for "smart_learn" */
@@ -1179,6 +1182,8 @@ struct player_type
 	s16b object_kind_idx; /* Object kind trackee */
 
 	s16b energy_use; /* Energy use this turn */
+
+	s16b breeder_kills; /* Count of breeders killed in current context */
 
 	s16b resting; /* Resting counter */
 	s16b running; /* Running counter */

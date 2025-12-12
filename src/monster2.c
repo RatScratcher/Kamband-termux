@@ -2623,7 +2623,63 @@ bool multiply_monster(int m_idx)
 			continue;
 
 		/* Create a new monster (awake, no groups) */
-		return place_monster_aux(y, x, m_ptr->r_idx, flags);
+		if (place_monster_aux(y, x, m_ptr->r_idx, flags))
+		{
+			/* Check for Alpha breeding */
+			if ((m_ptr->mflag & MFLAG_ALPHA) || (m_ptr->generation > 0))
+			{
+				/* Get the child */
+				monster_type *child_ptr = &m_list[cave_m_idx[y][x]];
+
+				/* Increment generation */
+				child_ptr->generation = m_ptr->generation + 1;
+
+				/* Check for generation limit */
+				if (child_ptr->generation >= 3)
+				{
+					/* Trigger mass exodus for this race */
+					/* Iterate over all monsters */
+					int j;
+					msg_format("The %ss sense the end of their time...", r_name + r_ptr->name);
+					for (j = 1; j < m_max; j++)
+					{
+						monster_type *other_ptr = &m_list[j];
+						if (!other_ptr->r_idx) continue;
+
+						/* If same race (or breeding line), set timer */
+						if (other_ptr->r_idx == m_ptr->r_idx)
+						{
+							if (other_ptr->life_counter == 0)
+							{
+								other_ptr->life_counter = 5;
+							}
+						}
+					}
+
+					/* Since we just created this child, also set its timer */
+					child_ptr->life_counter = 5;
+				}
+				else
+				{
+					/* Buff the child */
+					child_ptr->mflag |= MFLAG_ALPHA;
+
+					/* Increase stats based on generation/depth */
+					/* Start with base HP and Speed */
+
+					/* Speed boost: +10 per generation */
+					child_ptr->mspeed = r_ptr->speed + (child_ptr->generation * 10);
+					if (child_ptr->mspeed > 199) child_ptr->mspeed = 199;
+
+					/* HP boost: +50% per generation */
+					child_ptr->maxhp = child_ptr->maxhp * (100 + (child_ptr->generation * 50)) / 100;
+					child_ptr->hp = child_ptr->maxhp;
+
+					/* Update description/display if needed (not easy without changing race) */
+				}
+			}
+			return TRUE;
+		}
 	}
 
 	return FALSE;

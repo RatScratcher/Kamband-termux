@@ -749,6 +749,12 @@ bool make_attack_normal(int m_idx)
 			/* Roll out the damage */
 			damage = damroll(d_dice, d_side);
 
+			/* Alpha breeders do extra damage */
+			if (m_ptr->mflag & MFLAG_ALPHA)
+			{
+				damage = damage * 2;
+			}
+
 			/* Hack -- produce an explosion, turn off other effects. */
 			if (do_explosion)
 			{

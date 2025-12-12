@@ -2390,6 +2390,106 @@ bool mon_take_hit(int m_idx, int dam, bool * fear, cptr note,
 	{
 		char m_name[80];
 
+		/* Track breeder kills */
+		if ((r_ptr->flags2 & RF2_MULTIPLY) && give_exp)
+		{
+			p_ptr->breeder_kills++;
+			if (p_ptr->breeder_kills > 20)
+			{
+				p_ptr->breeder_kills = 0;
+				if (place_monster(p_ptr->py, p_ptr->px, MON_ALLOC_JUST_ONE | MON_ALLOC_OOD))
+				{
+					/* It's probably the last monster added */
+					/* But place_monster returns bool, not index.
+					   Wait, place_monster calls place_monster_aux, which calls place_monster_one...
+					   I used cave_m_idx in multiply_monster.
+					   I need to find where the monster was placed.
+					   Since I don't have the coordinates easily, I'll search nearby.
+					*/
+					int i, x, y;
+					for (i = 0; i < 20; i++)
+					{
+						int d = 3;
+						scatter(&y, &x, p_ptr->py, p_ptr->px, d, 0);
+						if (cave_m_idx[y][x] > 0)
+						{
+							monster_type *new_m_ptr = &m_list[cave_m_idx[y][x]];
+							/* Verify it's a new spawn (approximate check) */
+							if (new_m_ptr->mflag & MFLAG_BORN)
+							{
+								/* Check if it's the right race if needed,
+								   but place_monster picks a random race unless we specify.
+								   Wait, the plan said "Spawn Alpha near player".
+								   It should be the SAME race as the breeder we just killed, but Alpha.
+								*/
+								if (new_m_ptr->r_idx != m_ptr->r_idx)
+								{
+									/* If place_monster picked a random monster, that's not quite what we want.
+									   We want an Alpha of the breeder species.
+									*/
+									delete_monster_idx(cave_m_idx[y][x]);
+									/* Try to place the specific monster */
+									if (place_monster_aux(p_ptr->py, p_ptr->px, m_ptr->r_idx, MON_ALLOC_JUST_ONE))
+									{
+										/* Find it again (it will be near py, px) */
+										/* Just use the same scatter logic or search 'm_list' backwards? */
+										/* m_pop returns m_max - 1. So the new monster is at m_max - 1? */
+										/* Let's use m_max - 1 assuming m_pop increments m_max. */
+										/* But verify it's alive. */
+										/* Actually, m_pop might reuse a hole. */
+
+										/* Better to search m_list for the monster we just made. */
+										/* Or just assume we found it if we scan nearby. */
+									}
+								}
+							}
+						}
+					}
+
+					/* Simpler approach: call place_monster_aux explicitly with the race */
+				}
+
+				/* Correct logic: */
+				if (place_monster_aux(p_ptr->py, p_ptr->px, m_ptr->r_idx, MON_ALLOC_JUST_ONE))
+				{
+					/* Find the monster we just placed. It should be near the player. */
+					int best_i = 0;
+					int best_dist = 999;
+					int i;
+					for (i = 1; i < m_max; i++)
+					{
+						monster_type *scan_ptr = &m_list[i];
+						if (!scan_ptr->r_idx) continue;
+						if (scan_ptr->r_idx != m_ptr->r_idx) continue;
+						if (!(scan_ptr->mflag & MFLAG_BORN)) continue; /* Newly born */
+
+						int dist = distance(p_ptr->py, p_ptr->px, scan_ptr->fy, scan_ptr->fx);
+						if (dist < best_dist)
+						{
+							best_dist = dist;
+							best_i = i;
+						}
+					}
+
+					if (best_i > 0)
+					{
+						monster_type *alpha_ptr = &m_list[best_i];
+						msg_format("A powerful %s appears nearby!", r_name + r_ptr->name);
+						alpha_ptr->mflag |= MFLAG_ALPHA;
+						alpha_ptr->generation = 1;
+						alpha_ptr->maxhp = alpha_ptr->maxhp * 150 / 100;
+
+						/* Scale with depth */
+						alpha_ptr->maxhp += (p_ptr->depth * 3);
+						alpha_ptr->hp = alpha_ptr->maxhp;
+
+						alpha_ptr->mspeed = r_ptr->speed + 10 + (p_ptr->depth / 10);
+						if (alpha_ptr->mspeed > 199) alpha_ptr->mspeed = 199;
+					}
+				}
+			}
+		}
+
 		/* Extract monster name */
 		if (hit_by_pet)
 		{

@@ -5162,6 +5162,7 @@ void describe_attack(int type, char *r)
 
 		case GF_MAKE_MONSTER:
 		case GF_MAKE_PET:
+		case GF_MAKE_PET_SCALING:
 			strcpy(r, "beckoning whispering");
 			break;
 
@@ -5516,6 +5517,7 @@ void describe_attack_fully(int type, char *r)
 			strcpy(r, "summon monster");
 			break;
 		case GF_MAKE_PET:
+		case GF_MAKE_PET_SCALING:
 			strcpy(r, "summon pet");
 			break;
 		case GF_HEAL_CONF:

@@ -2367,6 +2367,20 @@ bool mon_take_hit(int m_idx, int dam, bool * fear, cptr note,
 
 	s32b div, new_exp, new_exp_frac;
 
+	/* Ancient monsters are immune to damage but get enraged */
+	if ((r_ptr->flags7 & (RF7_ANCIENT)))
+	{
+		dam = 0;
+		if (!(m_ptr->mflag & (MFLAG_ANCIENT_ENRAGED)))
+		{
+			m_ptr->mflag |= (MFLAG_ANCIENT_ENRAGED);
+			m_ptr->csleep = 0;
+			msg_format("The %s awakens in fury!", r_name + r_ptr->name);
+		}
+		/* Can't be hurt, so return false (not killed) */
+		return FALSE;
+	}
+
 	bool god_liked, god_hated;
 
 	/* Redraw (later) if needed */

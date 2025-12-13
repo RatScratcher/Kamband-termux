@@ -383,7 +383,7 @@ static cptr r_info_flags7[] = {
 	"HUMANOID",
 	"KAMIKAZE",
 	"KOBOLD",
-	"XXX16X7",
+	"ANCIENT",
 	"XXX17X7",
 	"XXX18X7",
 	"XXX19X7",

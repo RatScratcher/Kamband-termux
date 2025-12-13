@@ -1819,6 +1819,18 @@ void move_player(int dir, int jumping)
 	if (cave_m_idx[y][x] > 0)
 	{
 		m_ptr = &m_list[cave_m_idx[y][x]];
+		monster_race *r_ptr = &r_info[m_ptr->r_idx];
+
+		/* Wake up Ancients if bumped */
+		if (r_ptr->flags7 & (RF7_ANCIENT))
+		{
+			if (!(m_ptr->mflag & (MFLAG_ANCIENT_ENRAGED)))
+			{
+				m_ptr->mflag |= (MFLAG_ANCIENT_ENRAGED);
+				m_ptr->csleep = 0;
+				msg_format("The %s awakens in fury!", r_name + r_ptr->name);
+			}
+		}
 
 		/* Not a pet */
 		if (!m_ptr->is_pet)

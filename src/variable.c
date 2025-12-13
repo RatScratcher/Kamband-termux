@@ -140,6 +140,8 @@ s16b feeling; /* Most recent feeling */
 s16b rating; /* Level's current rating */
 s16b pet_rating; /* Amount of sacred pets on the level. */
 
+bool ancient_of_days_is_chasing = FALSE; /* An Ancient is following between levels */
+
 bool good_item_flag; /* True if "Artifact" on this level */
 
 bool closing_flag; /* Dungeon is closing */

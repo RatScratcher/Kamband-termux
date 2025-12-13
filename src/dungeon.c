@@ -2420,7 +2420,24 @@ static void process_player(void)
 
 		/* Handle "leaving" */
 		if (p_ptr->leaving)
+		{
+			/* Check for enraged ancients */
+			int i;
+			ancient_of_days_is_chasing = FALSE;
+			for (i = 1; i < m_max; i++)
+			{
+				monster_type *m_ptr = &m_list[i];
+				monster_race *r_ptr;
+				if (!m_ptr->r_idx) continue;
+				r_ptr = &r_info[m_ptr->r_idx];
+				if ((r_ptr->flags7 & RF7_ANCIENT) && (m_ptr->mflag & MFLAG_ANCIENT_ENRAGED))
+				{
+					ancient_of_days_is_chasing = TRUE;
+					break;
+				}
+			}
 			break;
+		}
 	}
 }
 

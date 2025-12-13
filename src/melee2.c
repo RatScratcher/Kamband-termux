@@ -4140,6 +4140,18 @@ void process_monsters(void)
 		if (m_ptr->mflag & (MFLAG_BORN))
 			continue;
 
+		/* Access the race */
+		r_ptr = &r_info[m_ptr->r_idx];
+
+		/* Ancient monsters sleep until enraged */
+		if ((r_ptr->flags7 & (RF7_ANCIENT)) &&
+		    !(m_ptr->mflag & (MFLAG_ANCIENT_ENRAGED)))
+		{
+			/* Keep sleeping */
+			m_ptr->csleep = 1;
+			continue;
+		}
+
 		/* Obtain the energy boost */
 		e = extract_energy[m_ptr->mspeed];
 
@@ -4147,8 +4159,34 @@ void process_monsters(void)
 		m_ptr->energy += e;
 
 		/* Regenerate Mana */
-		if (m_ptr->mana < m_ptr->max_mana) {
+		if (!(r_ptr->flags7 & RF7_ANCIENT) && m_ptr->mana < m_ptr->max_mana) {
 			m_ptr->mana++;
+		}
+
+		/* Ancient forgetting logic */
+		if ((r_ptr->flags7 & RF7_ANCIENT) && (m_ptr->mflag & MFLAG_ANCIENT_ENRAGED))
+		{
+			if (los(fy, fx, p_ptr->py, p_ptr->px))
+			{
+				m_ptr->mana = 0;
+			}
+			else
+			{
+				m_ptr->mana++;
+			}
+
+			if (m_ptr->mana > 100)
+			{
+				m_ptr->mflag &= ~(MFLAG_ANCIENT_ENRAGED);
+				m_ptr->csleep = 1;
+				m_ptr->mana = 0;
+				if (m_ptr->ml)
+				{
+					char m_name[80];
+					monster_desc(m_name, m_ptr, 0);
+					msg_format("%^s loses interest and returns to slumber.", m_name);
+				}
+			}
 		}
 
 		/* Not enough energy to move */

@@ -357,6 +357,27 @@ bool make_attack_normal(int m_idx)
 	if (r_ptr->flags1 & (RF1_NEVER_BLOW))
 		return (FALSE);
 
+	/* Ancient monsters don't attack unless enraged */
+	/* If they do attack, it's instant death */
+	if (r_ptr->flags7 & (RF7_ANCIENT))
+	{
+		if (!(m_ptr->mflag & (MFLAG_ANCIENT_ENRAGED)))
+			return (FALSE);
+
+		/* Enraged ancient attacks */
+		monster_desc(m_name, m_ptr, 0);
+		msg_format("%^s strikes you with unstoppable force!", m_name);
+		take_hit(5000, m_name); /* Massive damage */
+
+		/* Cancel Recall */
+		if (p_ptr->word_recall)
+		{
+			p_ptr->word_recall = 0;
+			msg_print("The tension leaves the air...");
+		}
+		return (TRUE);
+	}
+
 	/* Monsters in walls cannot attack */
 	if (!cave_floor_bold(m_ptr->fy, m_ptr->fx))
 		return (FALSE);

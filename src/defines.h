@@ -2670,6 +2670,7 @@
 #define MFLAG_AVATAR      0x0100 /* Monster is an avatar of a god. */
 #define MFLAG_PACIFIST    0x0200 /* Monster is a pacifist. */
 #define MFLAG_ALPHA       0x0400 /* Monster is a powered-up breeder. */
+#define MFLAG_ANCIENT_ENRAGED 0x0800 /* Ancient is enraged */
 
 
 /*
@@ -2909,7 +2910,7 @@
 #define RF7_HUMANOID		0x00001000 /* Monster is humanoid. */
 #define RF7_KAMIKAZE		0x00002000 /* Kamikaze monster. */
 #define RF7_KOBOLD		0x00004000 /* Oh my god, it's a kobold! */
-#define RF7_XXX16		0x00008000
+#define RF7_ANCIENT		0x00008000
 #define RF7_XXX17		0x00010000
 #define RF7_XXX18               0x00020000
 #define RF7_XXX19		0x00040000

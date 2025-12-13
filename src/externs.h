@@ -143,6 +143,7 @@ extern s16b SCREEN_WID;
 extern s16b feeling;
 extern s16b rating;
 extern s16b pet_rating;
+extern bool ancient_of_days_is_chasing;
 extern bool good_item_flag;
 extern bool closing_flag;
 extern int player_uid;

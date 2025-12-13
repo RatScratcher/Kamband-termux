@@ -3359,6 +3359,10 @@ static bool project_m(int who, int r, int y, int x, int dam, int typ)
 	/* Is the monster "seen"? */
 	bool seen = FALSE;
 
+	/* Ancient monsters are immune to everything but get enraged */
+	/* We check this early to avoid side effects */
+	/* But we need m_ptr first */
+
 	/* Were the effects "obvious" (if seen)? */
 	bool obvious = FALSE;
 
@@ -3424,6 +3428,23 @@ static bool project_m(int who, int r, int y, int x, int dam, int typ)
 	if (m_ptr->ml)
 		seen = TRUE;
 
+	if ((r_ptr->flags7 & (RF7_ANCIENT)))
+	{
+		dam = 0;
+
+		/* Don't get mad at detection spells */
+		if (typ >= GF_DETECT_DOOR && typ <= GF_DETECT_ANY) return FALSE;
+		if (typ == GF_DETECT_GRIDS) return FALSE;
+
+		/* Enrage */
+		if (!(m_ptr->mflag & (MFLAG_ANCIENT_ENRAGED)))
+		{
+			m_ptr->mflag |= (MFLAG_ANCIENT_ENRAGED);
+			m_ptr->csleep = 0;
+			msg_format("The %s awakens in fury!", r_name + r_ptr->name);
+		}
+		return FALSE;
+	}
 
 	/* Reduce damage by distance */
 	dam = (dam + r) / (r + 1);

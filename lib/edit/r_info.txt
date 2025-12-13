@@ -10074,3 +10074,16 @@ D:warning to enemies of the kobold race.
 # I:speed:hp:aaf:ac:sleep
 # W:level:rarity:extra:exp
 
+
+N:692:Untouchable Ancient
+G:A:W
+I:120:30000:0:200:0
+W:15:3:0:0
+B:HIT:HURT:10d10
+B:TOUCH:UN_POWER
+F:ANCIENT | FORCE_DEPTH | FORCE_MAXHP |
+F:IM_ACID | IM_ELEC | IM_FIRE | IM_COLD | IM_POIS |
+F:NO_FEAR | NO_SLEEP | NO_CONF |
+F:RES_NETH | RES_NEXU | RES_DISE | RES_PLAS
+D:A primordial being from beyond time. It ignores you completely,
+D:unless you are foolish enough to disturb it.

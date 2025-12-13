@@ -4737,7 +4737,54 @@ void generate_cave(void)
 
 		/* Accept */
 		if (okay)
+		{
+			/* Handle Ancients following between levels */
+			if (ancient_of_days_is_chasing)
+			{
+				int i, x, y, d;
+				int spawned = 0;
+				/* Try to spawn near player */
+				for (i = 0; i < 100; i++)
+				{
+					d = 3;
+					scatter(&y, &x, p_ptr->py, p_ptr->px, d, 0);
+					if (cave_floor_bold(y, x))
+					{
+						/* Find RF7_ANCIENT race index. We added it as 692. */
+						/* But let's scan for it to be safe or use defined index if possible */
+						/* Since we can't easily scan by flag here efficiently without iterating all r_info */
+						/* We'll iterate. */
+						int r_idx = 0;
+						int k;
+						for (k = 1; k < MAX_R_IDX; k++)
+						{
+							if (r_info[k].flags7 & RF7_ANCIENT)
+							{
+								r_idx = k;
+								break;
+							}
+						}
+
+						if (r_idx > 0)
+						{
+							if (place_monster_aux(y, x, r_idx, MON_ALLOC_JUST_ONE))
+							{
+								/* Enrage it immediately */
+								if (cave_m_idx[y][x] > 0)
+								{
+									m_list[cave_m_idx[y][x]].mflag |= MFLAG_ANCIENT_ENRAGED;
+									spawned++;
+									/* We only spawn one for now to represent "following" */
+									break;
+								}
+							}
+						}
+					}
+				}
+				if (spawned) ancient_of_days_is_chasing = FALSE;
+			}
 			break;
+		}
 
 
 		/* Message */

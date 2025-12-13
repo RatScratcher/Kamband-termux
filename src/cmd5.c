@@ -737,7 +737,7 @@ void spell_generate_new(int plev)
 		{
 			pnode->dam_dice = 1;
 			pnode->dam_sides = 3;
-			pnode->proj_flags = PROJECT_STOP;
+			pnode->proj_flags = PROJECT_STOP | PROJECT_KILL | PROJECT_ITEM | PROJECT_GRID;
 			pnode->safe = TRUE;
 			pnode->radius = 0;
 		}

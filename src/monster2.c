@@ -2518,7 +2518,7 @@ static bool summon_specific_aux(int y1, int x1, int lev, int type,
 	summon_specific_type = type;
 
 	/* Require "okay" monsters */
-	if (cripple_pets)
+	if (cripple_pets || (mode & MON_ALLOC_PET))
 	{
 		get_mon_num_hook = summon_specific_no_uniques_okay;
 	}

@@ -293,8 +293,8 @@ static void rd_monster(monster_type * m_ptr)
 	rd_s16b(&m_ptr->r_idx);
 
 	/* Read the other information */
-	rd_byte(&m_ptr->fy);
-	rd_byte(&m_ptr->fx);
+	rd_s16b(&m_ptr->fy);
+	rd_s16b(&m_ptr->fx);
 	rd_s16b(&m_ptr->hp);
 	rd_s16b(&m_ptr->maxhp);
 	rd_s16b(&m_ptr->csleep);
@@ -414,8 +414,8 @@ static errr rd_store(int n)
 			break;
 
 		/* Location */
-		rd_byte(&o_ptr->iy);
-		rd_byte(&o_ptr->ix);
+		rd_s16b(&o_ptr->iy);
+		rd_s16b(&o_ptr->ix);
 
 		insert_to_global_list(o_ptr, &(st_ptr->stock),
 			(n == 7 ? WORLD_HOME : WORLD_STORE));
@@ -976,15 +976,15 @@ static errr rd_dungeon(void)
 	/* Read the dungeon items */
 	while (1)
 	{
-		byte ix, iy;
+		s16b ix, iy;
 		object_type *o_ptr = rd_item();
 
 		if (!o_ptr)
 			break;
 
 		/* Location */
-		rd_byte(&iy);
-		rd_byte(&ix);
+		rd_s16b(&iy);
+		rd_s16b(&ix);
 
 		floor_carry(iy, ix, o_ptr);
 	}

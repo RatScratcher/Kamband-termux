@@ -98,16 +98,14 @@
 /*
  * Number of grids in each dungeon (horizontally)
  * Must be a multiple of SCREEN_HGT
- * Must be less or equal to 256
  */
-#define DUNGEON_HGT 88
+#define DUNGEON_HGT 440
 
 /*
  * Number of grids in each dungeon (vertically)
  * Must be a multiple of SCREEN_WID
- * Must be less or equal to 256
  */
-#define DUNGEON_WID	198
+#define DUNGEON_WID	462
 
 #define TOWN_HEIGHT	44 /* This is the expanded town size -KMW- */
 #define TOWN_WIDTH	66 /* This town includes extra buildings -KMW- */
@@ -178,8 +176,8 @@
 /*
  * Maximum array bounds for entity list arrays
  */
-#define MAX_O_IDX		256	/* Max size for "o_list[]" */
-#define MAX_M_IDX		512	/* Max size for "m_list[]" */
+#define MAX_O_IDX		1024	/* Max size for "o_list[]" */
+#define MAX_M_IDX		2048	/* Max size for "m_list[]" */
 
 
 /*

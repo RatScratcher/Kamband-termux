@@ -517,8 +517,8 @@ static void wr_monster(monster_type * m_ptr)
 	object_type *o_ptr;
 
 	wr_s16b(m_ptr->r_idx);
-	wr_byte(m_ptr->fy);
-	wr_byte(m_ptr->fx);
+	wr_s16b(m_ptr->fy);
+	wr_s16b(m_ptr->fx);
 	wr_s16b(m_ptr->hp);
 	wr_s16b(m_ptr->maxhp);
 	wr_s16b(m_ptr->csleep);
@@ -647,8 +647,8 @@ static void wr_store(store_type * st_ptr)
 		if (!o_ptr->k_idx) continue;
 
 		wr_item(o_ptr);
-		wr_byte(o_ptr->iy);
-		wr_byte(o_ptr->ix);
+		wr_s16b(o_ptr->iy);
+		wr_s16b(o_ptr->ix);
 	}
 
 	/* End-of-list. */
@@ -1082,8 +1082,8 @@ static void wr_dungeon(void)
 			wr_item(o_ptr);
 
 			/* Write location. */
-			wr_byte(o_ptr->iy);
-			wr_byte(o_ptr->ix);
+			wr_s16b(o_ptr->iy);
+			wr_s16b(o_ptr->ix);
 		}
 	}
 

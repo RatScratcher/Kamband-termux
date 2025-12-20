@@ -193,8 +193,8 @@ typedef struct coord coord;
 
 struct coord
 {
-	byte y;
-	byte x;
+	s16b y;
+	s16b x;
 };
 
 

@@ -165,22 +165,22 @@ char savefile[1024];
  * Array of grids lit by player lite (see "cave.c")
  */
 s16b lite_n;
-byte lite_y[LITE_MAX];
-byte lite_x[LITE_MAX];
+s16b lite_y[LITE_MAX];
+s16b lite_x[LITE_MAX];
 
 /*
  * Array of grids viewable to the player (see "cave.c")
  */
 s16b view_n;
-byte view_y[VIEW_MAX];
-byte view_x[VIEW_MAX];
+s16b view_y[VIEW_MAX];
+s16b view_x[VIEW_MAX];
 
 /*
  * Array of grids for use by various functions (see "cave.c")
  */
 s16b temp_n;
-byte temp_y[TEMP_MAX];
-byte temp_x[TEMP_MAX];
+s16b temp_y[TEMP_MAX];
+s16b temp_x[TEMP_MAX];
 
 
 /*
@@ -331,12 +331,12 @@ char angband_sound_name[SOUND_MAX][16] = {
 /*
  * The array of cave grid flow "cost" values
  */
-byte cave_cost[DUNGEON_HGT][DUNGEON_WID];
+s16b cave_cost[DUNGEON_HGT][DUNGEON_WID];
 
 /*
  * The array of cave grid flow "when" stamps
  */
-byte cave_when[DUNGEON_HGT][DUNGEON_WID];
+s16b cave_when[DUNGEON_HGT][DUNGEON_WID];
 
 #endif /* MONSTER_FLOW */
 

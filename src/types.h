@@ -488,8 +488,8 @@ struct object_type
 	u32b flags2; /* Flags, set 2. */
 	u32b flags3; /* Flags, set 3. */
 
-	byte iy; /* Y-position on map, or zero */
-	byte ix; /* X-position on map, or zero */
+	s16b iy; /* Y-position on map, or zero */
+	s16b ix; /* X-position on map, or zero */
 
 	byte tval; /* Item type (from kind) */
 	byte sval; /* Item sub-type (from kind) */
@@ -559,8 +559,8 @@ struct monster_type
 {
 	s16b r_idx;	/* Monster race index */
 
-	byte fy; /* Y location on map */
-	byte fx; /* X location on map */
+	s16b fy; /* Y location on map */
+	s16b fx; /* X location on map */
 
 	s16b hp; /* Current Hit points */
 	s16b maxhp;	/* Max Hit points */

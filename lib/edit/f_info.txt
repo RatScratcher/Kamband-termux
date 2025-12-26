@@ -463,6 +463,21 @@ G:#:W
 N:105:pool of acid
 G:#:g
 
+N:106:mirror wall (vertical)
+G:|:s
+
+N:107:ice wall
+G:#:B
+
+N:108:mirror wall (horizontal)
+G:-:s
+
+N:109:mirror wall (diagonal)
+G:/:s
+
+N:110:mirror wall (diagonal)
+G:\:s
+
 ####
 ####  128-160 some additional ``floor'' features.
 ####

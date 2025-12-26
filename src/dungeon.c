@@ -474,6 +474,101 @@ static void regen_monsters(void)
 
 
 /*
+ * Process environment (Burning Oil, Acid, etc.)
+ */
+static void process_environment(void)
+{
+	int y, x, i;
+	int ddy_burning[4] = {1, -1, 0, 0};
+	int ddx_burning[4] = {0, 0, 1, -1};
+
+	/* Pass 1: Clear CAVE_TEMP for burning oil */
+	for (y = 0; y < DUNGEON_HGT; y++) {
+		for (x = 0; x < DUNGEON_WID; x++) {
+			if (cave_feat[y][x] == FEAT_OIL_BURNING) {
+				cave_info[y][x] &= ~CAVE_TEMP;
+			}
+		}
+	}
+
+	/* Pass 2: Process environment */
+	for (y = 0; y < DUNGEON_HGT; y++) {
+		for (x = 0; x < DUNGEON_WID; x++) {
+			int feat = cave_feat[y][x];
+			int m_idx = cave_m_idx[y][x];
+
+			/* Burning Oil Logic */
+			if (feat == FEAT_OIL_BURNING) {
+				if (!(cave_info[y][x] & CAVE_TEMP)) {
+					/* Decay */
+					if (cave_fire_life[y][x] > 0) cave_fire_life[y][x]--;
+
+					/* Spread */
+					if (cave_fire_life[y][x] > 0) {
+						for (i = 0; i < 4; i++) {
+							int ny = y + ddy_burning[i];
+							int nx = x + ddx_burning[i];
+							if (in_bounds(ny, nx) && cave_feat[ny][nx] == FEAT_OIL) {
+								cave_set_feat(ny, nx, FEAT_OIL_BURNING);
+								cave_fire_life[ny][nx] = 5;
+								cave_info[ny][nx] |= CAVE_TEMP; /* Mark as new */
+								note_spot(ny, nx);
+								lite_spot(ny, nx);
+							}
+						}
+					} else {
+						/* Extinguish */
+						cave_set_feat(y, x, FEAT_FLOOR);
+						note_spot(y, x);
+						lite_spot(y, x);
+						feat = FEAT_FLOOR; /* Update local var */
+					}
+				}
+			}
+
+			/* Entity Interaction (Player or Monster) */
+			if (m_idx != 0) {
+				if (m_idx < 0) { /* Player */
+					if (!p_ptr->flying) {
+						if (feat == FEAT_ACID && !p_ptr->immune_acid) {
+							int dam = damroll(2, 2) + p_ptr->depth / 5;
+							acid_dam(dam, "a pool of acid");
+						}
+						else if (feat == FEAT_OIL) {
+							if (randint(2) == 1) {
+								mprint(MSG_WARNING, "You slip on the oil.");
+								set_stun(p_ptr->stun + rand_range(1, 10));
+							}
+						}
+						else if (feat == FEAT_OIL_BURNING && !p_ptr->immune_fire) {
+							int dam = damroll(2, 2) + p_ptr->depth / 5;
+							fire_dam(dam, "burning oil");
+						}
+					}
+				} else { /* Monster */
+					monster_type *m_ptr = &m_list[m_idx];
+					monster_race *r_ptr = &r_info[m_ptr->r_idx];
+					bool fly = (r_ptr->flags2 & RF2_FLY) ? TRUE : FALSE;
+
+					if (!fly) {
+						if (feat == FEAT_ACID && !(r_ptr->flags3 & RF3_IM_ACID)) {
+							bool fear = FALSE;
+							int dam = damroll(2, 2) + p_ptr->depth / 5;
+							mon_take_hit(m_idx, dam, &fear, " melts.", FALSE, FALSE);
+						}
+						else if (feat == FEAT_OIL_BURNING && !(r_ptr->flags3 & RF3_IM_FIRE)) {
+							bool fear = FALSE;
+							int dam = damroll(2, 2) + p_ptr->depth / 5;
+							mon_take_hit(m_idx, dam, &fear, " burns.", FALSE, FALSE);
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+/*
  * Handle certain things once every 10 game turns
  */
 static void process_world(void)
@@ -488,6 +583,8 @@ static void process_world(void)
 	/* Every 10 game turns */
 	if (turn % 10)
 		return;
+
+	process_environment();
 
 	update_dynamic_spell_costs();
 
@@ -713,6 +810,14 @@ static void process_world(void)
 
 	  mprint(MSG_TEMP, "The scorching light burns your skin!");
 	  take_hit(1, "sunburn");
+	}
+
+	/* Take damage from burning oil */
+	if (cave_feat[p_ptr->py][p_ptr->px] == FEAT_OIL_BURNING && !p_ptr->flying &&
+		!p_ptr->immune_fire)
+	{
+		int dam = damroll(2, 2) + p_ptr->depth / 5;
+		fire_dam(dam, "burning oil");
 	}
 
 	/* Take damage from cuts */

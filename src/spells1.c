@@ -125,6 +125,14 @@ void teleport_away(int m_idx, int dis)
 			if (!cave_empty_bold(ny, nx))
 				continue;
 
+			/* Avoid hazards */
+			if (cave_feat[ny][nx] == FEAT_OIL_BURNING ||
+			    cave_feat[ny][nx] == FEAT_ACID ||
+			    cave_feat[ny][nx] == FEAT_DEEP_LAVA ||
+			    cave_feat[ny][nx] == FEAT_SHAL_LAVA ||
+			    cave_feat[ny][nx] == FEAT_DEEP_WATER)
+				continue;
+
 			/* Hack -- no teleport onto glyph of warding */
 			if (cave_feat[ny][nx] == FEAT_GLYPH)
 				continue;
@@ -216,6 +224,14 @@ void teleport_away_to(int m_idx, int y, int x)
 			if (!cave_empty_bold(ny, nx))
 				continue;
 
+			/* Avoid hazards */
+			if (cave_feat[ny][nx] == FEAT_OIL_BURNING ||
+			    cave_feat[ny][nx] == FEAT_ACID ||
+			    cave_feat[ny][nx] == FEAT_DEEP_LAVA ||
+			    cave_feat[ny][nx] == FEAT_SHAL_LAVA ||
+			    cave_feat[ny][nx] == FEAT_DEEP_WATER)
+				continue;
+
 			/* Hack -- no teleport onto glyph of warding */
 			if (cave_feat[ny][nx] == FEAT_GLYPH)
 				continue;
@@ -292,6 +308,14 @@ void teleport_player(int dis)
 			if (!cave_naked_bold(y, x))
 				continue;
 
+			/* Avoid hazards */
+			if (cave_feat[y][x] == FEAT_OIL_BURNING ||
+			    cave_feat[y][x] == FEAT_ACID ||
+			    cave_feat[y][x] == FEAT_DEEP_LAVA ||
+			    cave_feat[y][x] == FEAT_SHAL_LAVA ||
+			    cave_feat[y][x] == FEAT_DEEP_WATER)
+				continue;
+
 			/* No teleporting into vaults and such */
 			if (p_ptr->inside_special == 0)
 				if (cave_info[y][x] & (CAVE_ICKY))
@@ -356,8 +380,13 @@ void teleport_player_to(int ny, int nx)
 
 		/* Accept an empty floor grid. */
 
-		if (cave_empty_bold(y, x) || (cave_feat[y][x] >= FEAT_QUEST_ENTER
-				&& cave_feat[y][x] <= FEAT_QUEST_EXIT))
+		if ((cave_empty_bold(y, x) &&
+		     cave_feat[y][x] != FEAT_OIL_BURNING &&
+		     cave_feat[y][x] != FEAT_ACID &&
+		     cave_feat[y][x] != FEAT_DEEP_LAVA &&
+		     cave_feat[y][x] != FEAT_SHAL_LAVA &&
+		     cave_feat[y][x] != FEAT_DEEP_WATER) ||
+		    (cave_feat[y][x] >= FEAT_QUEST_ENTER && cave_feat[y][x] <= FEAT_QUEST_EXIT))
 			break;
 
 		/* Occasionally advance the distance */
@@ -471,6 +500,14 @@ void teleport_player_directed(int rad, int dir)
 
 			/* Require "naked" floor space */
 			if (!cave_empty_bold(y, x))
+				continue;
+
+			/* Avoid hazards */
+			if (cave_feat[y][x] == FEAT_OIL_BURNING ||
+			    cave_feat[y][x] == FEAT_ACID ||
+			    cave_feat[y][x] == FEAT_DEEP_LAVA ||
+			    cave_feat[y][x] == FEAT_SHAL_LAVA ||
+			    cave_feat[y][x] == FEAT_DEEP_WATER)
 				continue;
 
 			/* This grid looks good */
@@ -2004,6 +2041,47 @@ static int project_m_y;
  *
  * Perhaps we should affect doors and/or walls. XXX XXX
  */
+static void project_ice_spread(int y, int x, int dam) {
+    if (dam <= 0) return;
+    if (!in_bounds(y, x)) return;
+    if (cave_feat[y][x] != FEAT_ICE) return;
+    /* Use CAVE_TEMP to avoid loops */
+    if (cave_info[y][x] & CAVE_TEMP) return;
+
+    cave_info[y][x] |= CAVE_TEMP;
+
+    /* Hit grid */
+    project(-1, 0, y, x, dam, GF_ELEC, PROJECT_KILL | PROJECT_ITEM | PROJECT_GRID);
+
+    /* Recurse */
+    project_ice_spread(y+1, x, dam-1);
+    project_ice_spread(y-1, x, dam-1);
+    project_ice_spread(y, x+1, dam-1);
+    project_ice_spread(y, x-1, dam-1);
+    project_ice_spread(y+1, x+1, dam-1);
+    project_ice_spread(y-1, x-1, dam-1);
+    project_ice_spread(y+1, x-1, dam-1);
+    project_ice_spread(y-1, x+1, dam-1);
+}
+
+static void project_ice_clear(int y, int x) {
+    if (!in_bounds(y, x)) return;
+    if (cave_feat[y][x] != FEAT_ICE) return;
+    if (!(cave_info[y][x] & CAVE_TEMP)) return;
+
+    cave_info[y][x] &= ~(CAVE_TEMP);
+
+    /* Recurse */
+    project_ice_clear(y+1, x);
+    project_ice_clear(y-1, x);
+    project_ice_clear(y, x+1);
+    project_ice_clear(y, x-1);
+    project_ice_clear(y+1, x+1);
+    project_ice_clear(y-1, x-1);
+    project_ice_clear(y+1, x-1);
+    project_ice_clear(y-1, x+1);
+}
+
 static bool project_f(int who, int r, int y, int x, int dam, int typ)
 {
 	bool obvious = FALSE;
@@ -2016,6 +2094,32 @@ static bool project_f(int who, int r, int y, int x, int dam, int typ)
 	/* Analyze the type */
 	switch (typ)
 	{
+		case GF_FIRE:
+		{
+			/* Melt ice, burn oil */
+			if (cave_feat[y][x] == FEAT_ICE)
+			{
+				cave_set_feat(y, x, FEAT_SHAL_WATER);
+				obvious = TRUE;
+			}
+			else if (cave_feat[y][x] == FEAT_OIL)
+			{
+				cave_set_feat(y, x, FEAT_OIL_BURNING);
+				cave_fire_life[y][x] = 5;
+				obvious = TRUE;
+			}
+			break;
+		}
+
+		case GF_ELEC:
+		{
+			if (cave_feat[y][x] == FEAT_ICE && !(cave_info[y][x] & CAVE_TEMP)) {
+				/* Start propagation */
+				project_ice_spread(y, x, dam);
+				project_ice_clear(y, x);
+			}
+			break;
+		}
 
 			/* Warp space-time :) */
 		case GF_QUAKE:
@@ -2875,7 +2979,8 @@ static bool project_o(int who, int r, int y, int x, int dam, int typ)
 				}
 				else if (cave_feat[y][x] == FEAT_OIL)
 				{
-					cave_set_feat(y, x, FEAT_SHAL_LAVA);
+					cave_set_feat(y, x, FEAT_OIL_BURNING);
+					cave_fire_life[y][x] = 5;
 					obvious = TRUE;
 				}
 

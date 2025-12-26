@@ -756,6 +756,11 @@ static errr rd_extra(void)
 	for (i = 0; i < 48; i++)
 		rd_byte(&tmp8u);
 
+    /* Read puzzle state */
+    for (i = 0; i < 8; i++) rd_byte(&p_ptr->puzzle_solution[i]);
+    for (i = 0; i < 8; i++) rd_byte(&p_ptr->puzzle_attempt[i]);
+    rd_byte(&p_ptr->puzzle_next);
+
 	/* Hack -- the two "special seeds" */
 	rd_u32b(&seed_flavor);
 	rd_u32b(&seed_town);

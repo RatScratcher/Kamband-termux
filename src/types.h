@@ -1157,6 +1157,11 @@ struct player_type
 
 	bool cheat[CHEAT_MAX]; /* Cheating options */
 
+    /* Puzzle state */
+    byte puzzle_solution[8];
+    byte puzzle_attempt[8];
+    byte puzzle_next; /* Next index to match */
+
   /*** Temporary fields ***/
 
 	bool playing; /* True if player is playing */

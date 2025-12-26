@@ -304,6 +304,9 @@ void teleport_player(int dis)
 			if (!in_bounds_fully(y, x))
 				continue;
 
+            /* Avoid sanctum walls explicitly */
+            if (is_sanctum_wall(y, x)) continue;
+
 			/* Require "naked" floor space */
 			if (!cave_naked_bold(y, x))
 				continue;
@@ -385,6 +388,7 @@ void teleport_player_to(int ny, int nx)
 		     cave_feat[y][x] != FEAT_ACID &&
 		     cave_feat[y][x] != FEAT_DEEP_LAVA &&
 		     cave_feat[y][x] != FEAT_SHAL_LAVA &&
+             !is_sanctum_wall(y, x) &&
 		     cave_feat[y][x] != FEAT_DEEP_WATER) ||
 		    (cave_feat[y][x] >= FEAT_QUEST_ENTER && cave_feat[y][x] <= FEAT_QUEST_EXIT))
 			break;
@@ -401,6 +405,10 @@ void teleport_player_to(int ny, int nx)
 	sound(SOUND_TELEPORT);
 
 	/* Move player */
+    if (is_sanctum_wall(y, x)) {
+        msg_print("The sanctum repels your teleportation!");
+        return;
+    }
 	monster_swap(py, px, y, x);
 
 	/* Handle stuff XXX XXX XXX */
@@ -548,6 +556,10 @@ void teleport_player_level(void)
 	    p_ptr->inside_special == SPECIAL_STORE)
 	{ /* arena or quest -KMW- */
 		msg_print("There is no effect.");
+
+    } else if (p_ptr->inside_special == SPECIAL_DREAM) {
+        msg_print("The dream holds you fast!");
+        return;
 
 	} else if (p_ptr->inside_special == SPECIAL_WILD) {
 	  
@@ -2306,6 +2318,10 @@ static bool project_f(int who, int r, int y, int x, int dam, int typ)
 			/* Permanent walls */
 			if (cave_feat[y][x] >= FEAT_PERM_EXTRA)
 				break;
+
+            /* Sanctum walls are permanent */
+            if (is_sanctum_wall(y, x))
+                break;
 
 			/* Granite */
 			if (cave_feat[y][x] >= FEAT_WALL_EXTRA)
@@ -5998,6 +6014,11 @@ static bool project_p(int who, int r, int y, int x, int dam, int typ)
 
 		case GF_RECALL:
 		{
+            if (p_ptr->inside_special == SPECIAL_DREAM) {
+                msg_print("The dream holds you fast!");
+                break;
+            }
+
 			if (p_ptr->word_recall == 0)
 			{
 				p_ptr->word_recall = dam;

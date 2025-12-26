@@ -65,7 +65,7 @@ OBJS = \
   cmd1.o cmd2.o cmd3.o cmd4.o cmd5.o cmd6.o \
   store.o bldg.o birth.o load.o \
   wizard1.o wizard2.o \
-  generate.o dungeon.o init1.o init2.o \
+  generate.o sanctum.o dungeon.o init1.o init2.o \
   lua.o lua/lib/liblua.a lua/lib/liblualib.a \
   main-cap.o main-gcu.o main-x11.o main-xaw.o main.o
 

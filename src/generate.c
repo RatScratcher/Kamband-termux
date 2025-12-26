@@ -181,7 +181,7 @@
 /*
  * Maximal number of room types
  */
-#define ROOM_MAX	10
+#define ROOM_MAX	12
 
 
 
@@ -255,6 +255,8 @@ struct dun_data
  */
 static dun_data *dun;
 
+/* Extern for sanctum */
+extern void build_sanctum_vault(int y, int x);
 
 /*
  * Array of room types (assumes 11x11 blocks)
@@ -270,6 +272,8 @@ static room_data room[ROOM_MAX] = {
 	{0, 1, -1, 1, 5}, /* 7 = Lesser vault (33x22) */
 	{-1, 2, -2, 3, 10},	/* 8 = Greater vault (66x44) */
 	{-1, 2, -2, 3, 5}, /* 9 = Themed vault. */
+    {-1, 2, -2, 3, 40}, /* 10 = Sanctum (Depth 40+) */
+    {-1, 3, -3, 3, 30}, /* 11 = Folly Vault (Depth 30+) */
 };
 
 
@@ -571,6 +575,17 @@ static void alloc_stairs(int feat, int num, int walls, bool force_room)
 {
 	int y, x, i, j, flag;
 
+    if (p_ptr->inside_special == SPECIAL_DREAM) {
+        /* Only place one exit */
+        if (feat == FEAT_LESS) return; /* No up stairs */
+        if (feat == FEAT_MORE) {
+             /* Place Dream Exit instead of down stairs */
+             /* We only want one, but alloc_stairs loops. */
+             /* Hack: only do it once. */
+             if (num > 1) num = 1;
+             feat = FEAT_DREAM_EXIT;
+        }
+    }
 
 	/* Place "num" stairs */
 	for (i = 0; i < num; i++)
@@ -3140,6 +3155,12 @@ static bool room_build(int y0, int x0, int typ)
 	switch (typ)
 	{
 			/* Build an appropriate room */
+        case 11:
+            build_folly_vault(y, x);
+            break;
+        case 10:
+            build_sanctum_vault(y, x);
+            break;
 		case 8:
 			build_type8(y, x);
 			break;
@@ -4043,6 +4064,14 @@ static void cave_gen(void)
 			/* Attempt a very unusual room */
 			if (rand_int(DUN_UNUSUAL) < p_ptr->depth)
 			{
+                /* Type 11 -- Folly Vault (10% if depth > 30) */
+                if ((k < 10) && (p_ptr->depth >= 30) && room_build(y, x, 11))
+                    continue;
+
+                /* Type 10 -- Sanctum (10% if depth > 40) */
+                if ((k < 10) && (p_ptr->depth >= 40) && room_build(y, x, 10))
+                    continue;
+
 				/* Type 8 -- Greater vault (10%) */
 				if ((k < 10) && room_build(y, x, 8))
 					continue;
@@ -4664,6 +4693,18 @@ void generate_cave(void)
 				/* Make a town */
 				town_gen();
 			}
+
+            /* Build a Dream Level */
+            else if (p_ptr->inside_special == SPECIAL_DREAM)
+            {
+                /* Generate a special dream level */
+                /* For now, reuse cave_gen but maybe with forced plasma? */
+                /* Or a specific layout. */
+                /* Let's use terrain_gen for a "wild" feel, or cave_gen with modified room generation. */
+                /* Simple hack: cave_gen but only "unusual" rooms? */
+                /* For now, just standard cave_gen but forced "open" maybe. */
+                cave_gen();
+            }
 
 			/* Build a real level */
 			else

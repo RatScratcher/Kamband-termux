@@ -165,7 +165,7 @@
  * Maximum array bounds for template based arrays
  *
  */
-#define MAX_F_IDX		210	/* Max size for "f_info[]" -KMW- */
+#define MAX_F_IDX		255	/* Max size for "f_info[]" -KMW- */
 #define MAX_K_IDX		611	/* Max size for "k_info[]" */
 #define MAX_A_IDX		128	/* Max size for "a_info[]" */
 #define MAX_E_IDX		150	/* Max size for "e_info[]" */
@@ -887,11 +887,30 @@
 #define FEAT_ACID               205
 #define FEAT_OIL_BURNING        206
 
+#define FEAT_DREAM_PORTAL       207
+#define FEAT_DREAM_EXIT         217
+#define FEAT_RUNE_A             208
+#define FEAT_RUNE_B             209
+#define FEAT_RUNE_C             210
+#define FEAT_RUNE_D             211
+#define FEAT_RUNE_E             212
+#define FEAT_LEVER_LEFT         213
+#define FEAT_LEVER_RIGHT        214
+#define FEAT_MIRROR_PLATE       215
+#define FEAT_FLOW_ACID          216
+
 #define FEAT_WALL_MIRROR_V      106
 #define FEAT_WALL_ICE           107
 #define FEAT_WALL_MIRROR_H      108
 #define FEAT_WALL_MIRROR_DA     109
 #define FEAT_WALL_MIRROR_DB     110
+
+#define FEAT_SANCTUM_WALL       111
+#define FEAT_WHISPERING_IDOL    112
+#define FEAT_FOLLY_WALL         113
+#define FEAT_EMITTER            114
+#define FEAT_CRYSTAL            115
+#define FEAT_SANCTUM_DOOR       116
 
 /* Altars. */
 #define FEAT_ALTAR_HEAD         128
@@ -2111,6 +2130,7 @@
 #define SPECIAL_MAGIC_ARENA   3
 #define SPECIAL_STORE         4
 #define SPECIAL_WILD          5
+#define SPECIAL_DREAM         6
 
 /*
  * Message constants.
@@ -3354,7 +3374,12 @@
 ((cave_feat[Y][X] >= FEAT_PERM_EXTRA && cave_feat[Y][X] <= FEAT_BLDG_TAIL) || \
  (cave_feat[Y][X] == FEAT_LESS) || \
  (cave_feat[Y][X] == FEAT_MORE) || \
- (cave_feat[Y][X] >= FEAT_SHOP_HEAD && cave_feat[Y][X] <= FEAT_SHOP_TAIL))
+ (cave_feat[Y][X] >= FEAT_SHOP_HEAD && cave_feat[Y][X] <= FEAT_SHOP_TAIL) || \
+ (cave_feat[Y][X] == FEAT_SANCTUM_WALL) || \
+ (cave_feat[Y][X] == FEAT_WHISPERING_IDOL) || \
+ (cave_feat[Y][X] == FEAT_FOLLY_WALL) || \
+ (cave_feat[Y][X] == FEAT_EMITTER) || \
+ (cave_feat[Y][X] == FEAT_CRYSTAL))
 
 /*
  * Determine if a "legal" grid is within "los" of the player

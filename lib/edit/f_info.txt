@@ -478,6 +478,24 @@ G:/:s
 N:110:mirror wall (diagonal)
 G:\:s
 
+N:111:sanctum wall
+G:#:y
+
+N:112:whispering idol
+G:8:y
+
+N:113:folly wall
+G:#:r
+
+N:114:beam emitter
+G:1:W
+
+N:115:crystal
+G:*:B
+
+N:116:sanctum door
+G:#:y
+
 ####
 ####  128-160 some additional ``floor'' features.
 ####
@@ -645,3 +663,36 @@ G:#:g
 
 N:206:stream of burning oil
 G:#:R
+
+N:207:dream portal
+G:@:B
+
+N:217:dream exit
+G:>:B
+
+N:208:rune
+G:[:y
+
+N:209:rune
+G:[:y
+
+N:210:rune
+G:[:y
+
+N:211:rune
+G:[:y
+
+N:212:rune
+G:[:y
+
+N:213:lever
+G:?:o
+
+N:214:lever
+G:?:o
+
+N:215:mirror plate
+G:-:w
+
+N:216:stream of acid
+G:*:g

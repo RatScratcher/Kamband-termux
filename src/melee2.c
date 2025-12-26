@@ -3410,7 +3410,7 @@ static void process_monster(int m_idx)
 		}
 
 		/* Floor is open? */
-		else if (cave_floor_bold(ny, nx))
+		else if (cave_floor_bold(ny, nx) && !is_sanctum_wall(ny, nx))
 		{
 			/* Go ahead and move */
 			do_move = TRUE;
@@ -3481,7 +3481,7 @@ static void process_monster(int m_idx)
 		}
 
 		/* Monster moves through walls (and doors) */
-		else if (r_ptr->flags2 & (RF2_PASS_WALL))
+		else if ((r_ptr->flags2 & (RF2_PASS_WALL)) && !is_sanctum_wall(ny, nx))
 		{
 			/* Pass through walls/doors/rubble */
 			do_move = TRUE;
@@ -3808,7 +3808,7 @@ static void process_monster(int m_idx)
 			/* Push past weaker monsters (unless leaving a wall) */
 			if ((r_ptr->flags2 & (RF2_MOVE_BODY)) &&
 				(compare_monsters(m_ptr, n_ptr) > 0) &&
-				(cave_floor_bold(m_ptr->fy, m_ptr->fx)) && !m_ptr->is_pet)
+				(cave_floor_bold(m_ptr->fy, m_ptr->fx)) && !m_ptr->is_pet && !is_sanctum_wall(m_ptr->fy, m_ptr->fx))
 			{
 				/* Allow movement */
 				do_move = TRUE;

@@ -925,6 +925,11 @@ static void wr_extra(void)
 	for (i = 0; i < 12; i++)
 		wr_u32b(0L);
 
+    /* Write puzzle state */
+    for (i = 0; i < 8; i++) wr_byte(p_ptr->puzzle_solution[i]);
+    for (i = 0; i < 8; i++) wr_byte(p_ptr->puzzle_attempt[i]);
+    wr_byte(p_ptr->puzzle_next);
+
 	/* Write the "object seeds" */
 	wr_u32b(seed_flavor);
 	wr_u32b(seed_town);

@@ -496,6 +496,16 @@ extern s16b init_s_info_txt(byte spell_book, spell * array, int max);
 extern void init_file_paths(char *path);
 extern void init_angband(void);
 
+/* sanctum.c */
+extern bool is_sanctum_wall(int y, int x);
+extern void build_sanctum_vault(int y, int x);
+extern void reset_puzzle_state(void);
+extern void interaction_rune(int y, int x);
+extern void interaction_lever(int y, int x);
+extern void interaction_plate(int y, int x);
+extern void interaction_idol(int y, int x);
+extern void build_folly_vault(int y, int x);
+
 /* load.c */
 extern errr rd_savefile_new(void);
 

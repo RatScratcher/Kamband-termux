@@ -1969,6 +1969,17 @@ void move_player(int dir, int jumping)
 			hit_trap(y, x);
 		}
 
+        /* Puzzle Interactions */
+        else if (cave_feat[y][x] >= FEAT_RUNE_A && cave_feat[y][x] <= FEAT_RUNE_E) {
+            interaction_rune(y, x);
+        } else if (cave_feat[y][x] >= FEAT_LEVER_LEFT && cave_feat[y][x] <= FEAT_LEVER_RIGHT) {
+            interaction_lever(y, x);
+        } else if (cave_feat[y][x] == FEAT_MIRROR_PLATE) {
+            interaction_plate(y, x);
+        } else if (cave_feat[y][x] == FEAT_WHISPERING_IDOL) {
+            interaction_idol(y, x);
+        }
+
 		/* Landed on acid */
 		else if (cave_feat[y][x] == FEAT_ACID && !p_ptr->flying &&
 			!p_ptr->immune_acid)
@@ -2004,6 +2015,26 @@ void move_player(int dir, int jumping)
 			int dam = damroll(2, 2) + p_ptr->depth / 5;
 			fire_dam(dam, "burning oil");
 		}
+
+        /* Dream Portal */
+        else if (cave_feat[y][x] == FEAT_DREAM_PORTAL) {
+            if (get_check("Enter the dream realm? ")) {
+                p_ptr->inside_special = SPECIAL_DREAM;
+                p_ptr->leaving = TRUE;
+                p_ptr->depth++;
+                msg_print("You fall into a deep slumber...");
+            }
+        }
+
+        /* Dream Exit */
+        else if (cave_feat[y][x] == FEAT_DREAM_EXIT) {
+            if (get_check("Wake up? ")) {
+                p_ptr->inside_special = 0;
+                p_ptr->leaving = TRUE;
+                p_ptr->depth++;
+                msg_print("You wake up.");
+            }
+        }
 	}
 }
 

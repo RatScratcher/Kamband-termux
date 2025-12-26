@@ -2044,7 +2044,7 @@ static int project_m_y;
 static void project_ice_spread(int y, int x, int dam) {
     if (dam <= 0) return;
     if (!in_bounds(y, x)) return;
-    if (cave_feat[y][x] != FEAT_ICE) return;
+    if (cave_feat[y][x] != FEAT_ICE && cave_feat[y][x] != FEAT_WALL_ICE) return;
     /* Use CAVE_TEMP to avoid loops */
     if (cave_info[y][x] & CAVE_TEMP) return;
 
@@ -2066,7 +2066,7 @@ static void project_ice_spread(int y, int x, int dam) {
 
 static void project_ice_clear(int y, int x) {
     if (!in_bounds(y, x)) return;
-    if (cave_feat[y][x] != FEAT_ICE) return;
+    if (cave_feat[y][x] != FEAT_ICE && cave_feat[y][x] != FEAT_WALL_ICE) return;
     if (!(cave_info[y][x] & CAVE_TEMP)) return;
 
     cave_info[y][x] &= ~(CAVE_TEMP);
@@ -2113,7 +2113,7 @@ static bool project_f(int who, int r, int y, int x, int dam, int typ)
 
 		case GF_ELEC:
 		{
-			if (cave_feat[y][x] == FEAT_ICE && !(cave_info[y][x] & CAVE_TEMP)) {
+			if ((cave_feat[y][x] == FEAT_ICE || cave_feat[y][x] == FEAT_WALL_ICE) && !(cave_info[y][x] & CAVE_TEMP)) {
 				/* Start propagation */
 				project_ice_spread(y, x, dam);
 				project_ice_clear(y, x);
@@ -7006,6 +7006,7 @@ static char bolt_char(int y, int x, int ny, int nx)
 static byte cave_proj_x[MAX_PROJECT_GRIDS];
 static byte cave_proj_y[MAX_PROJECT_GRIDS];
 static byte cave_proj_r[MAX_PROJECT_GRIDS];
+static s16b cave_proj_dam[MAX_PROJECT_GRIDS];
 
 static s16b max_project_grid = 0;
 
@@ -7013,13 +7014,14 @@ static s16b max_project_grid = 0;
 /* 
  * Add a new grid to the array.
  */
-static bool project_grid(byte y, byte x, byte r)
+static bool project_grid(byte y, byte x, byte r, int dam)
 {
 	if (max_project_grid < MAX_PROJECT_GRIDS)
 	{
 		cave_proj_y[max_project_grid] = y;
 		cave_proj_x[max_project_grid] = x;
 		cave_proj_r[max_project_grid] = r;
+		cave_proj_dam[max_project_grid] = dam;
 		max_project_grid++;
 		return TRUE;
 
@@ -7058,6 +7060,7 @@ static bool project_finalize(s16b start, int who, int dam, int typ_inp,
 {
 	int i;
 	int r, x, y, typ = typ_inp;
+	int current_dam = dam;
 	bool ret = FALSE;
 
 	/* Mega-Hack */
@@ -7073,6 +7076,8 @@ static bool project_finalize(s16b start, int who, int dam, int typ_inp,
 		y = cave_proj_y[i];
 		x = cave_proj_x[i];
 		r = cave_proj_r[i];
+		if (cave_proj_dam[i] > -1) current_dam = cave_proj_dam[i];
+		else current_dam = dam;
 
 		/* Mega-hack: Handle the ``RANDOM'' attack type. */
 		if (typ_inp == GF_RANDOM)
@@ -7083,23 +7088,23 @@ static bool project_finalize(s16b start, int who, int dam, int typ_inp,
 		/* Affect features. */
 		if (flg & PROJECT_GRID)
 		{
-			if (project_f(who, r, y, x, dam, typ))
+			if (project_f(who, r, y, x, current_dam, typ))
 				ret = TRUE;
 		}
 
 		/* Affect items */
 		if (flg & PROJECT_ITEM)
 		{
-			if (project_o(who, r, y, x, dam, typ))
+			if (project_o(who, r, y, x, current_dam, typ))
 				ret = TRUE;
 		}
 
 		/* Affect monsters */
 		if (flg & PROJECT_KILL)
 		{
-			if (project_m(who, r, y, x, dam, typ))
+			if (project_m(who, r, y, x, current_dam, typ))
 				ret = TRUE;
-			if (project_p(who, r, y, x, dam, typ))
+			if (project_p(who, r, y, x, current_dam, typ))
 				ret = TRUE;
 		}
 	}
@@ -7142,12 +7147,15 @@ static bool project_finalize(s16b start, int who, int dam, int typ_inp,
  */
 
 static void project_bolt_beam_ball_aux(int who, int rad, byte y, byte x,
-	int typ, u32b flg)
+	int typ, u32b flg, int dam)
 {
 	int dist;
 	int y9, x9;
 	int y1, x1;
 	int y2, x2;
+	int current_dam = dam;
+	int bounces = 0;
+	int y_old, x_old;
 
 	/* Start at player */
 	if (who == -1)
@@ -7183,6 +7191,8 @@ static void project_bolt_beam_ball_aux(int who, int rad, byte y, byte x,
 	x = x1;
 	y = y1;
 	dist = 0;
+	y_old = y;
+	x_old = x;
 
 	/* Project until done */
 	while (1)
@@ -7194,6 +7204,80 @@ static void project_bolt_beam_ball_aux(int who, int rad, byte y, byte x,
 		/* Paranoia. */
 		if (!in_bounds_fully(y, x))
 			break;
+
+		/* Check for bounce BEFORE wall check */
+		if (rad == 0 && bounces < 3 && !cave_floor_bold(y, x))
+		{
+			int dy = y - y_old;
+			int dx = x - x_old;
+			int ny2 = y2;
+			int nx2 = x2;
+			int feat = cave_feat[y][x];
+			bool bounce = FALSE;
+
+			if (feat == FEAT_WALL_ICE || feat == FEAT_WALL_MIRROR_V)
+			{
+				/* Vertical reflection */
+				if (dx)
+				{
+					nx2 = x_old - dx * 100;
+					ny2 = y_old + dy * 100;
+					bounce = TRUE;
+				}
+			}
+			else if (feat == FEAT_WALL_MIRROR_H)
+			{
+				/* Horizontal reflection */
+				if (dy)
+				{
+					nx2 = x_old + dx * 100;
+					ny2 = y_old - dy * 100;
+					bounce = TRUE;
+				}
+			}
+			else if (feat == FEAT_WALL_MIRROR_DA)
+			{
+				/* / reflection: (0,1)->(-1,0), (1,0)->(0,-1), (0,-1)->(1,0), (-1,0)->(0,1) */
+				/* dx' = -dy, dy' = -dx */
+				nx2 = x_old - dy * 100;
+				ny2 = y_old - dx * 100;
+				bounce = TRUE;
+			}
+			else if (feat == FEAT_WALL_MIRROR_DB)
+			{
+				/* \ reflection: (0,1)->(1,0), (1,0)->(0,1), (0,-1)->(-1,0), (-1,0)->(0,-1) */
+				/* dx' = dy, dy' = dx */
+				nx2 = x_old + dy * 100;
+				ny2 = y_old + dx * 100;
+				bounce = TRUE;
+			}
+
+			if (bounce)
+			{
+				/* Update damage */
+				current_dam -= 2;
+				if (current_dam < 1) current_dam = 1;
+
+				/* Visual feedback */
+				print_rel('*', TERM_WHITE, y, x);
+				Term_fresh();
+				Term_xtra(TERM_XTRA_DELAY, 50);
+				lite_spot(y, x);
+
+				if (bounces == 0) msg_print("It ricochets!");
+
+				/* Reset loop to reflect off the wall */
+				y1 = y_old;
+				x1 = x_old;
+				y2 = ny2;
+				x2 = nx2;
+				y = y_old;
+				x = x_old;
+				dist = 0;
+				bounces++;
+				continue;
+			}
+		}
 
 		/* Never pass through walls */
 		/* Hack - Yuck -- Spells pass through chaos fog. */
@@ -7233,7 +7317,7 @@ static void project_bolt_beam_ball_aux(int who, int rad, byte y, byte x,
 
 		if (flg & PROJECT_BEAM)
 		{
-			project_grid(y, x, 0);
+			project_grid(y, x, 0, current_dam);
 			draw_spell_effects(y, x, y, x, typ, 0);
 		}
 		else
@@ -7246,6 +7330,8 @@ static void project_bolt_beam_ball_aux(int who, int rad, byte y, byte x,
 		Term_fresh();
 
 		/* Save the new location */
+		y_old = y;
+		x_old = x;
 		y = y9;
 		x = x9;
 	}
@@ -7279,7 +7365,7 @@ static void project_bolt_beam_ball_aux(int who, int rad, byte y, byte x,
 					continue;
 
 				/* Save this grid */
-				project_grid(y, x, dist);
+				project_grid(y, x, dist, current_dam);
 
 				/* Draw spell effects */
 				draw_spell_effects(y, x, y, x, typ, dist);
@@ -7320,7 +7406,7 @@ static void project_viewable_aux(void)
 			continue;
 
 		/* Mark this grid */
-		project_grid(y, x, 0);
+		project_grid(y, x, 0, -1);
 	}
 }
 
@@ -7356,7 +7442,7 @@ static void project_blast_aux(int y1, int x1, int rad, int typ, u32b flg)
 				continue;
 
 			/* Mark this grid */
-			project_grid(y, x, k);
+			project_grid(y, x, k, -1);
 		}
 	}
 
@@ -7398,7 +7484,7 @@ static void project_meteor_shower_aux(int typ)
 		y = rand_range(1, DUNGEON_HGT - 1);
 		x = rand_range(1, DUNGEON_WID - 1);
 
-		project_grid(y, x, 0);
+		project_grid(y, x, 0, -1);
 		draw_spell_effects(y, x, y, x, typ, 4);
 		Term_fresh();
 		lite_spot(y, x);
@@ -7419,7 +7505,7 @@ static void project_panel_aux(void)
 	{
 		for (x = p_ptr->wx; x < p_ptr->wx + SCREEN_WID; x++)
 		{
-			project_grid(y, x, 0);
+			project_grid(y, x, 0, -1);
 		}
 	}
 }
@@ -7439,7 +7525,7 @@ static void project_all_aux(void)
 	{
 		for (x = 1; x < DUNGEON_WID - 1; x++)
 		{
-			project_grid(y, x, 0);
+			project_grid(y, x, 0, -1);
 		}
 	}
 }
@@ -7468,7 +7554,7 @@ static void project_genocide_aux(void)
 		if (r_ptr->d_char != typ)
 			continue;
 
-		project_grid(m_ptr->fy, m_ptr->fx, 0);
+		project_grid(m_ptr->fy, m_ptr->fx, 0, -1);
 	}
 }
 
@@ -7500,7 +7586,7 @@ bool project(int who, int rad, int y, int x, int dam, int typ, u32b flg)
 	}
 	else if (flg & PROJECT_PLAYER)
 	{
-		project_grid(p_ptr->py, p_ptr->px, 0);
+		project_grid(p_ptr->py, p_ptr->px, 0, -1);
 		draw_spell_effects(p_ptr->py, p_ptr->px, p_ptr->py, p_ptr->px, typ,
 			0);
 		lite_spot(p_ptr->py, p_ptr->px);
@@ -7529,7 +7615,7 @@ bool project(int who, int rad, int y, int x, int dam, int typ, u32b flg)
 	}
 	else
 	{
-		project_bolt_beam_ball_aux(who, rad, y, x, typ, flg);
+		project_bolt_beam_ball_aux(who, rad, y, x, typ, flg, dam);
 	}
 
 	ret = project_finalize(start_grids, who, dam, typ, flg);

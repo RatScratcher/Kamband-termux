@@ -887,6 +887,12 @@
 #define FEAT_ACID               205
 #define FEAT_OIL_BURNING        206
 
+#define FEAT_WALL_MIRROR_V      106
+#define FEAT_WALL_ICE           107
+#define FEAT_WALL_MIRROR_H      108
+#define FEAT_WALL_MIRROR_DA     109
+#define FEAT_WALL_MIRROR_DB     110
+
 /* Altars. */
 #define FEAT_ALTAR_HEAD         128
 #define FEAT_ALTAR_TAIL         159

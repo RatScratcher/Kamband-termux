@@ -4212,6 +4212,21 @@ static void cave_gen(void)
 		}
 	}
 
+	if (randint(10) > 7)
+	{
+		build_streamer2(FEAT_OIL, 0);
+	}
+
+	if (randint(10) > 7)
+	{
+		build_streamer2(FEAT_ICE, 0);
+	}
+
+	if (randint(10) > 7)
+	{
+		build_streamer2(FEAT_ACID, 0);
+	}
+
 	/* Place 3 or 4 down stairs near some walls */
 	alloc_stairs(FEAT_MORE, rand_range(3, 4), 3, (level_bg == FEAT_FOG || level_bg == FEAT_CHAOS_FOG));
 

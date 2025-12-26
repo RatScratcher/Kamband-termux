@@ -618,3 +618,15 @@ G:#:r
 
 N:202:stream of shallow lava
 G:#:U
+
+N:203:stream of oil
+G:#:y
+
+N:204:stream of ice
+G:#:W
+
+N:205:stream of acid
+G:#:g
+
+N:206:stream of burning oil
+G:#:R

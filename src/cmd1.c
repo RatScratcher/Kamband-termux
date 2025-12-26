@@ -1973,15 +1973,17 @@ void move_player(int dir, int jumping)
 		else if (cave_feat[y][x] == FEAT_ACID && !p_ptr->flying &&
 			!p_ptr->immune_acid)
 		{
-			acid_dam(damroll(2, 4), "a pool of acid");
+			int dam = damroll(2, 2) + p_ptr->depth / 5;
+			acid_dam(dam, "a pool of acid");
 		}
 
 		/* Landed on oil */
 		else if (cave_feat[y][x] == FEAT_OIL && !p_ptr->flying)
 		{
+			p_ptr->energy_use += 50; /* Slowed */
 			if (randint(2) == 1) {
 				mprint(MSG_WARNING, "You slip on the oil.");
-				set_stun(p_ptr->stun + 5);
+				set_stun(p_ptr->stun + rand_range(1, 10));
 			}
 		}
 
@@ -1991,8 +1993,16 @@ void move_player(int dir, int jumping)
 		{
 			if (randint(2) == 1) {
 				mprint(MSG_WARNING, "You slip on the ice.");
-				set_stun(p_ptr->stun + 5);
+				set_stun(p_ptr->stun + rand_range(1, 10));
 			}
+		}
+
+		/* Landed on burning oil */
+		else if (cave_feat[y][x] == FEAT_OIL_BURNING && !p_ptr->flying &&
+			!p_ptr->immune_fire)
+		{
+			int dam = damroll(2, 2) + p_ptr->depth / 5;
+			fire_dam(dam, "burning oil");
 		}
 	}
 }

@@ -66,6 +66,8 @@
 # include <curses.h>
 #endif
 
+#include <math.h>
+
 
 
 /*
@@ -434,6 +436,23 @@ static void keymap_game_prepare(void)
 }
 
 
+/*
+ * Apply gamma correction to colors
+ */
+static int gamma_correct(int value, double gamma)
+{
+	double ind;
+	double inverse;
+
+	if (gamma)
+		inverse = 1.0 / gamma;
+	else
+		inverse = 1.0;
+
+	/* Value is 0-1000 in curses */
+	ind = (double) value / 1000.0;
+	return (int) (1000 * pow(ind, inverse));
+}
 
 
 /*
@@ -854,22 +873,28 @@ errr init_gcu(int argc, char *argv[])
 		/* XXX XXX XXX Take account of "gamma correction" */
 
 		/* Prepare the "Angband Colors" */
-		init_color(0,     0,    0,    0);	/* Black */
-		init_color(1,  1000, 1000, 1000);	/* White */
-		init_color(2,   500,  500,  500);	/* Grey */
-		init_color(3,  1000,  500,    0);	/* Orange */
-		init_color(4,   750,    0,    0);	/* Red */
-		init_color(5,     0,  500,  250);	/* Green */
-		init_color(6,     0,    0, 1000);	/* Blue */
-		init_color(7,   500,  250,    0);	/* Brown */
-		init_color(8,   250,  250,  250);	/* Dark-grey */
-		init_color(9,   750,  750,  750);	/* Light-grey */
-		init_color(10, 1000,    0, 1000);	/* Purple */
-		init_color(11, 1000, 1000,    0);	/* Yellow */
-		init_color(12, 1000,    0,    0);	/* Light Red */
-		init_color(13,    0, 1000,    0);	/* Light Green */
-		init_color(14,    0, 1000, 1000);	/* Light Blue */
-		init_color(15,  750,  500,  250);	/* Light Brown */
+		{
+			double gamma = 1.7;
+			char *env_gamma = getenv("ANGBAND_GAMMA");
+			if (env_gamma) gamma = atof(env_gamma);
+
+			init_color(0,     gamma_correct(0, gamma),    gamma_correct(0, gamma),    gamma_correct(0, gamma));	/* Black */
+			init_color(1,  gamma_correct(1000, gamma), gamma_correct(1000, gamma), gamma_correct(1000, gamma));	/* White */
+			init_color(2,   gamma_correct(500, gamma),  gamma_correct(500, gamma),  gamma_correct(500, gamma));	/* Grey */
+			init_color(3,  gamma_correct(1000, gamma),  gamma_correct(500, gamma),    gamma_correct(0, gamma));	/* Orange */
+			init_color(4,   gamma_correct(750, gamma),    gamma_correct(0, gamma),    gamma_correct(0, gamma));	/* Red */
+			init_color(5,     gamma_correct(0, gamma),  gamma_correct(500, gamma),  gamma_correct(250, gamma));	/* Green */
+			init_color(6,     gamma_correct(0, gamma),    gamma_correct(0, gamma), gamma_correct(1000, gamma));	/* Blue */
+			init_color(7,   gamma_correct(500, gamma),  gamma_correct(250, gamma),    gamma_correct(0, gamma));	/* Brown */
+			init_color(8,   gamma_correct(250, gamma),  gamma_correct(250, gamma),  gamma_correct(250, gamma));	/* Dark-grey */
+			init_color(9,   gamma_correct(750, gamma),  gamma_correct(750, gamma),  gamma_correct(750, gamma));	/* Light-grey */
+			init_color(10, gamma_correct(1000, gamma),    gamma_correct(0, gamma), gamma_correct(1000, gamma));	/* Purple */
+			init_color(11, gamma_correct(1000, gamma), gamma_correct(1000, gamma),    gamma_correct(0, gamma));	/* Yellow */
+			init_color(12, gamma_correct(1000, gamma),    gamma_correct(0, gamma),    gamma_correct(0, gamma));	/* Light Red */
+			init_color(13,    gamma_correct(0, gamma), gamma_correct(1000, gamma),    gamma_correct(0, gamma));	/* Light Green */
+			init_color(14,    gamma_correct(0, gamma), gamma_correct(1000, gamma), gamma_correct(1000, gamma));	/* Light Blue */
+			init_color(15,  gamma_correct(750, gamma),  gamma_correct(500, gamma),  gamma_correct(250, gamma));	/* Light Brown */
+		}
 	}
 
 	/* Attempt to use colors */

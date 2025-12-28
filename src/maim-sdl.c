@@ -58,7 +58,6 @@
 
 
 /* The most pedantic-a%& getpixel and putpixel ever, hopefully. */
-/* There may still be endianness bugs! These will be fixed after adequte testing. XXX XXX XXX */
 inline errr SDL_GetPixel (SDL_Surface *f, Uint32 x, Uint32 y, Uint8 *r, Uint8 *g, Uint8 *b)
 {
 	/*const Uint32 mask[] = {0x0, 0xff, 0xffff, 0xffffff, 0xffffffff};*/
@@ -79,7 +78,6 @@ inline errr SDL_GetPixel (SDL_Surface *f, Uint32 x, Uint32 y, Uint8 *r, Uint8 *g
 	pp += (x * f->format->BytesPerPixel);
 
 	/* we do not lock the surface here, it would be inefficient XXX */
-	/* this reads the pixel as though it was a big-endian integer XXX */
 	/* I'm trying to avoid reading part the end of the pixel data by
 	 * using a data-type that's larger than the pixels */
 	for (n = 0, pixel = 0; n < f->format->BytesPerPixel; ++n, ++pp)
@@ -88,8 +86,7 @@ inline errr SDL_GetPixel (SDL_Surface *f, Uint32 x, Uint32 y, Uint8 *r, Uint8 *g
 		pixel >>= 8;
 		pixel |= *pp << (f->format->BitsPerPixel - 8);
 #else
-		pixel |= *pp;
-		pixel <<= 8;
+		pixel = (pixel << 8) | *pp;
 #endif
 	}
 
@@ -119,11 +116,20 @@ inline errr SDL_PutPixel (SDL_Surface *f, Uint32 x, Uint32 y, Uint8 r, Uint8 g, 
 
 	pixel = SDL_MapRGB(f->format, r, g, b);
 
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN
 	for (n = 0; n < f->format->BytesPerPixel; ++n, ++pp)
 	{
 		*pp = (Uint8) (pixel & 0xFF);
 		pixel >>= 8;
 	}
+#else
+	pp += (f->format->BytesPerPixel - 1);
+	for (n = 0; n < f->format->BytesPerPixel; ++n, --pp)
+	{
+		*pp = (Uint8) (pixel & 0xFF);
+		pixel >>= 8;
+	}
+#endif
 
 	return 0;
 }

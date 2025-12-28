@@ -807,8 +807,7 @@ static errr Term_xtra_sdl(int n, int v)
 		if (!td->face) return(1);
 
 		/* a NULL dstrect fills the entire window */
-		/* XXX the color 0 will not necessarily work for 8-bit modes */
-		SDL_FillRect(td->face, NULL, 0);
+		SDL_FillRect(td->face, NULL, SDL_MapRGB(td->face->format, 0, 0, 0));
 
 		return (0);
 
@@ -1041,7 +1040,7 @@ static errr Term_wipe_sdl(int x, int y, int n)
 		dr.h = td->h;
 		dr.x = td->w * x;
 		dr.y = td->h * y;
-		SDL_FillRect(td->face, &dr, 0);
+		SDL_FillRect(td->face, &dr, SDL_MapRGB(td->face->format, 0, 0, 0));
 		if (td->cx == x && td->cy == y)
 		{
 			SDL_UpdateRect(td->face, dr.x, dr.y, dr.w, dr.h);
@@ -1051,7 +1050,7 @@ static errr Term_wipe_sdl(int x, int y, int n)
 				dr.y = CURS_MAG_Y*td->h;
 				dr.w = 2*td->w;
 				dr.h = 2*td->h;
-				SDL_FillRect(td->face, &dr, 0);
+				SDL_FillRect(td->face, &dr, SDL_MapRGB(td->face->format, 0, 0, 0));
 				SDL_UpdateRect(td->face, dr.x, dr.y, dr.w, dr.h);
 			}
 		}

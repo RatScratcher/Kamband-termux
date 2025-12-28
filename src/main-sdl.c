@@ -1482,11 +1482,6 @@ errr init_sdl(int oargc, char **oargv)
 	/* so they look OK if you turn them on later... XXX */
 
 
-#ifdef USE_SDL_MIXER
-	initflags |= SDL_INIT_AUDIO;
-	/* TODO perhaps use SDL_InitSubSystem() instead. */
-#endif
-
 	/* I don't think you'd want the following (except for core dump): */
 #ifdef SDL_NOPARACHUTE
 	initflags |= SDL_INIT_NOPARACHUTE;
@@ -1501,7 +1496,13 @@ errr init_sdl(int oargc, char **oargv)
 		return -1;
 	}
 
-	atexit(SDL_Quit); 
+	atexit(SDL_Quit);
+
+#ifdef USE_SDL_MIXER
+	if (SDL_InitSubSystem(SDL_INIT_AUDIO) != 0) {
+		plog(format("SDL Audio initialization failed: %s", SDL_GetError()));
+	}
+#endif
 
 	init_color_data_sdl();
 

@@ -680,7 +680,11 @@ static errr Term_xtra_sdl(int n, int v)
 		do {
 			if (v) 
 			{
-				if (!SDL_WaitEvent(&event)) return(0); /* TODO handle errors */
+				if (!SDL_WaitEvent(&event))
+				{
+					plog(format("SDL_WaitEvent failed: %s", SDL_GetError()));
+					return(1);
+				}
 				v = 0;
 			} else 
 			{

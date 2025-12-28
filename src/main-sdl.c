@@ -1399,8 +1399,8 @@ errr init_sdl(int oargc, char **oargv)
 	use_graphics = (arg_graphics == TRUE);
 	ANGBAND_GRAF = "new"; /* not necessarily right.. set again below. XXX */
 	/*ANGBAND_SYS = "sdl";*/ 
-	strcpy(fontname, "font/vga8x16.hex"); /* slashes are system specific!! FIXME */
-	strcpy(tilebmpname, "graf/16x16.bmp");
+	path_build(fontname, sizeof(fontname), "font", "vga8x16.hex");
+	path_build(tilebmpname, sizeof(tilebmpname), "graf", "16x16.bmp");
 #endif
 
 

@@ -849,14 +849,83 @@ static errr Term_xtra_sdl(int n, int v)
 		return (0);
 
 		case TERM_XTRA_BORED:
+		{
+			SDL_Event event;
+			SDL_Surface *saved_screen;
 
-		/* XXX XXX XXX Handle random events when bored (optional) */
-		/* This action is optional, and not important */
+			/* Handle random events when bored (screensaver mode) */
+			if (!td->face) return (0);
 
-		/* TODO add nifty effects here, I guess? */
+			/* Save current screen */
+			saved_screen = SDL_DisplayFormat(td->face);
+			if (saved_screen)
+			{
+				SDL_BlitSurface(td->face, NULL, saved_screen, NULL);
+			}
 
+			/* Loop until an interesting event occurs */
+			while (1)
+			{
+				/* Add nifty effects: Random colored sparkles */
+				/* Use system rand() to avoid advancing game RNG */
+				int x = rand() % td->face->w;
+				int y = rand() % td->face->h;
+				int w = (rand() % 3) + 2;
+				int h = (rand() % 3) + 2;
+				SDL_Rect rect;
+				Uint32 color;
 
-		return (0);
+				rect.x = x;
+				rect.y = y;
+				rect.w = w;
+				rect.h = h;
+
+				/* Random color */
+				color = SDL_MapRGB(td->face->format,
+										  rand() % 256,
+										  rand() % 256,
+										  rand() % 256);
+
+				SDL_FillRect(td->face, &rect, color);
+				SDL_UpdateRect(td->face, x, y, w, h);
+
+				/* Delay to control speed */
+				SDL_Delay(20);
+
+				/* Check for events */
+				if (SDL_PollEvent(&event))
+				{
+					/* Stop on any key, quit, or mouse interaction */
+					if (event.type == SDL_KEYDOWN ||
+						event.type == SDL_QUIT ||
+						event.type == SDL_MOUSEMOTION ||
+						event.type == SDL_MOUSEBUTTONDOWN ||
+						event.type == SDL_MOUSEBUTTONUP)
+					{
+						SDL_PushEvent(&event);
+						break;
+					}
+				}
+			}
+
+			/* Restore screen */
+			if (saved_screen)
+			{
+				SDL_BlitSurface(saved_screen, NULL, td->face, NULL);
+				SDL_Flip(td->face);
+				SDL_FreeSurface(saved_screen);
+			}
+			else
+			{
+				/* Fallback if save failed: force redraw via Term hooks if possible,
+				   or just clear to black */
+				/* Force full redraw by invalidating the term */
+				Term->total_erase = TRUE;
+				Term_redraw();
+			}
+
+			return (0);
+		}
 
 		case TERM_XTRA_REACT:
 
@@ -1302,7 +1371,7 @@ static void term_data_link(int i)
 
 	/* XXX XXX XXX Ignore the "TERM_XTRA_BORED" action */
 	/* This may make things slightly more efficient. */
-	t->never_bored = TRUE;
+	t->never_bored = FALSE;
 
 	/* XXX XXX XXX Ignore the "TERM_XTRA_FROSH" action */
 	/* This may make things slightly more efficient. */

@@ -281,10 +281,19 @@ errr SDL_FastScaleBlit(SDL_Surface *src, SDL_Rect *sr, SDL_Surface *dst, SDL_Rec
 
 
 	/* TODO FIXME check for possible overflows! */
+	/* Fixed point logic requires coordinates to fit in 16 bits */
+	if (sr->x < 0 || (Uint32)sr->x + sr->w > 65535) return -1;
+	if (sr->y < 0 || (Uint32)sr->y + sr->h > 65535) return -1;
 
-	wsx = dsx = (sr->w << 16) / dr->w;
+	/* Check for accumulator overflow in weighted average.
+	 * If scaling down too much, sums might exceed Uint32 range.
+	 * Max safe ratio is approx 255 source pixels per dest pixel.
+	 */
+	if (((double)sr->w * sr->h) / ((double)dr->w * dr->h) > 255.0) return -1;
+
+	wsx = dsx = ((Uint32)sr->w << 16) / dr->w;
 	if (!(wsx & 0xFFFF0000)) wsx = 1 << 16;
-	wsy = dsy = (sr->h << 16) / dr->h;
+	wsy = dsy = ((Uint32)sr->h << 16) / dr->h;
 	if (!(wsy & 0xFFFF0000)) wsy = 1 << 16;
 
 	lx = dr->x + dr->w;

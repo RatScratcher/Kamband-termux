@@ -31,6 +31,13 @@
  * and that the row of attr/chars at (0,y) is a[y]/c[y]
  */
 
+#ifdef USE_UNICODE
+#include <wchar.h>
+typedef wchar_t term_char;
+#else
+typedef char term_char;
+#endif
+
 typedef struct term_win term_win;
 
 struct term_win
@@ -39,10 +46,10 @@ struct term_win
 	byte cx, cy;
 
 	byte **a;
-	char **c;
+	term_char **c;
 
 	byte *va;
-	char *vc;
+	term_char *vc;
 };
 
 
@@ -153,7 +160,7 @@ struct term
 	bool never_frosh;
 
 	byte attr_blank;
-	char char_blank;
+	term_char char_blank;
 
 	char *key_queue;
 
@@ -188,10 +195,10 @@ struct term
 
 	 errr(*wipe_hook) (int x, int y, int n);
 
-	 errr(*text_hook) (int x, int y, int n, byte a, cptr s);
+	 errr(*text_hook) (int x, int y, int n, byte a, const term_char *s);
 
 	 errr(*pict_hook) (int x, int y, int n, const byte * ap,
-		const char *cp);
+		const term_char *cp);
 };
 
 
@@ -245,16 +252,16 @@ extern term *Term;
 extern errr Term_user(int n);
 extern errr Term_xtra(int n, int v);
 
-extern void Term_queue_char(int x, int y, byte a, char c);
+extern void Term_queue_char(int x, int y, byte a, term_char c);
 extern void Term_queue_chars(int x, int y, int n, byte a, cptr s);
 
 extern errr Term_fresh(void);
 extern errr Term_set_cursor(int v);
 extern errr Term_gotoxy(int x, int y);
-extern errr Term_draw(int x, int y, byte a, char c);
-extern errr Term_addch(byte a, char c);
+extern errr Term_draw(int x, int y, byte a, term_char c);
+extern errr Term_addch(byte a, term_char c);
 extern errr Term_addstr(int n, byte a, cptr s);
-extern errr Term_putch(int x, int y, byte a, char c);
+extern errr Term_putch(int x, int y, byte a, term_char c);
 extern errr Term_putstr(int x, int y, int n, byte a, cptr s);
 extern errr Term_erase(int x, int y, int n);
 extern errr Term_clear(void);
@@ -263,7 +270,7 @@ extern errr Term_redraw(void);
 extern errr Term_get_cursor(int *v);
 extern errr Term_get_size(int *w, int *h);
 extern errr Term_locate(int *x, int *y);
-extern errr Term_what(int x, int y, byte * a, char *c);
+extern errr Term_what(int x, int y, byte * a, term_char *c);
 
 extern errr Term_flush(void);
 extern errr Term_keypress(int k);

@@ -2117,6 +2117,27 @@ static errr Term_xtra_x11_react(void)
 {
 	int i;
 
+	static bool first_time = TRUE;
+
+	/*
+	 * Load the preference file.
+	 * We do this here, instead of in init_x11(), because we need the
+	 * game data (r_info, etc) to be initialized, and that happens
+	 * after init_x11() is called.
+	 */
+	if (first_time)
+	{
+		first_time = FALSE;
+		if (use_graphics)
+		{
+			(void)process_pref_file("graf-x11.prf");
+		}
+		else
+		{
+			(void)process_pref_file("font-x11.prf");
+		}
+	}
+
 	/* Check the colors */
 	for (i = 0; i < 256; i++)
 	{
@@ -2435,18 +2456,6 @@ errr init_x11(int argc, char *argv[])
 
 #endif /* USE_GRAPHICS */
 
-
-	/* EVIL! Whoopie, segfaults at your age are crass... */
-	/* DO NOT uncomment this, this is a crude bug, actually. */
-#if 0
-	/*
-	if (use_graphics) {
-	  (void)process_pref_file("graf-x11.prf");
-	} else {
-	  (void)process_pref_file("font-x11.prf");
-	}
-	*/
-#endif
 
 	/* Init the Metadpy if possible */
 	if (Metadpy_init_name(dpy_name)) return (-1);

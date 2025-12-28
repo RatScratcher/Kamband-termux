@@ -227,6 +227,8 @@ term *angband_term[ANGBAND_TERM_MAX];
 
 static term_data data[MAX_TERM_DATA];
 
+static bool arg_fullscreen = FALSE;
+
 /*
 static term_data screen;
 static term_data mirror;
@@ -585,7 +587,7 @@ static void Term_init_sdl(term *t)
 	term_data *td = (term_data*)(t->data);
 
 	if (td->width && td->height && td == &(data[0])) {
-		/* TODO allow full-screen mode through command line */
+		if (arg_fullscreen) td->flags |= SDL_FULLSCREEN | SDL_HWSURFACE | SDL_DOUBLEBUF;
 		td->face = SDL_SetVideoMode(td->width, td->height, td->bpp, td->flags);
 		if (td->face == NULL) {
 			plog("SDL could not initialize video mode."); 
@@ -1367,8 +1369,6 @@ errr init_sdl(int oargc, char **oargv)
 
 	Uint32 ftw = 0, fth = 0; /* dimensions to scale tiles to, optionally */
 
-	int fullscreen = 0;
-
 	int bpp = 0;
 
 	/*int i;*/  /* the ever-handy 'i'. This is not an icky thing. XXX */
@@ -1430,9 +1430,9 @@ errr init_sdl(int oargc, char **oargv)
 			sscanf(getarg, "%d", &fh);
 		} else
 
-		if (!strcmp(a, "--fullscreen"))
+		if (!strcmp(a, "--fullscreen") || !strcmp(a, "-f"))
 		{
-			fullscreen = 1;
+			arg_fullscreen = TRUE;
 		} else
 
 		if (!strcmp(a, "--gfx") || !strcmp(a, "-g")) 
@@ -1588,8 +1588,6 @@ errr init_sdl(int oargc, char **oargv)
 	td->width = 80 * td->w; 
 	td->height = 24 * td->h; 
 	td->bpp = bpp; /* 0 is for current display bpp */
-
-	if (fullscreen) td->flags |= SDL_FULLSCREEN | SDL_HWSURFACE | SDL_DOUBLEBUF;
 
 	td->cursor_on = TRUE;
 	td->cursor_magic = TRUE;

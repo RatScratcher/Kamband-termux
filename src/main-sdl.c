@@ -1506,8 +1506,21 @@ errr init_sdl(int oargc, char **oargv)
 	init_color_data_sdl();
 
 #ifdef OLD_TERM_28X
-	strcpy(path,"lib/"); /* XXX XXX XXX this is system dependent!!!! FIXME */
-	init_file_paths(path);
+	/* Use the logic from main.c to determine the path */
+	{
+		cptr tail;
+
+		/* Get the environment variable */
+		tail = getenv("ANGBAND_PATH");
+
+		/* Use the angband_path, or a default */
+		strcpy(path, tail ? tail : DEFAULT_PATH);
+
+		/* Hack -- Add a path separator (only if needed) */
+		if (!suffix(path, PATH_SEP)) strcat(path, PATH_SEP);
+
+		init_file_paths(path);
+	}
 #endif
 
 

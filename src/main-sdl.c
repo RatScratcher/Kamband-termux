@@ -68,6 +68,11 @@
 #ifdef USE_SDL 
 
 #include "SDL.h"
+
+#ifdef USE_SDL_MIXER
+#include "SDL_mixer.h"
+#endif
+
 #include <string.h>
 
 
@@ -226,6 +231,11 @@ term *angband_term[ANGBAND_TERM_MAX];
 #define MAX_TERM_DATA ANGBAND_TERM_MAX
 
 static term_data data[MAX_TERM_DATA];
+
+#ifdef USE_SDL_MIXER
+/* An array of sound effects */
+static Mix_Chunk *sound_chunks[SOUND_MAX];
+#endif
 
 static bool arg_fullscreen = FALSE;
 
@@ -625,6 +635,25 @@ static void Term_nuke_sdl(term *t)
 	}
 }
 
+#ifdef USE_SDL_MIXER
+/*
+ * Cleanup the sound support
+ */
+static void cleanup_sound(void)
+{
+	int i;
+
+	/* Free the sound effects */
+	for (i = 1; i < SOUND_MAX; i++)
+	{
+		if (sound_chunks[i]) Mix_FreeChunk(sound_chunks[i]);
+	}
+
+	/* Close the audio */
+	Mix_CloseAudio();
+}
+#endif
+
 
 
 /*
@@ -841,7 +870,13 @@ static errr Term_xtra_sdl(int n, int v)
 		/* This action is optional, and not important. */
 
 #ifdef USE_SDL_MIXER
-		/* TODO make some noise. */
+		if (use_sound && (v >= 0) && (v < SOUND_MAX) && sound_chunks[v])
+		{
+			if (Mix_PlayChannel(-1, sound_chunks[v], 0) == -1)
+			{
+				/* Warning: Unable to play sound */
+			}
+		}
 #else
 		/* TODO We can actually make noise without the mixer too... */
 #endif
@@ -1570,6 +1605,33 @@ errr init_sdl(int oargc, char **oargv)
 #ifdef USE_SDL_MIXER
 	if (SDL_InitSubSystem(SDL_INIT_AUDIO) != 0) {
 		plog(format("SDL Audio initialization failed: %s", SDL_GetError()));
+	} else {
+		/* Initialize the mixer */
+		if (Mix_OpenAudio(22050, AUDIO_S16, 2, 4096) == -1) {
+			plog(format("SDL Mixer initialization failed: %s", Mix_GetError()));
+		} else {
+			int i;
+			char wav_file[1024];
+			char real_file[1024];
+
+			/* Allocate channels */
+			Mix_AllocateChannels(16);
+
+			/* Load sound effects */
+			for (i = 1; i < SOUND_MAX; i++)
+			{
+				/* Build the filename */
+				strnfmt(wav_file, sizeof(wav_file), "%s.wav", angband_sound_name[i]);
+				path_build(real_file, sizeof(real_file), ANGBAND_DIR_XTRA, "sound");
+				path_build(real_file, sizeof(real_file), real_file, wav_file);
+
+				/* Load the sound effect */
+				sound_chunks[i] = Mix_LoadWAV(real_file);
+			}
+
+			/* Register cleanup function */
+			atexit(cleanup_sound);
+		}
 	}
 #endif
 

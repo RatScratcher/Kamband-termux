@@ -113,9 +113,9 @@ CC = gcc
 # attempt to "guess" at many of these flags based on your system.
 #
 
-CFLAGS = -Wall -O2 -pipe -g -D"USE_SDL" -D"SDL_NOPARACHUTE" `sdl-config --cflags`
+CFLAGS = -Wall -O2 -pipe -g -D"USE_SDL" -D"SDL_NOPARACHUTE" -D"USE_SDL_MIXER" `sdl-config --cflags`
 
-LIBS = -lcurses -ltermcap `sdl-config --libs`
+LIBS = -lcurses -ltermcap `sdl-config --libs` -lSDL_mixer
 
 
 ##
@@ -332,4 +332,3 @@ z-rand.o: z-rand.c $(HDRS) z-rand.h
 z-term.o: z-term.c $(HDRS) z-term.h z-virt.h
 z-util.o: z-util.c $(HDRS) z-util.h
 z-virt.o: z-virt.c $(HDRS) z-virt.h z-util.h
-

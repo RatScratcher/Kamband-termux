@@ -67,6 +67,8 @@
 
 #ifdef USE_SDL 
 
+#define USE_TRANSPARENCY
+
 #include "SDL.h"
 
 #ifdef USE_SDL_MIXER
@@ -93,6 +95,27 @@ extern char *SDL_keysymtostr(SDL_keysym *ks); /* this is the important one. */
 extern errr SDL_init_screen_cursor(Uint32 w, Uint32 h);
 extern errr SDL_DrawCursor(SDL_Surface *dst, SDL_Rect *dr);
 
+static void SDL_PutPixelRGBA(SDL_Surface *surface, int x, int y, Uint8 r, Uint8 g, Uint8 b, Uint8 a)
+{
+	Uint32 pixel = SDL_MapRGBA(surface->format, r, g, b, a);
+	int n;
+	Uint8 *pp = (Uint8 *)surface->pixels + y * surface->pitch + x * surface->format->BytesPerPixel;
+
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN
+	for (n = 0; n < surface->format->BytesPerPixel; ++n, ++pp)
+	{
+		*pp = (Uint8) (pixel & 0xFF);
+		pixel >>= 8;
+	}
+#else
+	pp += (surface->format->BytesPerPixel - 1);
+	for (n = 0; n < surface->format->BytesPerPixel; ++n, --pp)
+	{
+		*pp = (Uint8) (pixel & 0xFF);
+		pixel >>= 8;
+	}
+#endif
+}
 
 
 
@@ -1309,13 +1332,11 @@ static errr Term_pict_sdl_28x(int x, int y, byte a, char c)
 #ifdef USE_TRANSPARENCY
 static errr Term_pict_sdl_trans(int x, int y, int n, const byte *ap, const char *cp, const byte *tap, const char *tcp)
 {
-	term_data *td = (term_data*)(Term->data);
-	/* TODO load the "mask" into the Alpha channel of the graphics tiles
-	 * at load-time.
-	 */
+	/* Draw terrain then the entity */
+	Term_pict_sdl(x, y, n, tap, tcp);
+	Term_pict_sdl(x, y, n, ap, cp);
 
-	td->pict_hook(x, y, n, tap, tcp);
-	td->pict_hook(x, y, n, ap, cp);
+	return (0);
 }
 #endif
 
@@ -1791,6 +1812,20 @@ errr init_sdl(int oargc, char **oargv)
 		plog(format("Sorry, could not load %s", path));
 	} else
 	{
+#ifdef USE_TRANSPARENCY
+		/* Load the mask */
+		SDL_Surface *mask = NULL;
+		char maskname[64];
+		char maskpath[1024];
+
+		path_build(maskname, sizeof(maskname), "graf", "mask.bmp");
+		path_build(maskpath, 1023, ANGBAND_DIR_XTRA, maskname);
+
+		mask = SDL_LoadBMP(maskpath);
+
+		/* Scaling of mask is deferred until after tiles are scaled */
+#endif
+
 		td->t.higher_pict = use_graphics;
 		if (scale_fit || (scale_tiles && ftw && fth))
 		{
@@ -1812,6 +1847,67 @@ errr init_sdl(int oargc, char **oargv)
 				/*SDL_SaveBMP (screen_tiles.face, "dump.bmp");*/
 			}
 		}
+
+#ifdef USE_TRANSPARENCY
+		if (mask && screen_tiles.face)
+		{
+			SDL_Surface *new_face;
+
+			/* If tiles were scaled, we must scale mask too */
+			if (scale_fit || (scale_tiles && ftw && fth))
+			{
+				Uint32 mask_w = gw; /* original width, same as tiles */
+				Uint32 mask_h = gh;
+				Uint32 target_w = screen_tiles.w;
+				Uint32 target_h = screen_tiles.h;
+
+				mask = SDL_ScaleTiledBitmap(mask, mask_w, mask_h, target_w, target_h, TRUE);
+			}
+
+			if (mask) {
+				/* Add alpha channel to tiles */
+				new_face = SDL_DisplayFormatAlpha(screen_tiles.face);
+				if (new_face)
+				{
+					SDL_FreeSurface(screen_tiles.face);
+					screen_tiles.face = new_face;
+
+					/* Apply mask */
+					if (SDL_LockSurface(screen_tiles.face) == 0)
+					{
+						if (SDL_LockSurface(mask) == 0)
+						{
+							int x, y;
+							int w = screen_tiles.face->w;
+							int h = screen_tiles.face->h;
+							Uint8 r, g, b, a;
+							Uint8 mr, mg, mb;
+
+							for (y = 0; y < h; ++y)
+							{
+								for (x = 0; x < w; ++x)
+								{
+									SDL_GetPixel(mask, x, y, &mr, &mg, &mb);
+									SDL_GetPixel(screen_tiles.face, x, y, &r, &g, &b);
+
+									/* Black in mask is transparent */
+									if (mr == 0 && mg == 0 && mb == 0)
+										a = 0;
+									else
+										a = 255;
+
+									SDL_PutPixelRGBA(screen_tiles.face, x, y, r, g, b, a);
+								}
+							}
+							SDL_UnlockSurface(mask);
+						}
+						SDL_UnlockSurface(screen_tiles.face);
+					}
+				}
+				SDL_FreeSurface(mask);
+			}
+		}
+#endif
 	}
 
 

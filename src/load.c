@@ -920,10 +920,25 @@ static errr rd_dungeon(void)
 	/* Ignore illegal dungeons */
 	if ((ymax != DUNGEON_HGT) || (xmax != DUNGEON_WID))
 	{
-		/* XXX XXX XXX */
-		note(format("Ignoring illegal dungeon size (%d,%d).", xmax, ymax));
-		msg_print(NULL);
-		return (1);
+		/* Warn about zero-sized dungeons (older savefiles?) */
+		if ((ymax == 0) && (xmax == 0))
+		{
+			/* Warn */
+			note(format("Warning: Dungeon size recorded as (0,0). Assuming default (%d,%d).",
+			            DUNGEON_WID, DUNGEON_HGT));
+			msg_print(NULL);
+
+			/* Hack -- Use default */
+			ymax = DUNGEON_HGT;
+			xmax = DUNGEON_WID;
+		}
+		else
+		{
+			/* XXX XXX XXX */
+			note(format("Ignoring illegal dungeon size (%d,%d).", xmax, ymax));
+			msg_print(NULL);
+			return (1);
+		}
 	}
 
 	/* Ignore illegal dungeons */

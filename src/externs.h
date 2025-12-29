@@ -437,6 +437,7 @@ extern object_type *item_effect(cptr, cptr, bool, bool, int,
 	bool(hook) (object_type *), s16b);
 
 /* dungeon.c */
+extern void dungeon_save_wilderness_location(void);
 extern void play_game(bool new_game);
 
 /* files.c */

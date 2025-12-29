@@ -521,12 +521,13 @@ errr load_HEX_font_sdl(font_data *fd, cptr filename, bool justmetrics)
 	}
 
 	/* Might as well allocate the bitmap here. */
-	/* XXX I'm not sure what pixel format to use but the text blitter is 
-	 * probably the wrong thing to start optimizing.
+	/* We use an 8-bit surface to allow cheap palette swapping for text coloring.
+	 * We use RLE with ColorKey 0 (background) to optimize blitting.
 	 */
 	fd->face = SDL_CreateRGBSurface(SDL_SWSURFACE, fd->w, 256*fd->h,8,0,0,0,0); 
 	if(!(fd->face)) return -1;
-	SDL_SetAlpha(fd->face, SDL_RLEACCEL, SDL_ALPHA_OPAQUE); /* use RLE */
+	SDL_FillRect(fd->face, NULL, 0); /* Clear to background index 0 */
+	SDL_SetColorKey(fd->face, SDL_SRCCOLORKEY | SDL_RLEACCEL, 0);
 
 	rewind(f);
 

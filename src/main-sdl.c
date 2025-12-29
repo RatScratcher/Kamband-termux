@@ -1077,7 +1077,22 @@ static errr Term_xtra_sdl(int n, int v)
 		/* use the screen, or resume from such a cleaned up state. */
 		/* This action is currently only used on UNIX machines */
 
-		/* TODO this should probably do something... no, nevermind. */
+		/* Suspend */
+		if (!v)
+		{
+			/* Iconify the window */
+			SDL_WM_IconifyWindow();
+
+			/* Pause audio */
+			SDL_PauseAudio(1);
+		}
+
+		/* Resume */
+		else
+		{
+			/* Resume audio */
+			SDL_PauseAudio(0);
+		}
 
 		return (0);
 

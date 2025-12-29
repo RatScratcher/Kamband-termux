@@ -79,11 +79,7 @@ void do_cmd_go_down(void)
 
 	if (p_ptr->inside_special == SPECIAL_WILD)
 	{
-	  /* HACK: Save the current location. */
-	  p_ptr->wilderness_px = p_ptr->px;
-	  p_ptr->wilderness_py = p_ptr->py;
-	  p_ptr->wilderness_depth = p_ptr->depth;
-
+	  dungeon_save_wilderness_location();
 	  p_ptr->inside_special = 0;
 	}
 

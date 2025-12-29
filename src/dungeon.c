@@ -474,6 +474,19 @@ static void regen_monsters(void)
 
 
 /*
+ * Save the wilderness location when entering a dungeon/building/etc.
+ */
+void dungeon_save_wilderness_location(void)
+{
+	if (p_ptr->inside_special == SPECIAL_WILD)
+	{
+		p_ptr->wilderness_px = p_ptr->px;
+		p_ptr->wilderness_py = p_ptr->py;
+		p_ptr->wilderness_depth = p_ptr->depth;
+	}
+}
+
+/*
  * Process environment (Burning Oil, Acid, etc.)
  */
 static void process_environment(void)
@@ -1337,11 +1350,7 @@ static void process_world(void)
 			{
 				mprint(MSG_BONUS, "You feel yourself yanked downwards!");
 
-				if (p_ptr->inside_special == SPECIAL_WILD) {
-				  p_ptr->wilderness_px = p_ptr->px;
-				  p_ptr->wilderness_py = p_ptr->py;
-				  p_ptr->wilderness_depth = p_ptr->depth;
-				}
+				dungeon_save_wilderness_location();
 
 				/* New depth */
 				p_ptr->depth = p_ptr->max_depth;

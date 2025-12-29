@@ -136,10 +136,6 @@ They just made the source harder to read.
 /* You need to define this if compiling for Angband 2.7.9 throug 2.8.x
  * It's probably only relevant for MAngband, though. XXX */
 
-/* META_ADDRESS is probably only defined in MAngband, right? XXX XXX XXX */
-#if defined(MANGBAND) || defined(META_ADDRESS) 
-#define OLD_TERM_28X
-#endif
 
 /*#ifdef USE_GRAPHICS
 #define USE_TILE_GRAPHICS
@@ -827,8 +823,6 @@ static errr Term_xtra_sdl(int n, int v)
 						FILE *tmp;
 						int i;
 
-#ifndef OLD_TERM_28X /* I'll deal with MAngband later. XXX */
-
 					/* Try to toggle graphics. */
 					case SDLK_SCROLLOCK:
 						use_graphics = !use_graphics;
@@ -841,7 +835,6 @@ static errr Term_xtra_sdl(int n, int v)
 
 						/*sprintf(buf, "%s-%s.prf", (use_graphics ? "graf" : "font"), ANGBAND_SYS);*/
 						break;
-#endif
 
 					/* Try to save a screenshot. */
 					case SDLK_PRINT:
@@ -1398,15 +1391,6 @@ static errr Term_pict_sdl(int x, int y, int n,  const byte *ap, const char *cp)
 	return (0);
 }
 
-/* We need a different version of Term_pict_sdl() for older versions
- * of the Angband term code. This is mostly only necessary for MAngband.
- */
-#ifdef OLD_TERM_28X
-static errr Term_pict_sdl_28x(int x, int y, byte a, char c)
-{
-	return Term_pict_sdl(x, y, 1, &a, &c);
-}
-#endif
 
 /* We also need a different version in case transparency is enabled!
  * Of course, that's not implemented yet but what the heck...
@@ -1530,15 +1514,11 @@ static void term_data_link(int i)
 	td->curs_hook = t->curs_hook = Term_curs_sdl;
 	td->text_hook = t->text_hook = Term_text_sdl;
 
-#ifdef OLD_TERM_28X /* These #ifdefs are essential. Sorry. */
-	td->pict_hook = t->pict_hook = Term_pict_sdl_28x;
-#else
 # ifdef USE_TRANSPARENCY
 	td->pict_hook = t->pict_hook = Term_pict_sdl_trans;
 # else
 	td->pict_hook = t->pict_hook = Term_pict_sdl;
 # endif
-#endif
 
 	/* Remember where we came from */
 	t->data = (vptr)(td);
@@ -1598,17 +1578,11 @@ errr init_sdl(int oargc, char **oargv)
 #endif
 
 
-#ifdef OLD_TERM_28X
-	use_graphics = 0;
-	strcpy(fontname, "vga8x16.hex");
-	strcpy(tilebmpname, "16x16.bmp");
-#else
 	use_graphics = (arg_graphics == TRUE);
 	ANGBAND_GRAF = "new"; /* not necessarily right.. set again below. XXX */
 	/*ANGBAND_SYS = "sdl";*/ 
 	path_build(fontname, sizeof(fontname), "font", "vga8x16.hex");
 	path_build(tilebmpname, sizeof(tilebmpname), "graf", "16x16.bmp");
-#endif
 
 
 
@@ -1875,11 +1849,7 @@ errr init_sdl(int oargc, char **oargv)
 		/* I can't believe that this is what I'm supposed to do: XXX XXX XXX*/
 		if (gw == 8 && gh == 8)
 		{
-			#ifdef OLD_TERM_28X
-
-			#else
 			ANGBAND_GRAF = "old";
-			#endif
 		}
 	}
 	if (use_graphics)

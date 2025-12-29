@@ -7034,8 +7034,8 @@ static char bolt_char(int y, int x, int ny, int nx)
  * There are just enough grids to cover the whole level. If there are
  * nested ``project'' calls, the array of grids will be shared between them.
  */
-static byte cave_proj_x[MAX_PROJECT_GRIDS];
-static byte cave_proj_y[MAX_PROJECT_GRIDS];
+static s16b cave_proj_x[MAX_PROJECT_GRIDS];
+static s16b cave_proj_y[MAX_PROJECT_GRIDS];
 static byte cave_proj_r[MAX_PROJECT_GRIDS];
 static s16b cave_proj_dam[MAX_PROJECT_GRIDS];
 
@@ -7045,7 +7045,7 @@ static s16b max_project_grid = 0;
 /* 
  * Add a new grid to the array.
  */
-static bool project_grid(byte y, byte x, byte r, int dam)
+static bool project_grid(int y, int x, int r, int dam)
 {
 	if (max_project_grid < MAX_PROJECT_GRIDS)
 	{
@@ -7068,7 +7068,7 @@ static bool project_grid(byte y, byte x, byte r, int dam)
  * Draw some visual effects for spells.
  */
 
-static void draw_spell_effects(byte y, byte x, byte y2, byte x2, int typ,
+static void draw_spell_effects(int y, int x, int y2, int x2, int typ,
 	int rad)
 {
 	if (!p_ptr->blind && player_has_los_bold(y, x))
@@ -7177,7 +7177,7 @@ static bool project_finalize(s16b start, int who, int dam, int typ_inp,
  *
  */
 
-static void project_bolt_beam_ball_aux(int who, int rad, byte y, byte x,
+static void project_bolt_beam_ball_aux(int who, int rad, int y, int x,
 	int typ, u32b flg, int dam)
 {
 	int dist;

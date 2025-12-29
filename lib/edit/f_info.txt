@@ -667,9 +667,6 @@ G:#:R
 N:207:dream portal
 G:@:B
 
-N:217:dream exit
-G:>:B
-
 N:208:rune
 G:[:y
 
@@ -696,3 +693,6 @@ G:-:w
 
 N:216:stream of acid
 G:*:g
+
+N:217:dream exit
+G:>:B

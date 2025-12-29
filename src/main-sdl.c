@@ -191,9 +191,9 @@ struct term_data
 
 	cptr		name;
 
-	Uint32 width, height, bpp, flags; 
-	/* XXX width, height, bpp, and flags are only used to provide hints to 
-	 * Term_init_sdl(). Consider them write-only values!
+	Uint32 hint_width, hint_height, hint_bpp, hint_flags;
+	/* These fields are used to provide initialization hints to Term_init_sdl().
+	 * They are write-only values!
 	 * If you need  to read the actual window dimensions, use
 	 * face->w, face->h, and face->format
 	 */
@@ -662,14 +662,14 @@ static void Term_init_sdl(term *t)
 	char got[200];
 	term_data *td = (term_data*)(t->data);
 
-	if (td->width && td->height && td == &(data[0])) {
-		if (arg_fullscreen) td->flags |= SDL_FULLSCREEN | SDL_HWSURFACE | SDL_DOUBLEBUF;
-		td->face = SDL_SetVideoMode(td->width, td->height, td->bpp, td->flags);
+	if (td->hint_width && td->hint_height && td == &(data[0])) {
+		if (arg_fullscreen) td->hint_flags |= SDL_FULLSCREEN | SDL_HWSURFACE | SDL_DOUBLEBUF;
+		td->face = SDL_SetVideoMode(td->hint_width, td->hint_height, td->hint_bpp, td->hint_flags);
 		if (td->face == NULL) {
 			plog("SDL could not initialize video mode."); 
 		}
-		if (td->face->flags != td->flags) {
-			strncpy(asked, formatsdlflags(td->flags), 199);
+		if (td->face->flags != td->hint_flags) {
+			strncpy(asked, formatsdlflags(td->hint_flags), 199);
 			asked[199] = 0;
 			strncpy(got, formatsdlflags(td->face->flags), 199);
 			got[199] = 0;
@@ -1876,9 +1876,9 @@ errr init_sdl(int oargc, char **oargv)
 	}
 
 	/* XXX possibly, these should be calculated in Term_init_sdl.c */
-	td->width = 80 * td->w; 
-	td->height = 24 * td->h; 
-	td->bpp = bpp; /* 0 is for current display bpp */
+	td->hint_width = 80 * td->w;
+	td->hint_height = 24 * td->h;
+	td->hint_bpp = bpp; /* 0 is for current display bpp */
 
 	td->cursor_on = TRUE;
 	td->cursor_magic = TRUE;

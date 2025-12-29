@@ -744,25 +744,20 @@ static void cleanup_sound(void)
 
 
 /*
- * XXX XXX XXX Do a "user action" on the current "term"
+ * React to the "Term_user" hook.
  *
- * This function allows the visual module to do things.
+ * This function is called when the user presses the '!' key.
+ * It is intended for system-specific interactions, such as
+ * executing shell commands.
  *
- * This function is currently unused, but has access to the "info"
- * field of the "term" to hold an extra argument.
- *
- * In general, this function should return zero if the action is successfully
- * handled, and non-zero if the action is unknown or incorrectly handled.
+ * Currently, the SDL port does not support any such actions.
  */
 static errr Term_user_sdl(int n)
 {
-	/*term_data *td = (term_data*)(Term->data);*/
+	/* Unused parameter */
+	(void)n;
 
-	/* XXX XXX XXX Handle the request */
-
-	/* TODO What? Huh? */
-
-	/* Unknown */
+	/* Not handled */
 	return (1);
 }
 
@@ -1369,14 +1364,15 @@ inline static errr Term_tile_sdl (int x, int y, Uint8 a, Uint8 c){
  */
 
 
+static errr Term_text_sdl(int x, int y, int n, byte a, cptr s);
+
 static errr Term_pict_sdl(int x, int y, int n,  const byte *ap, const char *cp)
 {
 	term_data *td = (term_data*)(Term->data);
 
 	if (!td->gt || !td->gt->face)
 	{
-		errr static Term_text_sdl(int x, int y, int n, const byte *ap, const char *cp);
-		Term_text_sdl(x, y, n, ap, cp);
+		Term_text_sdl(x, y, n, *ap, cp);
 	} else
 	while(n--)
 	{

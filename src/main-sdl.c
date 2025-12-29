@@ -258,6 +258,52 @@ static term_data data[MAX_TERM_DATA];
 #ifdef USE_SDL_MIXER
 /* An array of sound effects */
 static Mix_Chunk *sound_chunks[SOUND_MAX];
+#else
+/* Sound structures for manual mixing */
+typedef struct {
+	Uint8 *data;
+	Uint32 length;
+} SoundSample;
+
+static SoundSample sound_samples[SOUND_MAX];
+
+/* Mixing channels */
+#define NUM_CHANNELS 8
+typedef struct {
+	const Uint8 *position;
+	Uint32 remaining;
+	int active;
+} AudioChannel;
+
+static AudioChannel channels[NUM_CHANNELS];
+static SDL_AudioSpec audio_spec;
+
+static void audio_callback(void *userdata, Uint8 *stream, int len)
+{
+	int i;
+	/* Silence the buffer */
+	memset(stream, audio_spec.silence, len);
+
+	/* Mix active channels */
+	for (i = 0; i < NUM_CHANNELS; i++)
+	{
+		if (channels[i].active)
+		{
+			Uint32 mix_len = channels[i].remaining;
+			if (mix_len > (Uint32)len) mix_len = len;
+
+			SDL_MixAudio(stream, (Uint8 *)channels[i].position, mix_len, SDL_MIX_MAXVOLUME);
+
+			channels[i].position += mix_len;
+			channels[i].remaining -= mix_len;
+
+			if (channels[i].remaining == 0)
+			{
+				channels[i].active = 0;
+			}
+		}
+	}
+}
 #endif
 
 static bool arg_fullscreen = FALSE;
@@ -675,6 +721,27 @@ static void cleanup_sound(void)
 	/* Close the audio */
 	Mix_CloseAudio();
 }
+#else
+/*
+ * Cleanup the sound support
+ */
+static void cleanup_sound(void)
+{
+	int i;
+
+	/* Close the audio */
+	SDL_CloseAudio();
+
+	/* Free the sound effects */
+	for (i = 1; i < SOUND_MAX; i++)
+	{
+		if (sound_samples[i].data)
+		{
+			free(sound_samples[i].data);
+			sound_samples[i].data = NULL;
+		}
+	}
+}
 #endif
 
 
@@ -900,7 +967,22 @@ static errr Term_xtra_sdl(int n, int v)
 			}
 		}
 #else
-		/* TODO We can actually make noise without the mixer too... */
+		if (use_sound && (v >= 0) && (v < SOUND_MAX) && sound_samples[v].data)
+		{
+			int i;
+			SDL_LockAudio();
+			for (i = 0; i < NUM_CHANNELS; i++)
+			{
+				if (!channels[i].active)
+				{
+					channels[i].position = sound_samples[v].data;
+					channels[i].remaining = sound_samples[v].length;
+					channels[i].active = 1;
+					break;
+				}
+			}
+			SDL_UnlockAudio();
+		}
 #endif
 
 		return (0);
@@ -1651,6 +1733,75 @@ errr init_sdl(int oargc, char **oargv)
 
 			/* Register cleanup function */
 			atexit(cleanup_sound);
+		}
+	}
+#else
+	if (SDL_InitSubSystem(SDL_INIT_AUDIO) != 0) {
+		plog(format("SDL Audio initialization failed: %s", SDL_GetError()));
+	} else {
+		SDL_AudioSpec desired;
+
+		desired.freq = 22050;
+		desired.format = AUDIO_S16SYS;
+		desired.channels = 2;
+		desired.samples = 4096;
+		desired.callback = audio_callback;
+		desired.userdata = NULL;
+
+		if (SDL_OpenAudio(&desired, &audio_spec) < 0) {
+			plog(format("SDL Audio open failed: %s", SDL_GetError()));
+		} else {
+			int i;
+			char wav_file[1024];
+			char real_file[1024];
+
+			/* Load sound effects */
+			for (i = 1; i < SOUND_MAX; i++)
+			{
+				SDL_AudioSpec wav_spec;
+				Uint8 *wav_buf;
+				Uint32 wav_len;
+
+				/* Build the filename */
+				strnfmt(wav_file, sizeof(wav_file), "%s.wav", angband_sound_name[i]);
+				path_build(real_file, sizeof(real_file), ANGBAND_DIR_XTRA, "sound");
+				path_build(real_file, sizeof(real_file), real_file, wav_file);
+
+				/* Load the sound effect */
+				if (SDL_LoadWAV(real_file, &wav_spec, &wav_buf, &wav_len) != NULL) {
+					SDL_AudioCVT cvt;
+					int ret = SDL_BuildAudioCVT(&cvt, wav_spec.format, wav_spec.channels, wav_spec.freq,
+										  audio_spec.format, audio_spec.channels, audio_spec.freq);
+					if (ret == -1) {
+						SDL_FreeWAV(wav_buf);
+					} else if (ret == 0) {
+						/* No conversion needed */
+						sound_samples[i].data = malloc(wav_len);
+						if (sound_samples[i].data) {
+							memcpy(sound_samples[i].data, wav_buf, wav_len);
+							sound_samples[i].length = wav_len;
+						}
+						SDL_FreeWAV(wav_buf);
+					} else {
+						/* Conversion needed */
+						cvt.buf = malloc(wav_len * cvt.len_mult);
+						if (cvt.buf) {
+							memcpy(cvt.buf, wav_buf, wav_len);
+							cvt.len = wav_len;
+							SDL_ConvertAudio(&cvt);
+							sound_samples[i].data = cvt.buf;
+							sound_samples[i].length = cvt.len_cvt;
+						}
+						SDL_FreeWAV(wav_buf);
+					}
+				}
+			}
+
+			/* Register cleanup function */
+			atexit(cleanup_sound);
+
+			/* Start audio */
+			SDL_PauseAudio(0);
 		}
 	}
 #endif

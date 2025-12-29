@@ -2472,13 +2472,17 @@ static bool project_f(int who, int r, int y, int x, int dam, int typ)
 		case GF_MAKE_PET_SCALING:
 		{
 			int i;
+			bool summoned = FALSE;
 
 			if (p_ptr->inside_special == SPECIAL_ARENA)
 				break;
 
-			if (p_ptr->number_pets >
+			if (p_ptr->number_pets >=
 				adj_chr_pet_summon[p_ptr->stat_ind[A_CHR]])
+			{
+				if (who == -1) msg_print("You have too many pets!");
 				break;
+			}
 
 			if (dam > 10) dam = 10;
 
@@ -2488,7 +2492,13 @@ static bool project_f(int who, int r, int y, int x, int dam, int typ)
 				{
 					p_ptr->number_pets++;
 					obvious = TRUE;
+					summoned = TRUE;
 				}
+			}
+
+			if (!summoned && who == -1)
+			{
+				msg_print("The summoning fails!");
 			}
 
 			/* Update some things */

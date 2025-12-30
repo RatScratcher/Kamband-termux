@@ -905,10 +905,97 @@ static void get_extra(void)
 		p_ptr->mutations2 = 0L;
 		p_ptr->mutations3 = 0L;
 
+		/* Giant pulsing brain for all mutants */
+		{
+			int which_mut = MUT_PLUS_INT;
+			int which_var = which_mut / 32;
+			u32b which_flg = 1L << (which_mut % 32);
+
+			switch (which_var)
+			{
+				case 0:
+					p_ptr->mutations1 |= which_flg;
+					break;
+				case 1:
+					p_ptr->mutations2 |= which_flg;
+					break;
+				case 2:
+					p_ptr->mutations3 |= which_flg;
+					break;
+			}
+			mprint(MSG_WARNING, mutation_names[which_mut][1]);
+		}
+
 		for (i = 0; i < j; i++)
 		{
-			generate_mutation();
+			int which_mut;
+			int which_var;
+			u32b which_flg;
+			bool looper = TRUE;
+			int attempts = 0;
+
+			while (looper && attempts < 1000)
+			{
+				which_mut = rand_int(MAX_MUTS);
+				attempts++;
+
+				/* Banned mutations */
+				if (which_mut == MUT_PARALYZED) continue;
+				if (which_mut == MUT_STUNNED) continue;
+				if (which_mut == MUT_BLEEDING) continue;
+				if (which_mut == MUT_EXP_DRAIN) continue;
+				if (which_mut == MUT_PARASITES) continue;
+				if (which_mut == MUT_BLIND) continue;
+				if (which_mut == MUT_MINUS_INT) continue;
+				if (which_mut == MUT_TELEPORT) continue;
+				if (which_mut == MUT_CONFUSED) continue;
+				if (which_mut == MUT_HALLUC) continue;
+
+				/* Already have Giant pulsing brain */
+				if (which_mut == MUT_PLUS_INT) continue;
+
+				which_var = which_mut / 32;
+				which_flg = 1L << (which_mut % 32);
+
+				switch (which_var)
+				{
+					case 0:
+						if (!(p_ptr->mutations1 & which_flg))
+						{
+							p_ptr->mutations1 |= which_flg;
+							looper = FALSE;
+						}
+						break;
+
+					case 1:
+						if (!(p_ptr->mutations2 & which_flg))
+						{
+							p_ptr->mutations2 |= which_flg;
+							looper = FALSE;
+						}
+						break;
+
+					case 2:
+						if (!(p_ptr->mutations3 & which_flg))
+						{
+							p_ptr->mutations3 |= which_flg;
+							looper = FALSE;
+						}
+						break;
+				}
+			}
+
+			if (!looper)
+			{
+				mprint(MSG_WARNING, mutation_names[which_mut][1]);
+			}
 		}
+
+		/* Update after all mutations added */
+		p_ptr->update |= PU_BONUS;
+		p_ptr->redraw |= (PR_STATE | PR_MAP);
+		handle_stuff();
+		msg_print(NULL);
 	}
 
 	/* Experience factor */

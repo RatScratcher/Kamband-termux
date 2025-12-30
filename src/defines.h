@@ -229,8 +229,10 @@
  * largest illuminatable room, but no room is larger than 800 grids.  We
  * must also be large enough to allow "good enough" use as a circular queue,
  * to calculate monster flow, but note that the flow code is "paranoid".
+ *
+ * We must also be large enough to hold the whole screen for target_set.
  */
-#define TEMP_MAX		1536
+#define TEMP_MAX		4096
 
 
 /*

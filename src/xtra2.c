@@ -3477,9 +3477,12 @@ static void target_set_prepare(int mode)
 			}
 
 			/* Save the location */
-			temp_x[temp_n] = x;
-			temp_y[temp_n] = y;
-			temp_n++;
+			if (temp_n < TEMP_MAX)
+			{
+				temp_x[temp_n] = x;
+				temp_y[temp_n] = y;
+				temp_n++;
+			}
 		}
 	}
 

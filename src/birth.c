@@ -867,6 +867,18 @@ static void get_stats(void)
 			p_ptr->stat_cur[i] = p_ptr->stat_max[i] = stat_use[i];
 		}
 	}
+
+	/* Hack -- Mutant Corrupted always have high INT */
+	if (p_ptr->prace == RACE_MUTANT && p_ptr->pclass == CLASS_CORRUPTED)
+	{
+		/* Ensure > 18/100 */
+		if (p_ptr->stat_max[A_INT] < 119)
+		{
+			p_ptr->stat_max[A_INT] = 119 + randint(20);
+			p_ptr->stat_cur[A_INT] = p_ptr->stat_max[A_INT];
+			stat_use[A_INT] = p_ptr->stat_max[A_INT];
+		}
+	}
 }
 
 
@@ -923,7 +935,78 @@ static void get_extra(void)
 
 		for (i = 0; i < j; i++)
 		{
-			generate_mutation();
+			int attempts = 0;
+			bool banned = TRUE;
+
+			while (banned && attempts < 1000)
+			{
+				banned = FALSE;
+				generate_mutation();
+
+				/* Remove banned mutations */
+				/* Brain shrivels */
+				if (p_ptr->mutations2 & (1L << (MUT_MINUS_INT - 32)))
+				{
+					p_ptr->mutations2 &= ~(1L << (MUT_MINUS_INT - 32));
+					banned = TRUE;
+				}
+				/* Permanently blind */
+				if (p_ptr->mutations2 & (1L << (MUT_BLIND - 32)))
+				{
+					p_ptr->mutations2 &= ~(1L << (MUT_BLIND - 32));
+					banned = TRUE;
+				}
+				/* Randomly hallucinating */
+				if (p_ptr->mutations2 & (1L << (MUT_HALLUC - 32)))
+				{
+					p_ptr->mutations2 &= ~(1L << (MUT_HALLUC - 32));
+					banned = TRUE;
+				}
+				/* Disoriented */
+				if (p_ptr->mutations2 & (1L << (MUT_CONFUSED - 32)))
+				{
+					p_ptr->mutations2 &= ~(1L << (MUT_CONFUSED - 32));
+					banned = TRUE;
+				}
+				/* Epilepsy */
+				if (p_ptr->mutations2 & (1L << (MUT_PARALYZED - 32)))
+				{
+					p_ptr->mutations2 &= ~(1L << (MUT_PARALYZED - 32));
+					banned = TRUE;
+				}
+				/* Blood doesn't clot */
+				if (p_ptr->mutations2 & (1L << (MUT_BLEEDING - 32)))
+				{
+					p_ptr->mutations2 &= ~(1L << (MUT_BLEEDING - 32));
+					banned = TRUE;
+				}
+				/* Parasitic worms */
+				if (p_ptr->mutations2 & (1L << (MUT_PARASITES - 32)))
+				{
+					p_ptr->mutations2 &= ~(1L << (MUT_PARASITES - 32));
+					banned = TRUE;
+				}
+				/* Frequently stunned */
+				if (p_ptr->mutations2 & (1L << (MUT_STUNNED - 32)))
+				{
+					p_ptr->mutations2 &= ~(1L << (MUT_STUNNED - 32));
+					banned = TRUE;
+				}
+				/* Feeling lost */
+				if (p_ptr->mutations2 & (1L << (MUT_TELEPORT - 32)))
+				{
+					p_ptr->mutations2 &= ~(1L << (MUT_TELEPORT - 32));
+					banned = TRUE;
+				}
+				/* Lose memories */
+				if (p_ptr->mutations2 & (1L << (MUT_EXP_DRAIN - 32)))
+				{
+					p_ptr->mutations2 &= ~(1L << (MUT_EXP_DRAIN - 32));
+					banned = TRUE;
+				}
+
+				if (banned) attempts++;
+			}
 		}
 	}
 

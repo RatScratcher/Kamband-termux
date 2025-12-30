@@ -10077,7 +10077,7 @@ D:warning to enemies of the kobold race.
 
 N:692:Untouchable Ancient
 G:A:W
-I:120:30000:0:200:0
+I:120:30000d1:0:200:0
 W:15:3:0:0
 B:HIT:HURT:10d10
 B:TOUCH:UN_POWER

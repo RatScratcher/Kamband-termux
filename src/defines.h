@@ -169,7 +169,7 @@
 #define MAX_K_IDX		611	/* Max size for "k_info[]" */
 #define MAX_A_IDX		128	/* Max size for "a_info[]" */
 #define MAX_E_IDX		150	/* Max size for "e_info[]" */
-#define MAX_R_IDX		700	/* Max size for "r_info[]" */
+#define MAX_R_IDX		1024	/* Max size for "r_info[]" */
 #define MAX_V_IDX		200	/* Max size for "v_info[]" -KMW- */
 
 

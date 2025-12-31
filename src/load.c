@@ -406,6 +406,7 @@ static errr rd_store(int n)
 	rd_s16b(&st_ptr->bad_buy);
 
 	/* Read the items */
+	note(format("Loading Store %d items...", n));
 	while (1)
 	{
 		o_ptr = rd_item_store();
@@ -626,6 +627,7 @@ static errr rd_extra(void)
 	}
 
 	/* Class/Race/Gender/Spells */
+	note("Loading Player Race/Class...");
 	rd_byte(&p_ptr->prace);
 	rd_byte(&p_ptr->pclass);
 	rd_byte(&p_ptr->psex);
@@ -655,6 +657,7 @@ static errr rd_extra(void)
 	rd_s16b(&p_ptr->lev);
 
 	/* read arena information and rewards -KMW- */
+	note("Loading Arena Info...");
 	rd_byte(&p_ptr->which_arena);
 	rd_byte(&p_ptr->which_quest);
 	rd_s16b(&p_ptr->which_town);
@@ -712,6 +715,7 @@ static errr rd_extra(void)
 	rd_s16b(&p_ptr->sc);
 
 	/* Read the flags */
+	note("Loading Timed Flags...");
 	rd_s16b(&p_ptr->blind);
 	rd_s16b(&p_ptr->paralyzed);
 	rd_s16b(&p_ptr->confused);
@@ -757,6 +761,7 @@ static errr rd_extra(void)
 		rd_byte(&tmp8u);
 
     /* Read puzzle state */
+    note("Loading Puzzle State...");
     for (i = 0; i < 8; i++) rd_byte(&p_ptr->puzzle_solution[i]);
     for (i = 0; i < 8; i++) rd_byte(&p_ptr->puzzle_attempt[i]);
     rd_byte(&p_ptr->puzzle_next);
@@ -896,6 +901,7 @@ static errr rd_dungeon(void)
 	/*** Basic info ***/
 
 	/* Header info */
+	note("Loading Dungeon Header...");
 	rd_s16b(&depth);
 	rd_s16b(&p_ptr->inside_special);
 	rd_s16b(&p_ptr->wild_y);
@@ -954,6 +960,7 @@ static errr rd_dungeon(void)
 	/*** Run length decoding ***/
 
 	/* Load the dungeon data */
+	note("Loading Dungeon Info RLE...");
 	for (x = y = 0; y < DUNGEON_HGT;)
 	{
 		/* Grab RLE info */
@@ -983,6 +990,7 @@ static errr rd_dungeon(void)
 	/*** Run length decoding ***/
 
 	/* Load the dungeon data */
+	note("Loading Dungeon Feat RLE...");
 	for (x = y = 0; y < DUNGEON_HGT;)
 	{
 		/* Grab RLE info */
@@ -1015,6 +1023,7 @@ static errr rd_dungeon(void)
 	p_ptr->depth = depth;
 
 	/* Place player in dungeon */
+	note("Placing Player...");
 	if (!player_place(py, px))
 	{
 		note(format("Cannot place player (%d,%d)!", py, px));
@@ -1024,6 +1033,7 @@ static errr rd_dungeon(void)
 	/*** Objects ***/
 
 	/* Read the dungeon items */
+	note("Loading Dungeon Items...");
 	while (1)
 	{
 		s16b ix, iy;
@@ -1054,6 +1064,7 @@ static errr rd_dungeon(void)
 	/*** Monsters ***/
 
 	/* Read the monster count */
+	note("Loading Monsters...");
 	rd_u16b(&limit);
 
 	/* Hack -- verify */
@@ -1197,24 +1208,28 @@ static errr rd_savefile_new_aux(void)
 
 
 	/* Read RNG state */
+	note("Loading Randomizer Info...");
 	rd_randomizer();
 	if (arg_fiddle)
 		note("Loaded Randomizer Info");
 
 
 	/* Then the options */
+	note("Loading Option Flags...");
 	rd_options();
 	if (arg_fiddle)
 		note("Loaded Option Flags");
 
 
 	/* Then the "messages" */
+	note("Loading Messages...");
 	rd_messages();
 	if (arg_fiddle)
 		note("Loaded Messages");
 
 
 	/* Monster Memory */
+	note("Loading Monster Memory...");
 	rd_u16b(&tmp16u);
 
 	/* Incompatible save files */
@@ -1240,6 +1255,7 @@ static errr rd_savefile_new_aux(void)
 
 
 	/* Object Memory */
+	note("Loading Object Memory...");
 	rd_u16b(&tmp16u);
 
 	/* Incompatible save files */
@@ -1266,6 +1282,7 @@ static errr rd_savefile_new_aux(void)
 
 
 	/* Load the Quests */
+	note("Loading Quests...");
 	rd_u16b(&tmp16u);
 
 	/* Incompatible save files */
@@ -1286,6 +1303,7 @@ static errr rd_savefile_new_aux(void)
 
 
 	/* Load the recipe recall info. */
+	note("Loading Recipes...");
 
 	rd_u16b(&tmp16u);
 
@@ -1302,6 +1320,7 @@ static errr rd_savefile_new_aux(void)
 	}
 
 	/* Load the random artifacts. */
+	note("Loading Random Artifacts...");
 	rd_u16b(&tmp16u);
 	if (tmp16u > MAX_RANDARTS)
 	{
@@ -1323,6 +1342,7 @@ static errr rd_savefile_new_aux(void)
 	}
 
 	/* Load the random spells. */
+	note("Loading Random Spells...");
 
 	rd_u16b(&tmp16u);
 	if (tmp16u > MAX_SPELLS)
@@ -1345,6 +1365,7 @@ static errr rd_savefile_new_aux(void)
 
 
 	/* Load the Artifacts */
+	note("Loading Artifacts...");
 	rd_u16b(&tmp16u);
 
 	/* Incompatible save files */
@@ -1368,6 +1389,7 @@ static errr rd_savefile_new_aux(void)
 
 
 	/* Read the extra stuff */
+	note("Loading Extra Info...");
 	if (rd_extra())
 		return (25);
 	if (arg_fiddle)
@@ -1382,6 +1404,7 @@ static errr rd_savefile_new_aux(void)
 	cp_ptr = &class_info[p_ptr->pclass];
 
 	/* Read the inventory */
+	note("Loading Inventory...");
 	if (rd_inventory())
 	{
 		note("Unable to read inventory");
@@ -1390,6 +1413,7 @@ static errr rd_savefile_new_aux(void)
 
 
 	/* Read the stores */
+	note("Loading Stores...");
 	rd_u16b(&tmp16u);
 	for (i = 0; i < tmp16u; i++)
 	{

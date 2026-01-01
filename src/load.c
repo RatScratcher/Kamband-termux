@@ -31,6 +31,10 @@ static u32b v_check = 0L;
  */
 static u32b x_check = 0L;
 
+/*
+ * Hack -- error flag for "Unexpected End of File"
+ */
+static bool sf_error = FALSE;
 
 
 
@@ -73,6 +77,7 @@ static byte sf_get(void)
 	if (tmp == EOF)
 	{
 		note("Unexpected End of File encountered!");
+		sf_error = TRUE;
 		return 0;
 	}
 
@@ -1211,6 +1216,9 @@ static errr rd_savefile_new_aux(void)
 	u16b tmp16u;
 	u32b tmp32u;
 
+	/* Reset error flag */
+	sf_error = FALSE;
+
 
 	/* Mention the savefile version */
 	note(format("Loading a %d.%d.%d savefile...", sf_major, sf_minor,
@@ -1476,6 +1484,8 @@ static errr rd_savefile_new_aux(void)
 	/* Hack -- no ghosts */
 	r_info[MAX_R_IDX - 1].max_num = 0;
 
+	/* Check for errors */
+	if (sf_error) return (26);
 
 	/* Success */
 	return (0);
@@ -1534,13 +1544,14 @@ bool load_dungeon(s16b tag)
 	xor_byte = 0;
 	v_check = 0L;
 	x_check = 0L;
+	sf_error = FALSE;
 
 	/* Read the dungeon. */
 	if (rd_dungeon())
 		return TRUE;
 
 	/* Check for errors */
-	if (ferror(fff))
+	if (ferror(fff) || sf_error)
 		return TRUE;
 
 	/* Close the file */

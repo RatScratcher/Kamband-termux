@@ -924,13 +924,11 @@ static errr rd_dungeon(void)
 		if ((ymax == 0) && (xmax == 0))
 		{
 			/* Warn */
-			note(format("Warning: Dungeon size recorded as (0,0). Assuming default (%d,%d).",
-			            DUNGEON_WID, DUNGEON_HGT));
+			note("Warning: Dungeon size recorded as (0,0). Ignoring dungeon data.");
 			msg_print(NULL);
 
-			/* Hack -- Use default */
-			ymax = DUNGEON_HGT;
-			xmax = DUNGEON_WID;
+			/* Success */
+			return (0);
 		}
 		else
 		{
@@ -960,6 +958,9 @@ static errr rd_dungeon(void)
 		rd_byte(&count);
 		rd_byte(&tmp8u);
 
+		/* Verify the count */
+		if (count == 0) break;
+
 		/* Apply the RLE info */
 		for (i = count; i > 0; i--)
 		{
@@ -988,6 +989,41 @@ static errr rd_dungeon(void)
 		/* Grab RLE info */
 		rd_byte(&count);
 		rd_byte(&tmp8u);
+
+		/* Verify the count */
+		if (count == 0) break;
+
+		/* Apply the RLE info */
+		for (i = count; i > 0; i--)
+		{
+			/* Extract "fire life" */
+			cave_fire_life[y][x] = (u16b)tmp8u;
+
+			/* Advance/Wrap */
+			if (++x >= DUNGEON_WID)
+			{
+				/* Wrap */
+				x = 0;
+
+				/* Advance/Wrap */
+				if (++y >= DUNGEON_HGT)
+					break;
+			}
+		}
+	}
+
+
+	/*** Run length decoding ***/
+
+	/* Load the dungeon data */
+	for (x = y = 0; y < DUNGEON_HGT;)
+	{
+		/* Grab RLE info */
+		rd_byte(&count);
+		rd_byte(&tmp8u);
+
+		/* Verify the count */
+		if (count == 0) break;
 
 		/* Apply the RLE info */
 		for (i = count; i > 0; i--)

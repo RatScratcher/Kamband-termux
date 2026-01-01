@@ -1300,6 +1300,8 @@ static errr rd_savefile_new_aux(void)
 		rd_byte(&tmp8u);
 		recipe_recall[i] = tmp8u;
 	}
+	if (arg_fiddle)
+		note("Loaded Recipes");
 
 	/* Load the random artifacts. */
 	rd_u16b(&tmp16u);
@@ -1321,6 +1323,8 @@ static errr rd_savefile_new_aux(void)
 		rd_s16b(&ra_ptr->activation);
 		rd_byte(&ra_ptr->generated);
 	}
+	if (arg_fiddle)
+		note("Loaded Random Artifacts");
 
 	/* Load the random spells. */
 
@@ -1339,7 +1343,6 @@ static errr rd_savefile_new_aux(void)
 
 		rd_spell(rspell);
 	}
-
 	if (arg_fiddle)
 		note("Loaded Random Spells");
 
@@ -1387,6 +1390,8 @@ static errr rd_savefile_new_aux(void)
 		note("Unable to read inventory");
 		return (21);
 	}
+	if (arg_fiddle)
+		note("Loaded Inventory");
 
 
 	/* Read the stores */
@@ -1396,6 +1401,8 @@ static errr rd_savefile_new_aux(void)
 		if (rd_store(i))
 			return (22);
 	}
+	if (arg_fiddle)
+		note("Loaded Stores");
 
 	/* I'm not dead. (yet)... */
 	if (!p_ptr->is_dead)

@@ -567,6 +567,9 @@ static void rd_options(void)
 		rd_byte(&count);
 		rd_byte(&tmp8u);
 
+		/* Verify the count */
+		if (count == 0) break;
+
 		/* Apply the RLE info */
 		for (i = count; i > 0; i--)
 		{

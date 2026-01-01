@@ -558,37 +558,6 @@ static void rd_options(void)
 		}
 	}
 
-	/*** Run length decoding ***/
-
-	/* Load the dungeon data */
-	for (x = y = 0; y < DUNGEON_HGT;)
-	{
-		/* Grab RLE info */
-		rd_byte(&count);
-		rd_byte(&tmp8u);
-
-		/* Verify the count */
-		if (count == 0) break;
-
-		/* Apply the RLE info */
-		for (i = count; i > 0; i--)
-		{
-			/* Extract "fire life" */
-			cave_fire_life[y][x] = (u16b)tmp8u;
-
-			/* Advance/Wrap */
-			if (++x >= DUNGEON_WID)
-			{
-				/* Wrap */
-				x = 0;
-
-				/* Advance/Wrap */
-				if (++y >= DUNGEON_HGT)
-					break;
-			}
-		}
-	}
-
 	/*** Window Options ***/
 
 	/* Read the window flags */

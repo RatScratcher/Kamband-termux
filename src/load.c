@@ -64,9 +64,19 @@ static void note(cptr msg)
 static byte sf_get(void)
 {
 	byte c, v;
+	int tmp;
 
 	/* Get a character, decode the value */
-	c = getc(fff) & 0xFF;
+	tmp = getc(fff);
+
+	/* Check for EOF */
+	if (tmp == EOF)
+	{
+		note("Unexpected End of File encountered!");
+		return 0;
+	}
+
+	c = tmp & 0xFF;
 	v = c ^ xor_byte;
 	xor_byte = c;
 
@@ -785,6 +795,9 @@ static errr rd_extra(void)
 	/* Current turn */
 	rd_s32b(&turn);
 
+	/* Debug logging */
+	note(format("Loaded Turn: %ld", (long)turn));
+
 	/* Read the player_hp array */
 	rd_u16b(&tmp16u);
 
@@ -908,6 +921,10 @@ static errr rd_dungeon(void)
 
 	rd_s16b(&ymax);
 	rd_s16b(&xmax);
+
+	/* Debug logging */
+	note(format("Dungeon Header: Depth %d, PY %d, PX %d, YMAX %d, XMAX %d",
+	            (int)depth, (int)py, (int)px, (int)ymax, (int)xmax));
 	
 	/* Ignore illegal dungeons */
 	if ((depth < 0) || (depth >= MAX_DEPTH))
@@ -1439,6 +1456,8 @@ static errr rd_savefile_new_aux(void)
 	}
 	if (arg_fiddle)
 		note("Loaded Stores");
+
+	note("Starting to restore Dungeon...");
 
 	/* I'm not dead. (yet)... */
 	if (!p_ptr->is_dead)

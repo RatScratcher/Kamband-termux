@@ -1757,8 +1757,12 @@ bool load_player(void)
 		/* Invalid turn */
 		if (!turn)
 		{
-			msg_print("Error: Turn is 0.");
-			err = -1;
+			/* Warn */
+			msg_print("Warning: Turn is 0. Fixing.");
+			msg_print(NULL);
+
+			/* Fix */
+			turn = 1;
 		}
 
 		/* Message (below) */

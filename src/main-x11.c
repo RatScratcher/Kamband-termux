@@ -527,7 +527,7 @@ struct infofnt
 
 /* Initialize 'M' using Display 'D' */
 #define Metadpy_init_dpy(D) \
-	Metadpy_init_2(D,cNULL)
+	Metadpy_init_2(D,NULL)
 
 /* Initialize 'M' using a Display named 'N' */
 #define Metadpy_init_name(N) \
@@ -535,7 +535,7 @@ struct infofnt
 
 /* Initialize 'M' using the standard Display */
 #define Metadpy_init() \
-	Metadpy_init_name("")
+	Metadpy_init_name(NULL)
 
 
 /* Init an infowin by giving father as an (info_win*) (or NULL), and data */
@@ -2398,7 +2398,7 @@ errr init_x11(int argc, char *argv[])
 {
 	int i;
 
-	cptr dpy_name = "";
+	cptr dpy_name = NULL;
 
 	int num_term = 2; /* MAX_TERM_DATA; Changed by Ivan */
 

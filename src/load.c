@@ -953,7 +953,11 @@ static errr rd_dungeon(void)
 		rd_byte(&tmp8u);
 
 		/* Verify the count */
-		if (count == 0) break;
+		if (count == 0)
+		{
+			if (sf_error) break;
+			continue;
+		}
 
 		/* Apply the RLE info */
 		for (i = count; i > 0; i--)
@@ -985,7 +989,11 @@ static errr rd_dungeon(void)
 		rd_byte(&tmp8u);
 
 		/* Verify the count */
-		if (count == 0) break;
+		if (count == 0)
+		{
+			if (sf_error) break;
+			continue;
+		}
 
 		/* Apply the RLE info */
 		for (i = count; i > 0; i--)
@@ -1017,7 +1025,11 @@ static errr rd_dungeon(void)
 		rd_byte(&tmp8u);
 
 		/* Verify the count */
-		if (count == 0) break;
+		if (count == 0)
+		{
+			if (sf_error) break;
+			continue;
+		}
 
 		/* Apply the RLE info */
 		for (i = count; i > 0; i--)

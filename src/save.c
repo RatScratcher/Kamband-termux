@@ -1006,8 +1006,11 @@ static void wr_dungeon(void)
 			/* If the run is broken, or too full, flush it */
 			if ((tmp8u != prev_char) || (count == MAX_UCHAR))
 			{
-				wr_byte((byte) count);
-				wr_byte((byte) prev_char);
+				if (count)
+				{
+					wr_byte((byte) count);
+					wr_byte((byte) prev_char);
+				}
 				prev_char = tmp8u;
 				count = 1;
 			}
@@ -1037,8 +1040,11 @@ static void wr_dungeon(void)
 			/* If the run is broken, or too full, flush it */
 			if ((tmp8u != prev_char) || (count == MAX_UCHAR))
 			{
-				wr_byte((byte) count);
-				wr_byte((byte) prev_char);
+				if (count)
+				{
+					wr_byte((byte) count);
+					wr_byte((byte) prev_char);
+				}
 				prev_char = tmp8u;
 				count = 1;
 			}
@@ -1076,8 +1082,11 @@ static void wr_dungeon(void)
 			/* If the run is broken, or too full, flush it */
 			if ((tmp8u != prev_char) || (count == MAX_UCHAR))
 			{
-				wr_byte((byte) count);
-				wr_byte((byte) prev_char);
+				if (count)
+				{
+					wr_byte((byte) count);
+					wr_byte((byte) prev_char);
+				}
 				prev_char = tmp8u;
 				count = 1;
 			}

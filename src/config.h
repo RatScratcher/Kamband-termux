@@ -107,7 +107,7 @@
  * This flag enables the "POSIX" methods for "SAFE_SETUID".
  */
 #ifdef _POSIX_SAVED_IDS
-# define SAFE_SETUID_POSIX
+/* # define SAFE_SETUID_POSIX */
 #endif
 
 

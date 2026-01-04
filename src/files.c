@@ -4561,20 +4561,6 @@ static void handle_signal_abort(int sig)
 	if (!character_generated || character_saved)
 		quit(NULL);
 
-
-	/* Clear the bottom line */
-	Term_erase(0, 23, 255);
-
-	/* Give a warning */
-	Term_putstr(0, 23, -1, TERM_RED,
-		"A gruesome software bug LEAPS out at you!");
-
-	/* Message */
-	Term_putstr(45, 23, -1, TERM_RED, "Panic save...");
-
-	/* Flush output */
-	Term_fresh();
-
 	/* Panic Save */
 	p_ptr->panic_save = 1;
 
@@ -4587,17 +4573,14 @@ static void handle_signal_abort(int sig)
 	/* Attempt to save */
 	if (save_player())
 	{
-		Term_putstr(45, 23, -1, TERM_RED, "Panic save succeeded!");
+		write(2, "Panic save succeeded!\n", 22);
 	}
 
 	/* Save failed */
 	else
 	{
-		Term_putstr(45, 23, -1, TERM_RED, "Panic save failed!");
+		write(2, "Panic save failed!\n", 19);
 	}
-
-	/* Flush output */
-	Term_fresh();
 
 	/* Quit */
 	quit("software bug");

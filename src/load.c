@@ -187,6 +187,13 @@ static object_type *rd_item_aux(bool store)
 	if (kind == 0)
 		return NULL;
 
+	/* Paranoia */
+	if ((kind < 0) || (kind >= MAX_K_IDX))
+	{
+		sf_error = TRUE;
+		return NULL;
+	}
+
 	if (store)
 	{
 		MAKE(o_ptr, object_type);
@@ -260,6 +267,12 @@ static object_type *rd_item_aux(bool store)
 	{
 		artifact_type *a_ptr;
 
+		/* Paranoia */
+		if (o_ptr->name1 >= MAX_A_IDX)
+		{
+			o_ptr->name1 = 0;
+		}
+
 		/* Obtain the artifact info */
 		a_ptr = &a_info[o_ptr->name1];
 
@@ -272,6 +285,12 @@ static object_type *rd_item_aux(bool store)
 	if (o_ptr->name2)
 	{
 		ego_item_type *e_ptr;
+
+		/* Paranoia */
+		if (o_ptr->name2 >= MAX_E_IDX)
+		{
+			o_ptr->name2 = 0;
+		}
 
 		/* Obtain the ego-item info */
 		e_ptr = &e_info[o_ptr->name2];
@@ -306,6 +325,13 @@ static void rd_monster(monster_type * m_ptr)
 
 	/* Read the monster race */
 	rd_s16b(&m_ptr->r_idx);
+
+	/* Paranoia */
+	if ((m_ptr->r_idx < 0) || (m_ptr->r_idx >= MAX_R_IDX))
+	{
+		m_ptr->r_idx = 0;
+		sf_error = TRUE;
+	}
 
 	/* Read the other information */
 	rd_s16b(&m_ptr->fy);

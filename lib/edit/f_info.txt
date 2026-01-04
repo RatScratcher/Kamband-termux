@@ -696,3 +696,12 @@ G:*:g
 
 N:217:dream exit
 G:>:B
+
+N:218:fountain
+G:_:b
+
+N:219:Cartographer's Desk
+G:?:y
+
+N:220:Heroic Remains
+G:&:w

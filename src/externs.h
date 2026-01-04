@@ -578,6 +578,7 @@ extern s16b size_stack(object_type * stack, bool glob);
 extern object_type *get_item(cptr pmt, cptr str, int y, int x, int mode);
 
 /* object2.c */
+extern void set_generation_origin(int y, int x);
 extern void next_tag(object_type * o_ptr);
 extern void remove_tag(object_type * o_ptr);
 extern void remove_from_stack(object_type * o_ptr);
@@ -758,6 +759,9 @@ extern bool trap_creation(void);
 extern bool destroy_doors_touch(void);
 extern bool sleep_monsters_touch(void);
 extern void summon_pet_monster(void);
+extern bool detect_traps(void);
+extern bool detect_doors(void);
+extern bool detect_stairs(void);
 extern bool fetch_item(int wgt, int y, int x);
 
 /* store.c */

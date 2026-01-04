@@ -4250,6 +4250,56 @@ static void terrain_gen(void) {
 
 
 /*
+ * Populate the level with new features
+ */
+static void populate_features(void)
+{
+	int y, x, i;
+
+	/* Place Fountains */
+	for (i = 0; i < rand_range(2, 5); i++) {
+		int d = 0;
+		while (d < 1000) {
+			d++;
+			y = rand_int(DUNGEON_HGT);
+			x = rand_int(DUNGEON_WID);
+			if (cave_clean_bold(y, x) && (cave_info[y][x] & CAVE_ROOM)) {
+				cave_feat[y][x] = FEAT_FOUNTAIN;
+				break;
+			}
+		}
+	}
+
+	/* Place Cartographer's Desk */
+	if (rand_int(100) < 40) { /* 40% chance */
+		int d = 0;
+		while (d < 1000) {
+			d++;
+			y = rand_int(DUNGEON_HGT);
+			x = rand_int(DUNGEON_WID);
+			if (cave_clean_bold(y, x) && (cave_info[y][x] & CAVE_ROOM)) {
+				cave_feat[y][x] = FEAT_CARTOGRAPHER;
+				break;
+			}
+		}
+	}
+
+	/* Place Heroic Remains in dead ends */
+	for (y = 1; y < DUNGEON_HGT - 1; y++) {
+		for (x = 1; x < DUNGEON_WID - 1; x++) {
+			if (cave_floor_bold(y, x) && cave_naked_bold(y, x)) {
+				/* Check for 3 walls */
+				if (next_to_walls(y, x) >= 3) {
+					if (rand_int(100) < 5) { /* Rare */
+						cave_feat[y][x] = FEAT_HEROIC_REMAINS;
+					}
+				}
+			}
+		}
+	}
+}
+
+/*
  * Generate a new dungeon level
  *
  * Note that "dun_body" adds about 4000 bytes of memory to the stack.
@@ -4664,6 +4714,30 @@ static void cave_gen(void)
 	/* Place 1 or 2 up stairs near some walls */
 	alloc_stairs(FEAT_LESS, rand_range(1, 2), 3, (level_bg == FEAT_FOG || level_bg == FEAT_CHAOS_FOG));
 
+	/* Find level start (up stairs) to seed loot generation logic */
+	{
+		int sy, sx;
+		bool found_start = FALSE;
+		/* Scan for up stairs (FEAT_LESS) usually */
+		int start_feat = (!p_ptr->depth) ? FEAT_MORE : FEAT_LESS;
+		if (!p_ptr->depth && p_ptr->inside_special == SPECIAL_WILD) start_feat = FEAT_SHAFT;
+
+		for (sy = 0; sy < DUNGEON_HGT; sy++) {
+			for (sx = 0; sx < DUNGEON_WID; sx++) {
+				if (cave_feat[sy][sx] == start_feat) {
+					set_generation_origin(sy, sx);
+					found_start = TRUE;
+					break;
+				}
+			}
+			if (found_start) break;
+		}
+		if (!found_start) {
+			/* Fallback to center */
+			set_generation_origin(DUNGEON_HGT / 2, DUNGEON_WID / 2);
+		}
+	}
+
 	/* Determine the character location */
 	new_player_spot();
 
@@ -4714,6 +4788,9 @@ static void cave_gen(void)
 	/* Put some objects/gold in the dungeon */
 	alloc_object(ALLOC_SET_BOTH, ALLOC_TYP_OBJECT, randnor(DUN_AMT_ITEM,
 			3));
+
+	/* Populate with new features */
+	populate_features();
 
 	/* Do not light floors inside rooms. */
 	/* Floors outside rooms or walls are lit. */

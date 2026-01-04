@@ -3018,6 +3018,24 @@ static bool item_tester_hook_fetch(object_type * o_ptr)
  * Simply ask for an item using the standard ``get_item'' function, and
  * add it to the inventory.
  */
+bool detect_traps(void)
+{
+	u32b flg = PROJECT_GRID | PROJECT_ITEM;
+	return (project(-1, MAX_SIGHT * 5, p_ptr->py, p_ptr->px, 0, GF_DETECT_TRAP, flg));
+}
+
+bool detect_doors(void)
+{
+	u32b flg = PROJECT_GRID | PROJECT_ITEM;
+	return (project(-1, MAX_SIGHT * 5, p_ptr->py, p_ptr->px, 0, GF_DETECT_DOOR, flg));
+}
+
+bool detect_stairs(void)
+{
+	u32b flg = PROJECT_GRID | PROJECT_ITEM;
+	return (project(-1, MAX_SIGHT * 5, p_ptr->py, p_ptr->px, 0, GF_DETECT_STAIR, flg));
+}
+
 bool fetch_item(int wgt, int y, int x)
 {
 

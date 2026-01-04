@@ -39,6 +39,20 @@ static bool sf_error = FALSE;
 
 
 /*
+ * Hack -- Log information to a debug file.
+ */
+static void debug_log(cptr msg)
+{
+	FILE *fp;
+	fp = fopen("load_debug.log", "a");
+	if (fp)
+	{
+		fprintf(fp, "%s\n", msg);
+		fclose(fp);
+	}
+}
+
+/*
  * Hack -- Show information on the screen, one line at a time.
  *
  * Avoid the top two lines, to avoid interference with "msg_print()".
@@ -46,6 +60,9 @@ static bool sf_error = FALSE;
 static void note(cptr msg)
 {
 	static int y = 2;
+
+	/* Debug logging */
+	debug_log(msg);
 
 	/* Draw the message */
 	prt(msg, y, 0);
@@ -629,6 +646,8 @@ static errr rd_extra(void)
 	byte tmp8u;
 	u16b tmp16u;
 
+	debug_log("rd_extra: start");
+
 	rd_string(op_ptr->full_name, 32);
 
 	rd_string(p_ptr->died_from, 80);
@@ -780,6 +799,8 @@ static errr rd_extra(void)
 	rd_u32b(&seed_dungeon);
 	rd_u32b(&seed_wild);
 
+	debug_log("rd_extra: seeds read");
+
 	/* Special stuff */
 	rd_u16b(&p_ptr->panic_save);
 	rd_u16b(&p_ptr->total_winner);
@@ -788,6 +809,8 @@ static errr rd_extra(void)
 
 	/* Read "death" */
 	rd_byte(&p_ptr->is_dead);
+
+	debug_log("rd_extra: death flag read");
 
 	/* Read "feeling" */
 	rd_s16b(&feeling);
@@ -971,6 +994,7 @@ static errr rd_dungeon(void)
 
 	/*** Run length decoding ***/
 
+	debug_log("rd_dungeon: start RLE 1 (info)");
 	/* Load the dungeon data */
 	for (x = y = 0; y < DUNGEON_HGT;)
 	{
@@ -1007,6 +1031,7 @@ static errr rd_dungeon(void)
 
 	/*** Run length decoding ***/
 
+	debug_log("rd_dungeon: start RLE 2 (fire life)");
 	/* Load the dungeon data */
 	for (x = y = 0; y < DUNGEON_HGT;)
 	{
@@ -1043,6 +1068,7 @@ static errr rd_dungeon(void)
 
 	/*** Run length decoding ***/
 
+	debug_log("rd_dungeon: start RLE 3 (feat)");
 	/* Load the dungeon data */
 	for (x = y = 0; y < DUNGEON_HGT;)
 	{
@@ -1508,6 +1534,8 @@ static errr rd_savefile_new_aux(void)
 errr rd_savefile_new(void)
 {
 	errr err;
+
+	debug_log("rd_savefile_new: start");
 
 	/* The savefile is a binary file */
 	fff = my_fopen(savefile, "rb");

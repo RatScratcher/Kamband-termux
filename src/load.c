@@ -951,6 +951,7 @@ static void rd_messages(void)
 static errr rd_dungeon(void)
 {
 	int i, y, x;
+	int d;
 
 	s16b depth;
 	s16b py, px;
@@ -1139,6 +1140,40 @@ static errr rd_dungeon(void)
 
 	/* Save depth */
 	p_ptr->depth = depth;
+
+	/* Verify player location */
+	if (!in_bounds(py, px) || !cave_floor_bold(py, px))
+	{
+		bool found = FALSE;
+
+		note(format("Player at (%d,%d) is in a wall. Searching for floor...", py, px));
+
+		/* Search for a valid spot */
+		for (d = 1; d < 20; d++)
+		{
+			for (y = py - d; y <= py + d; y++)
+			{
+				for (x = px - d; x <= px + d; x++)
+				{
+					if (!in_bounds(y, x)) continue;
+					if (cave_floor_bold(y, x))
+					{
+						py = y;
+						px = x;
+						found = TRUE;
+						break;
+					}
+				}
+				if (found) break;
+			}
+			if (found) break;
+		}
+
+		if (found)
+		{
+			note(format("Moved player to (%d,%d).", py, px));
+		}
+	}
 
 	/* Place player in dungeon */
 	if (!player_place(py, px))

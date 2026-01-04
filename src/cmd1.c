@@ -1943,11 +1943,18 @@ void move_player(int dir, int jumping)
 		else if (cave_feat[y][x] >= FEAT_ALTAR_HEAD &&
 			cave_feat[y][x] <= FEAT_ALTAR_TAIL)
 		{
-
-			cptr name = f_name + f_info[cave_feat[y][x]].name;
-			cptr pref = (is_a_vowel(name[0])) ? "an" : "a";
-
-			msg_format("You see %s %s.", pref, name);
+			if (get_check("Pray at the altar? ")) {
+				msg_print("You pray at the altar.");
+				if (p_ptr->au > 100) {
+					p_ptr->au -= 100;
+					msg_print("You offer a small donation.");
+					p_ptr->blessed += 100;
+					p_ptr->hero += 100;
+					p_ptr->redraw |= (PR_GOLD);
+				} else {
+					msg_print("The altar seems unimpressed.");
+				}
+			}
 		}
 
 		/* Landed on an invisible trap */
@@ -2014,6 +2021,57 @@ void move_player(int dir, int jumping)
 		{
 			int dam = damroll(2, 2) + p_ptr->depth / 5;
 			fire_dam(dam, "burning oil");
+		}
+
+		/* Fountains */
+		else if (cave_feat[y][x] == FEAT_FOUNTAIN)
+		{
+			if (get_check("Drink from the fountain? ")) {
+				msg_print("You drink from the fountain.");
+				if (rand_int(100) < 33) {
+					msg_print("You feel refreshed!");
+					hp_player(100);
+					set_food(PY_FOOD_MAX - 1);
+				} else if (rand_int(100) < 50) {
+					do_inc_stat(rand_int(6));
+				} else {
+					msg_print("You feel enlightened!");
+					wiz_lite();
+				}
+				cave_set_feat(y, x, FEAT_FLOOR);
+			}
+		}
+
+		/* Cartographer's Desk */
+		else if (cave_feat[y][x] == FEAT_CARTOGRAPHER)
+		{
+			if (get_check("Examine the maps? ")) {
+				msg_print("You study the ancient maps.");
+				map_area();
+				/* Maybe detect some things too */
+				detect_traps();
+				detect_doors();
+				detect_stairs();
+				cave_set_feat(y, x, FEAT_FLOOR);
+			}
+		}
+
+		/* Heroic Remains */
+		else if (cave_feat[y][x] == FEAT_HEROIC_REMAINS)
+		{
+			if (get_check("Search the remains? ")) {
+				msg_print("You disturb the remains!");
+
+				/* Spawn Guardian */
+				summon_specific(y, x, p_ptr->depth + 5, SUMMON_UNDEAD);
+
+				/* Drop Loot */
+				/* Force good/great items */
+				place_object(y, x, TRUE, TRUE);
+				place_object(y, x, TRUE, TRUE);
+
+				cave_set_feat(y, x, FEAT_BROKEN);
+			}
 		}
 
         /* Dream Portal */

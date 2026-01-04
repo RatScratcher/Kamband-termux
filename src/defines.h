@@ -914,6 +914,10 @@
 #define FEAT_CRYSTAL            115
 #define FEAT_SANCTUM_DOOR       116
 
+#define FEAT_FOUNTAIN           218
+#define FEAT_CARTOGRAPHER       219
+#define FEAT_HEROIC_REMAINS     220
+
 /* Altars. */
 #define FEAT_ALTAR_HEAD         128
 #define FEAT_ALTAR_TAIL         159

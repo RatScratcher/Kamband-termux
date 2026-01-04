@@ -3226,8 +3226,8 @@ static bool ang_sort_comp_distance(vptr u, vptr v, int a, int b)
 	int py = p_ptr->py;
 	int px = p_ptr->px;
 
-	byte *x = (byte *) (u);
-	byte *y = (byte *) (v);
+	s16b *x = (s16b *) (u);
+	s16b *y = (s16b *) (v);
 
 	int da, db, kx, ky;
 
@@ -3266,10 +3266,10 @@ static bool ang_sort_comp_distance(vptr u, vptr v, int a, int b)
  */
 static void ang_sort_swap_distance(vptr u, vptr v, int a, int b)
 {
-	byte *x = (byte *) (u);
-	byte *y = (byte *) (v);
+	s16b *x = (s16b *) (u);
+	s16b *y = (s16b *) (v);
 
-	byte temp;
+	s16b temp;
 
 	/* Swap "x" */
 	temp = x[a];

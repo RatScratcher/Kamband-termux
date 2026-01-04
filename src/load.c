@@ -182,45 +182,9 @@ static void strip_bytes(int n)
 }
 
 
-/*
- * Read an object
- */
-static object_type *rd_item_aux(bool store)
+static void rd_item_body(object_type *o_ptr)
 {
-	u32b f1, f2, f3;
-	s16b kind;
-
-	object_kind *k_ptr;
-
 	char buf[128];
-
-	object_type *o_ptr;
-
-
-	/* Kind */
-	rd_s16b(&kind);
-
-	/* No object here. */
-	if (kind == 0)
-		return NULL;
-
-	/* Paranoia */
-	if ((kind < 0) || (kind >= MAX_K_IDX))
-	{
-		sf_error = TRUE;
-		return NULL;
-	}
-
-	if (store)
-	{
-		MAKE(o_ptr, object_type);
-	}
-	else
-	{
-		o_ptr = new_object();
-	}
-
-	o_ptr->k_idx = kind;
 
 	/* Special flags. */
 	rd_u32b(&o_ptr->flags1);
@@ -266,6 +230,65 @@ static object_type *rd_item_aux(bool store)
 	/* Save the inscription */
 	if (buf[0])
 		o_ptr->note = quark_add(buf);
+}
+
+
+/*
+ * Read an object
+ */
+static object_type *rd_item_aux(bool store)
+{
+	u32b f1, f2, f3;
+	s16b kind;
+
+	object_kind *k_ptr;
+
+	object_type *o_ptr;
+
+
+	/* Kind */
+	rd_s16b(&kind);
+
+	/* No object here. */
+	if (kind == 0)
+		return NULL;
+
+	/* Check for valid kind */
+	if ((kind < 0) || (kind >= MAX_K_IDX))
+	{
+		/* Warn */
+		note(format("Ignoring invalid item kind %d", kind));
+
+		/* Allocate dummy object to consume stream */
+		if (store)
+		{
+			MAKE(o_ptr, object_type);
+		}
+		else
+		{
+			o_ptr = new_object();
+		}
+		o_ptr->k_idx = 0;
+
+		/* Consume fields */
+		rd_item_body(o_ptr);
+
+		/* Return dummy */
+		return o_ptr;
+	}
+
+	if (store)
+	{
+		MAKE(o_ptr, object_type);
+	}
+	else
+	{
+		o_ptr = new_object();
+	}
+
+	o_ptr->k_idx = kind;
+
+	rd_item_body(o_ptr);
 
 	/* Obtain the "kind" template */
 	k_ptr = &k_info[o_ptr->k_idx];
@@ -863,6 +886,15 @@ static errr rd_inventory(void)
 		if (!o_ptr)
 			break;
 
+		/* Skip broken items */
+		if (!o_ptr->k_idx)
+		{
+			s16b slot;
+			rd_s16b(&slot);
+			remove_object(o_ptr);
+			continue;
+		}
+
 		/* Insert into the stack. */
 		foo = inven_carry(o_ptr);
 
@@ -1129,6 +1161,13 @@ static errr rd_dungeon(void)
 		/* Location */
 		rd_s16b(&iy);
 		rd_s16b(&ix);
+
+		/* Skip broken items */
+		if (!o_ptr->k_idx)
+		{
+			remove_object(o_ptr);
+			continue;
+		}
 
 		floor_carry(iy, ix, o_ptr);
 	}

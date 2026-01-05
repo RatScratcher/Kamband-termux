@@ -181,7 +181,7 @@
 /*
  * Maximal number of room types
  */
-#define ROOM_MAX	12
+#define ROOM_MAX	16
 
 
 
@@ -329,6 +329,36 @@ static void rand_dir(int *rdir, int *cdir)
 static void new_player_spot(void)
 {
 	int y = p_ptr->py, x = p_ptr->px;
+	int i;
+
+	/* Find level start (up stairs) to seed loot generation logic */
+	int start_feat = (!p_ptr->depth) ? FEAT_MORE : FEAT_LESS;
+	if (!p_ptr->depth && p_ptr->inside_special == SPECIAL_WILD) start_feat = FEAT_SHAFT;
+
+	/* Try to place the player on a staircase */
+	temp_n = 0;
+	for (y = 0; y < DUNGEON_HGT; y++)
+	{
+		for (x = 0; x < DUNGEON_WID; x++)
+		{
+			if (cave_feat[y][x] == start_feat && cave_naked_bold(y, x))
+			{
+				/* Save the location */
+				temp_y[temp_n] = y;
+				temp_x[temp_n] = x;
+				temp_n++;
+			}
+		}
+	}
+
+	if (temp_n > 0)
+	{
+		i = rand_int(temp_n);
+		y = temp_y[i];
+		x = temp_x[i];
+		player_place(y, x);
+		return;
+	}
 
 	/* Place the player */
 	while (1)

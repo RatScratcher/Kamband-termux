@@ -13,6 +13,15 @@
 
 /**************************** Removal functions. ***/
 
+/* Origin for object generation during level creation */
+static int gen_origin_y = -1;
+static int gen_origin_x = -1;
+
+void set_generation_origin(int y, int x)
+{
+	gen_origin_y = y;
+	gen_origin_x = x;
+}
 
 static bool object_slots[50];
 
@@ -3235,6 +3244,47 @@ void place_object(int y, int x, bool good, bool great)
 
 	/* Allocate space for the object. */
 	i_ptr = new_object();
+
+	/* Calculate distance from player start or generation origin */
+	/* Distance from Stairs logic */
+	{
+		int origin_y = p_ptr->py;
+		int origin_x = p_ptr->px;
+
+		/* Use generation origin if available and during level generation */
+		if (!character_dungeon && gen_origin_y != -1 && gen_origin_x != -1) {
+			origin_y = gen_origin_y;
+			origin_x = gen_origin_x;
+		}
+
+		int d = distance(y, x, origin_y, origin_x);
+		int max_dist = (DUNGEON_HGT > DUNGEON_WID ? DUNGEON_HGT : DUNGEON_WID);
+
+		/* Boost quality based on distance */
+		if (d > max_dist / 3) {
+			if (rand_int(100) < (d * 50 / max_dist)) {
+				good = TRUE;
+			}
+			if (d > max_dist / 2) {
+				if (rand_int(100) < (d * 25 / max_dist)) {
+					great = TRUE;
+				}
+			}
+		}
+	}
+
+	/* Common Item Reduction:
+	 * If the item is not intended to be good or great, there is a chance
+	 * we skip generating it to avoid "junk".
+	 */
+	if (!good && !great) {
+		/* 20% chance to skip common items */
+		if (rand_int(100) < 20) {
+			/* Delete unused object struct */
+			KILL(i_ptr, object_type);
+			return;
+		}
+	}
 
 	/* Make an object (if possible) */
 	if (make_object(i_ptr, good, great))

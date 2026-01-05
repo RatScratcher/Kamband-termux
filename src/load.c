@@ -87,6 +87,9 @@ static byte sf_get(void)
 	byte c, v;
 	int tmp;
 
+	/* Check for error */
+	if (sf_error) return 0;
+
 	/* Get a character, decode the value */
 	tmp = getc(fff);
 

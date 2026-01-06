@@ -1345,6 +1345,13 @@ static void process_world(void)
 				mprint(MSG_BONUS, "You feel yourself yanked upwards!");
 				p_ptr->inside_special = SPECIAL_WILD;
 				p_ptr->leaving = TRUE;
+
+				/* HACK -- Teleport to the town */
+				p_ptr->wild_x = 0;
+				p_ptr->wild_y = 0;
+				p_ptr->wilderness_depth = 0;
+				p_ptr->px = 0;
+				p_ptr->py = 0;
 			}
 			else
 			{

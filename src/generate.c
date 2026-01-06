@@ -4315,14 +4315,17 @@ static void populate_features(void)
 	}
 
 	/* Place Heroic Remains in dead ends */
-	for (y = 1; y < DUNGEON_HGT - 1; y++) {
-		for (x = 1; x < DUNGEON_WID - 1; x++) {
+	for (i = 0; i < rand_range(1, 3); i++) {
+		int d = 0;
+		while (d < 1000) {
+			d++;
+			y = rand_range(1, DUNGEON_HGT - 2);
+			x = rand_range(1, DUNGEON_WID - 2);
 			if (cave_floor_bold(y, x) && cave_naked_bold(y, x)) {
 				/* Check for 3 walls */
 				if (next_to_walls(y, x) >= 3) {
-					if (rand_int(100) < 5) { /* Rare */
-						cave_feat[y][x] = FEAT_HEROIC_REMAINS;
-					}
+					cave_feat[y][x] = FEAT_HEROIC_REMAINS;
+					break;
 				}
 			}
 		}

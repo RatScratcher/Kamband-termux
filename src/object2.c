@@ -3281,7 +3281,7 @@ void place_object(int y, int x, bool good, bool great)
 		/* 20% chance to skip common items */
 		if (rand_int(100) < 20) {
 			/* Delete unused object struct */
-			KILL(i_ptr, object_type);
+			remove_object(i_ptr);
 			return;
 		}
 	}

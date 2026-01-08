@@ -1049,7 +1049,8 @@ static errr rd_dungeon(void)
 		for (i = count; i > 0; i--)
 		{
 			/* Extract "info" */
-			cave_info[y][x] = tmp8u;
+			if (in_bounds(y, x))
+				cave_info[y][x] = tmp8u;
 
 			/* Advance/Wrap */
 			if (++x >= DUNGEON_WID)
@@ -1086,7 +1087,8 @@ static errr rd_dungeon(void)
 		for (i = count; i > 0; i--)
 		{
 			/* Extract "fire life" */
-			cave_fire_life[y][x] = (u16b)tmp8u;
+			if (in_bounds(y, x))
+				cave_fire_life[y][x] = (u16b)tmp8u;
 
 			/* Advance/Wrap */
 			if (++x >= DUNGEON_WID)
@@ -1123,7 +1125,8 @@ static errr rd_dungeon(void)
 		for (i = count; i > 0; i--)
 		{
 			/* Extract "feat" */
-			cave_feat[y][x] = tmp8u;
+			if (in_bounds(y, x))
+				cave_feat[y][x] = tmp8u;
 
 			/* Advance/Wrap */
 			if (++x >= DUNGEON_WID)

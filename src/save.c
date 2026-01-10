@@ -1121,6 +1121,9 @@ static void wr_dungeon(void)
 		/* Paranoia: Don't write dead item */
 		if (!o_ptr->k_idx) continue;
 
+		/* Paranoia: Don't write invalid item */
+		if (o_ptr->k_idx < 0 || o_ptr->k_idx >= MAX_K_IDX) continue;
+
 		if (o_ptr->stack == STACK_FLOOR)
 		{
 			/* Dump it */
@@ -1144,6 +1147,9 @@ static void wr_dungeon(void)
 	for (i = 1; i < m_max; i++)
 	{
 		monster_type *m_ptr = &m_list[i];
+
+		/* Paranoia: Don't write invalid monster */
+		if (m_ptr->r_idx < 0 || m_ptr->r_idx >= MAX_R_IDX) continue;
 
 		/* Dump it */
 		wr_monster(m_ptr);

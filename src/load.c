@@ -814,10 +814,23 @@ static errr rd_extra(void)
 	for (i = 0; i < 48; i++)
 		rd_byte(&tmp8u);
 
-    /* Read puzzle state */
-    for (i = 0; i < 8; i++) rd_byte(&p_ptr->puzzle_solution[i]);
-    for (i = 0; i < 8; i++) rd_byte(&p_ptr->puzzle_attempt[i]);
-    rd_byte(&p_ptr->puzzle_next);
+	/* Read puzzle state */
+	if (sf_patch >= 1)
+	{
+		for (i = 0; i < 8; i++) rd_byte(&p_ptr->puzzle_solution[i]);
+		for (i = 0; i < 8; i++) rd_byte(&p_ptr->puzzle_attempt[i]);
+		rd_byte(&p_ptr->puzzle_next);
+	}
+	else
+	{
+		/* Initialize puzzle state to defaults */
+		for (i = 0; i < 8; i++)
+		{
+			p_ptr->puzzle_solution[i] = 0;
+			p_ptr->puzzle_attempt[i] = 0;
+		}
+		p_ptr->puzzle_next = 0;
+	}
 
 	/* Hack -- the two "special seeds" */
 	rd_u32b(&seed_flavor);
@@ -1069,36 +1082,50 @@ static errr rd_dungeon(void)
 	/*** Run length decoding ***/
 
 	debug_log("rd_dungeon: start RLE 2 (fire life)");
-	/* Load the dungeon data */
-	for (x = y = 0; y < DUNGEON_HGT;)
+	if (sf_patch >= 1)
 	{
-		/* Grab RLE info */
-		rd_byte(&count);
-		rd_byte(&tmp8u);
-
-		/* Verify the count */
-		if (count == 0)
+		/* Load the dungeon data */
+		for (x = y = 0; y < DUNGEON_HGT;)
 		{
-			if (sf_error) break;
-			continue;
-		}
+			/* Grab RLE info */
+			rd_byte(&count);
+			rd_byte(&tmp8u);
 
-		/* Apply the RLE info */
-		for (i = count; i > 0; i--)
-		{
-			/* Extract "fire life" */
-			if (in_bounds(y, x))
-				cave_fire_life[y][x] = (u16b)tmp8u;
-
-			/* Advance/Wrap */
-			if (++x >= DUNGEON_WID)
+			/* Verify the count */
+			if (count == 0)
 			{
-				/* Wrap */
-				x = 0;
+				if (sf_error) break;
+				continue;
+			}
+
+			/* Apply the RLE info */
+			for (i = count; i > 0; i--)
+			{
+				/* Extract "fire life" */
+				if (in_bounds(y, x))
+					cave_fire_life[y][x] = (u16b)tmp8u;
 
 				/* Advance/Wrap */
-				if (++y >= DUNGEON_HGT)
-					break;
+				if (++x >= DUNGEON_WID)
+				{
+					/* Wrap */
+					x = 0;
+
+					/* Advance/Wrap */
+					if (++y >= DUNGEON_HGT)
+						break;
+				}
+			}
+		}
+	}
+	else
+	{
+		/* Clear the fire life array */
+		for (y = 0; y < DUNGEON_HGT; y++)
+		{
+			for (x = 0; x < DUNGEON_WID; x++)
+			{
+				cave_fire_life[y][x] = 0;
 			}
 		}
 	}

@@ -1210,7 +1210,19 @@ static errr rd_dungeon(void)
 			continue;
 		}
 
-		floor_carry(iy, ix, o_ptr);
+		if (in_bounds(iy, ix))
+		{
+			floor_carry(iy, ix, o_ptr);
+		}
+		else
+		{
+			note(format("Ignoring object at invalid location (%d,%d)", iy, ix));
+			/*
+			 * The object has not been placed on the floor yet, so it is not in a stack.
+			 * remove_object() is safe to call.
+			 */
+			remove_object(o_ptr);
+		}
 	}
 
 	/* Hack: Scatter the items in a store. */

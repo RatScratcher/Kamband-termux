@@ -1257,7 +1257,7 @@ static errr rd_dungeon(void)
 		if (!monster_place(n_ptr->fy, n_ptr->fx, n_ptr))
 		{
 			note(format("Cannot place monster %d", i));
-			return (162);
+			/* return (162); */
 		}
 	}
 

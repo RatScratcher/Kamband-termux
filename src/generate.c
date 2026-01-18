@@ -103,7 +103,7 @@
 /*
  * Dungeon generation values
  */
-#define DUN_ROOMS	50 /* Number of rooms to attempt */
+#define DUN_ROOMS	400 /* Number of rooms to attempt */
 #define DUN_UNUSUAL	200	/* Level/chance of unusual room */
 #define DUN_DEST	15 /* 1/chance of having a destroyed level */
 
@@ -140,8 +140,8 @@
 /*
  * Dungeon treasure allocation values
  */
-#define DUN_AMT_ROOM	9 /* Amount of objects for rooms */
-#define DUN_AMT_ITEM	4 /* Amount of objects for rooms/corridors */
+#define DUN_AMT_ROOM	100 /* Amount of objects for rooms */
+#define DUN_AMT_ITEM	50 /* Amount of objects for rooms/corridors */
 #define DUN_AMT_ALTAR   3 /* Amount of altars */
 
 
@@ -172,10 +172,10 @@
  * Bounds on some arrays used in the "dun_data" structure.
  * These bounds are checked, though usually this is a formality.
  */
-#define CENT_MAX	100
-#define DOOR_MAX	200
-#define WALL_MAX	500
-#define TUNN_MAX	900
+#define CENT_MAX	1000
+#define DOOR_MAX	1000
+#define WALL_MAX	2000
+#define TUNN_MAX	9000
 
 
 /*
@@ -4280,6 +4280,24 @@ static void terrain_gen(void) {
 
 
 /*
+ * Places some small gold
+ */
+static void place_gold_small(int y, int x)
+{
+	object_type *i_ptr;
+
+	/* Allocate space for the new object. */
+	i_ptr = new_object();
+
+	/* Set up gold */
+	i_ptr->tval = TV_GOLD;
+	i_ptr->pval = randint(100);
+
+	/* Drop the object */
+	drop_near(i_ptr, FALSE, y, x);
+}
+
+/*
  * Populate the level with new features
  */
 static void populate_features(void)
@@ -4742,10 +4760,10 @@ static void cave_gen(void)
 	}
 
 	/* Place 3 or 4 down stairs near some walls */
-	alloc_stairs(FEAT_MORE, rand_range(3, 4), 3, (level_bg == FEAT_FOG || level_bg == FEAT_CHAOS_FOG));
+	alloc_stairs(FEAT_MORE, rand_range(100, 120), 3, (level_bg == FEAT_FOG || level_bg == FEAT_CHAOS_FOG));
 
 	/* Place 1 or 2 up stairs near some walls */
-	alloc_stairs(FEAT_LESS, rand_range(1, 2), 3, (level_bg == FEAT_FOG || level_bg == FEAT_CHAOS_FOG));
+	alloc_stairs(FEAT_LESS, rand_range(40, 60), 3, (level_bg == FEAT_FOG || level_bg == FEAT_CHAOS_FOG));
 
 	/* Find level start (up stairs) to seed loot generation logic */
 	{
@@ -4789,8 +4807,9 @@ static void cave_gen(void)
 
 
 	/* Pick a base number of monsters */
-	i = MIN_M_ALLOC_LEVEL + randint(8);
+	i = (MIN_M_ALLOC_LEVEL + randint(8)) * 4;
 
+	if (!dun->crowded) i += 100;
 
 	/* Put some monsters in the dungeon */
 	for (i = i + k; i > 0; i--)
@@ -4802,6 +4821,42 @@ static void cave_gen(void)
 		}
 
 		alloc_monster(0, MON_ALLOC_SLEEP);
+	}
+
+	/* Place some good items */
+	for (i = 0; i < 6; i++)
+	{
+		int y, x;
+		int d = 0;
+		while (d < 1000)
+		{
+			d++;
+			y = rand_int(DUNGEON_HGT);
+			x = rand_int(DUNGEON_WID);
+			if (cave_naked_bold(y, x))
+			{
+				place_object(y, x, TRUE, FALSE);
+				break;
+			}
+		}
+	}
+
+	/* Place some small gold piles */
+	for (i = 0; i < 50; i++)
+	{
+		int y, x;
+		int d = 0;
+		while (d < 1000)
+		{
+			d++;
+			y = rand_int(DUNGEON_HGT);
+			x = rand_int(DUNGEON_WID);
+			if (cave_naked_bold(y, x))
+			{
+				place_gold_small(y, x);
+				break;
+			}
+		}
 	}
 
 	/* Place some traps in the dungeon */

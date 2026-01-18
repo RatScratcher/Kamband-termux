@@ -1023,6 +1023,13 @@ static void wr_dungeon(void)
 		}
 	}
 
+	/* Flush the data (if any) */
+	if (count)
+	{
+		wr_byte((byte) count);
+		wr_byte((byte) prev_char);
+	}
+
 	/*** Simple "Run-Length-Encoding" of cave fire life ***/
 
 	/* Note that this will induce two wasted bytes */

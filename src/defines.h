@@ -3496,3 +3496,4 @@ extern int PlayerUID;
 # undef MESSAGE_BUF
 # define MESSAGE_BUF	4096
 #endif
+/* Force rebuild for dungeon size */

@@ -4205,7 +4205,7 @@ void process_monsters(void)
 
 		/* Monsters can "sense" the player */
 
-		if (m_ptr->cdis <= r_ptr->aaf)
+		if (m_ptr->cdis <= r_ptr->aaf || m_ptr->is_pet)
 		{
 			/* Process the monster */
 			process_monster(i);

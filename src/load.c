@@ -1043,49 +1043,89 @@ static errr rd_dungeon(void)
 
 	/*** Run length decoding ***/
 
-	debug_log("rd_dungeon: start RLE 1 (info)");
-	/* Load the dungeon data */
-	for (x = y = 0; y < DUNGEON_HGT;)
 	{
-		/* Grab RLE info */
-		rd_byte(&count);
-		rd_byte(&tmp8u);
+		int cells_count, cells_total;
+		cells_total = DUNGEON_HGT * DUNGEON_WID;
 
-		/* Verify the count */
-		if (count == 0)
+		debug_log("rd_dungeon: start RLE 1 (info)");
+
+		/* Load the dungeon data (info) */
+		cells_count = 0;
+		while (cells_count < cells_total)
 		{
-			if (sf_error) break;
-			continue;
-		}
+			/* Grab RLE info */
+			rd_byte(&count);
+			rd_byte(&tmp8u);
 
-		/* Apply the RLE info */
-		for (i = count; i > 0; i--)
-		{
-			/* Extract "info" */
-			if (in_bounds(y, x))
-				cave_info[y][x] = tmp8u;
-
-			/* Advance/Wrap */
-			if (++x >= DUNGEON_WID)
+			if (count == 0)
 			{
-				/* Wrap */
-				x = 0;
+				if (sf_error) break;
+				continue;
+			}
 
-				/* Advance/Wrap */
-				if (++y >= DUNGEON_HGT)
-					break;
+			/* Apply the RLE info */
+			for (i = 0; i < count; i++)
+			{
+				if (cells_count < cells_total)
+				{
+					int cur_y = cells_count / DUNGEON_WID;
+					int cur_x = cells_count % DUNGEON_WID;
+
+					cave_info[cur_y][cur_x] = tmp8u;
+					cells_count++;
+				}
 			}
 		}
-	}
 
+		debug_log("rd_dungeon: start RLE 2 (fire life)");
+		if (sf_patch >= 1)
+		{
+			cells_count = 0;
+			while (cells_count < cells_total)
+			{
+				/* Grab RLE info */
+				rd_byte(&count);
+				rd_byte(&tmp8u);
 
-	/*** Run length decoding ***/
+				if (count == 0)
+				{
+					if (sf_error) break;
+					continue;
+				}
 
-	debug_log("rd_dungeon: start RLE 2 (fire life)");
-	if (sf_patch >= 1)
-	{
-		/* Load the dungeon data */
-		for (x = y = 0; y < DUNGEON_HGT;)
+				/* Apply the RLE info */
+				for (i = 0; i < count; i++)
+				{
+					if (cells_count < cells_total)
+					{
+						int cur_y = cells_count / DUNGEON_WID;
+						int cur_x = cells_count % DUNGEON_WID;
+
+						cave_fire_life[cur_y][cur_x] = (u16b)tmp8u;
+						cells_count++;
+					}
+				}
+			}
+		}
+		else
+		{
+			/* Clear the fire life array */
+			for (y = 0; y < DUNGEON_HGT; y++)
+			{
+				for (x = 0; x < DUNGEON_WID; x++)
+				{
+					cave_fire_life[y][x] = 0;
+				}
+			}
+		}
+
+		debug_log("rd_dungeon: start RLE 3 (feat)");
+
+		/* Use a single counter to track total cells (Width * Height) */
+		cells_count = 0;
+		cells_total = DUNGEON_HGT * DUNGEON_WID;
+
+		while (cells_count < cells_total)
 		{
 			/* Grab RLE info */
 			rd_byte(&count);
@@ -1099,71 +1139,21 @@ static errr rd_dungeon(void)
 			}
 
 			/* Apply the RLE info */
-			for (i = count; i > 0; i--)
+			for (i = 0; i < count; i++)
 			{
-				/* Extract "fire life" */
-				if (in_bounds(y, x))
-					cave_fire_life[y][x] = (u16b)tmp8u;
-
-				/* Advance/Wrap */
-				if (++x >= DUNGEON_WID)
+				/* * Only write to memory if we haven't exceeded the dungeon size.
+				 * This prevents "over-reading" into the player data section.
+				 */
+				if (cells_count < cells_total)
 				{
-					/* Wrap */
-					x = 0;
+					/* Calculate coordinates from the total count */
+					int cur_y = cells_count / DUNGEON_WID;
+					int cur_x = cells_count % DUNGEON_WID;
 
-					/* Advance/Wrap */
-					if (++y >= DUNGEON_HGT)
-						break;
+					cave_feat[cur_y][cur_x] = tmp8u;
+
+					cells_count++;
 				}
-			}
-		}
-	}
-	else
-	{
-		/* Clear the fire life array */
-		for (y = 0; y < DUNGEON_HGT; y++)
-		{
-			for (x = 0; x < DUNGEON_WID; x++)
-			{
-				cave_fire_life[y][x] = 0;
-			}
-		}
-	}
-
-
-	/*** Run length decoding ***/
-
-	debug_log("rd_dungeon: start RLE 3 (feat)");
-	/* Load the dungeon data */
-	for (x = y = 0; y < DUNGEON_HGT;)
-	{
-		/* Grab RLE info */
-		rd_byte(&count);
-		rd_byte(&tmp8u);
-
-		/* Verify the count */
-		if (count == 0)
-		{
-			if (sf_error) break;
-			continue;
-		}
-
-		/* Apply the RLE info */
-		for (i = count; i > 0; i--)
-		{
-			/* Extract "feat" */
-			if (in_bounds(y, x))
-				cave_feat[y][x] = tmp8u;
-
-			/* Advance/Wrap */
-			if (++x >= DUNGEON_WID)
-			{
-				/* Wrap */
-				x = 0;
-
-				/* Advance/Wrap */
-				if (++y >= DUNGEON_HGT)
-					break;
 			}
 		}
 	}

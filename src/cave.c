@@ -1546,7 +1546,23 @@ void display_map(int scale)
  */
 void do_cmd_view_map(void)
 {
-	int c, ratio = 30;
+	int c;
+	int min_scale_h, min_scale_w, max_ratio;
+	int ratio;
+
+	/* Calculate max ratio to fit the dungeon */
+	/* We need scale/5 * dimension >= DUNGEON_DIMENSION */
+	/* So scale >= 5 * DUNGEON_DIMENSION / dimension */
+	min_scale_h = 5 * DUNGEON_HGT / screen_y;
+	min_scale_w = 5 * DUNGEON_WID / screen_x;
+	max_ratio = (min_scale_h > min_scale_w) ? min_scale_h : min_scale_w;
+
+	/* Add a bit of buffer and ensure multiple of 5 */
+	max_ratio += 5;
+	if (max_ratio % 5) max_ratio += (5 - (max_ratio % 5));
+
+	/* Start fully zoomed out */
+	ratio = max_ratio;
 
 	/* Save the screen */
 	screen_save();
@@ -1579,14 +1595,16 @@ void do_cmd_view_map(void)
 		/* Get any key */
 		c = inkey();
 
-		if ((c == '+' || c == '=') && ratio < 30)
+		if ((c == '+' || c == '=') && ratio < max_ratio)
 		{
-			ratio += 5;
+			ratio += 10;
+			if (ratio > max_ratio) ratio = max_ratio;
 
 		}
 		else if (c == '-' && ratio > 5)
 		{
-			ratio -= 5;
+			ratio -= 10;
+			if (ratio < 5) ratio = 5;
 
 		}
 		else if (c == ESCAPE)

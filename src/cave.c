@@ -1492,6 +1492,26 @@ void display_map(int scale)
 
 			tp = priority(ta, tc);
 
+			/* Hack -- Always show the Travelling Merchant */
+			if (cave_m_idx[j][i] > 0)
+			{
+				monster_type *m_ptr = &m_list[cave_m_idx[j][i]];
+
+				if (m_ptr->r_idx == R_IDX_MERCHANT)
+				{
+					monster_race *r_ptr = &r_info[m_ptr->r_idx];
+
+					/* Use char */
+					tc = r_ptr->x_char;
+
+					/* Use attr */
+					ta = r_ptr->x_attr;
+
+					/* High priority */
+					tp = 30;
+				}
+			}
+
 			if (mp[y][x] < tp)
 			{
 				mc[y][x] = tc;

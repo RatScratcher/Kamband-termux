@@ -878,6 +878,36 @@ static void get_stats(void)
 			p_ptr->stat_cur[A_INT] = p_ptr->stat_max[A_INT];
 			stat_use[A_INT] = p_ptr->stat_max[A_INT];
 		}
+
+		/* Decrease Wisdom */
+		p_ptr->stat_max[A_WIS] -= 3;
+		if (p_ptr->stat_max[A_WIS] < 3) p_ptr->stat_max[A_WIS] = 3;
+		p_ptr->stat_cur[A_WIS] = p_ptr->stat_max[A_WIS];
+		stat_use[A_WIS] = p_ptr->stat_max[A_WIS];
+
+		/* Increase Strength, Dexterity, Constitution */
+		p_ptr->stat_max[A_STR] += 2;
+		p_ptr->stat_max[A_DEX] += 2;
+		p_ptr->stat_max[A_CON] += 2;
+
+		/* Enforce Minimums */
+		if (p_ptr->stat_max[A_STR] < 6) p_ptr->stat_max[A_STR] = 6;
+		if (p_ptr->stat_max[A_DEX] < 15) p_ptr->stat_max[A_DEX] = 15;
+
+		/* Cap at 18/100 just in case */
+		if (p_ptr->stat_max[A_STR] > 118) p_ptr->stat_max[A_STR] = 118;
+		if (p_ptr->stat_max[A_DEX] > 118) p_ptr->stat_max[A_DEX] = 118;
+		if (p_ptr->stat_max[A_CON] > 118) p_ptr->stat_max[A_CON] = 118;
+
+		/* Sync */
+		p_ptr->stat_cur[A_STR] = p_ptr->stat_max[A_STR];
+		stat_use[A_STR] = p_ptr->stat_max[A_STR];
+
+		p_ptr->stat_cur[A_DEX] = p_ptr->stat_max[A_DEX];
+		stat_use[A_DEX] = p_ptr->stat_max[A_DEX];
+
+		p_ptr->stat_cur[A_CON] = p_ptr->stat_max[A_CON];
+		stat_use[A_CON] = p_ptr->stat_max[A_CON];
 	}
 }
 
@@ -1086,6 +1116,12 @@ static void get_extra(void)
 	    
 	/* Hitdice */
 	p_ptr->hitdie = rp_ptr->r_mhp + cp_ptr->c_mhp;
+
+	/* Hack -- Mutant Corrupted HP buff */
+	if (p_ptr->prace == RACE_MUTANT && p_ptr->pclass == CLASS_CORRUPTED)
+	{
+		if (p_ptr->hitdie < 10) p_ptr->hitdie = 10;
+	}
 
 	/* Initial hitpoints */
 	p_ptr->mhp = p_ptr->hitdie;

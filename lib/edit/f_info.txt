@@ -461,7 +461,7 @@ N:104:sheet of ice
 G:#:W
 
 N:105:pool of acid
-G:#:g
+G:#:o
 
 N:106:mirror wall (vertical)
 G:|:s
@@ -659,7 +659,7 @@ N:204:stream of ice
 G:#:W
 
 N:205:stream of acid
-G:#:g
+G:#:o
 
 N:206:stream of burning oil
 G:#:R
@@ -692,7 +692,7 @@ N:215:mirror plate
 G:-:w
 
 N:216:stream of acid
-G:*:g
+G:*:o
 
 N:217:dream exit
 G:>:B

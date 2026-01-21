@@ -400,7 +400,7 @@ extern int spell_chance(spell * rspell);
 extern spell *select_spell(bool quick);
 extern void do_cmd_cast_power(void);
 
-extern void generate_mutation(void);
+extern int generate_mutation(bool silent);
 extern void remove_mutation(void);
 
 extern void add_powers(byte class);

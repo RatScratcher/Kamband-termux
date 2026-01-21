@@ -1675,7 +1675,7 @@ void do_cmd_debug(void)
 
 		case 'M':
 		{
-			generate_mutation();
+			generate_mutation(FALSE);
 			break;
 		}
 

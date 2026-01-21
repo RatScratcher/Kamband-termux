@@ -4536,7 +4536,7 @@ void ok_side_effect(void)
 	else if (tmp <= 80)
 	{
 		mprint(MSG_WARNING, "Your body mutates!");
-		generate_mutation();
+		generate_mutation(FALSE);
 	}
 	else if (tmp <= 90)
 	{
@@ -4590,7 +4590,7 @@ void neutral_side_effect(void)
 	else if (tmp <= 60)
 	{
 		mprint(MSG_WARNING, "Your body mutates!");
-		generate_mutation();
+		generate_mutation(FALSE);
 	}
 	else if (tmp <= 70)
 	{

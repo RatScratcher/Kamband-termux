@@ -2892,38 +2892,10 @@ static void store_process_command(void)
 /*
  * Enter a store, and interact with it.
  */
-void do_cmd_store(void)
+void do_cmd_store_aux(int which)
 {
-	int py = p_ptr->py;
-	int px = p_ptr->px;
-
-	int which;
 	store_type *st_ptr;
 	s16b tmp_chr;
-
-
-	/* Leave the shop. */
-	if (vault_shops && (p_ptr->inside_special == SPECIAL_STORE))
-	{
-		p_ptr->load_dungeon = MAX_DEPTH + 1;
-		p_ptr->leaving = TRUE;
-
-		/* Remove the junk we scattered. */
-		clean_floor_items();
-
-		return;
-	}
-
-	/* Verify a store */
-	if (!((cave_feat[py][px] >= FEAT_SHOP_HEAD) &&
-			(cave_feat[py][px] <= FEAT_SHOP_TAIL)))
-	{
-		mprint(MSG_TEMP, "You see no store here.");
-		return;
-	}
-
-	/* Hack -- Extract the store code */
-	which = (cave_feat[py][px] - FEAT_SHOP_HEAD);
 
 	/* Save the store index for other functions. */
 	p_ptr->s_idx = which;
@@ -3040,6 +3012,42 @@ void do_cmd_store(void)
 
 	/* Redraw */
 	p_ptr->redraw |= (PR_WIPE | PR_BASIC | PR_EXTRA | PR_MAP);
+}
+
+/*
+ * Enter a store, and interact with it.
+ */
+void do_cmd_store(void)
+{
+	int py = p_ptr->py;
+	int px = p_ptr->px;
+
+	int which;
+
+	/* Leave the shop. */
+	if (vault_shops && (p_ptr->inside_special == SPECIAL_STORE))
+	{
+		p_ptr->load_dungeon = MAX_DEPTH + 1;
+		p_ptr->leaving = TRUE;
+
+		/* Remove the junk we scattered. */
+		clean_floor_items();
+
+		return;
+	}
+
+	/* Verify a store */
+	if (!((cave_feat[py][px] >= FEAT_SHOP_HEAD) &&
+			(cave_feat[py][px] <= FEAT_SHOP_TAIL)))
+	{
+		mprint(MSG_TEMP, "You see no store here.");
+		return;
+	}
+
+	/* Hack -- Extract the store code */
+	which = (cave_feat[py][px] - FEAT_SHOP_HEAD);
+
+	do_cmd_store_aux(which);
 }
 
 

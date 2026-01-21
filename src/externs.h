@@ -769,6 +769,7 @@ extern bool fetch_item(int wgt, int y, int x);
 
 /* store.c */
 extern void player_theft(void);
+extern void do_cmd_store_aux(int which);
 extern void do_cmd_store(void);
 extern bool store_object_similar(object_type * o_ptr, object_type * j_ptr);
 extern void store_object_absorb(object_type *o_ptr, object_type *j_ptr);

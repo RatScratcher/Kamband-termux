@@ -1433,6 +1433,13 @@ void py_attack(int y, int x)
 	m_ptr = &m_list[cave_m_idx[y][x]];
 	r_ptr = &r_info[m_ptr->r_idx];
 
+	/* Travelling Merchant Logic */
+	if (m_ptr->r_idx == R_IDX_MERCHANT) {
+		/* Hack -- use Black Market */
+		do_cmd_store_aux(6);
+		return;
+	}
+
 	/* 
 	 * Melkor does not particularly appreciate this code.
 	 */

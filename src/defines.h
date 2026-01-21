@@ -170,7 +170,7 @@
 #define MAX_A_IDX		2048	/* Max size for "a_info[]" */
 #define MAX_E_IDX		150	/* Max size for "e_info[]" */
 #define MAX_R_IDX		1024	/* Max size for "r_info[]" */
-#define R_IDX_MERCHANT  693 /* Traveling Merchant */
+#define R_IDX_MERCHANT  12 /* Traveling Merchant */
 #define MAX_V_IDX		200	/* Max size for "v_info[]" -KMW- */
 
 

@@ -907,6 +907,13 @@ static void get_extra(void)
 		int i;
 		int num = rand_range(1, 2);
 
+		/* Add the specific Mutant Corrupted spells if applicable */
+		if (p_ptr->prace == RACE_MUTANT)
+		{
+			add_psionic_spark_spell();
+			add_telekinetic_toss_spell();
+		}
+
 		for (i = 0; i < num; i++)
 		{
 			spell_generate_new(1);

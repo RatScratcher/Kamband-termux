@@ -592,6 +592,75 @@ static const int attack_types[30] = {
 };
 
 
+/*
+ * Add a "Psionic Spark" spell.
+ */
+void add_psionic_spark_spell(void)
+{
+	spell *rspell;
+	proj_node *pnode;
+
+	if (spell_num == MAX_SPELLS) return;
+
+	rspell = &spells[spell_num];
+
+	rspell->class = 0;
+	rspell->level = 1;
+	rspell->mana = 1;
+	rspell->untried = TRUE;
+	rspell->unknown = FALSE;
+	strcpy(rspell->name, "Psionic Spark");
+	strcpy(rspell->desc, "Ignite oil and shock foes.");
+
+	/* Fill in the projection info. */
+	MAKE(pnode, proj_node);
+	rspell->proj_list = pnode;
+
+	pnode->attack_kind = GF_PSIONIC_SPARK;
+	pnode->proj_flags = PROJECT_KILL | PROJECT_ITEM | PROJECT_GRID | PROJECT_STOP | PROJECT_VIEWABLE;
+	pnode->radius = 2; /* Small radius */
+	pnode->safe = TRUE;
+	pnode->dam_dice = 1; /* 1 damage */
+	pnode->dam_sides = 1;
+
+	spell_num++;
+}
+
+/*
+ * Add a "Telekinetic Toss" spell.
+ */
+void add_telekinetic_toss_spell(void)
+{
+	spell *rspell;
+	proj_node *pnode;
+
+	if (spell_num == MAX_SPELLS) return;
+
+	rspell = &spells[spell_num];
+
+	rspell->class = 0;
+	rspell->level = 5;
+	rspell->mana = 5;
+	rspell->untried = TRUE;
+	rspell->unknown = FALSE;
+	strcpy(rspell->name, "Telekinetic Toss");
+	strcpy(rspell->desc, "Throw a monster or fetch an item.");
+
+	/* Fill in the projection info. */
+	MAKE(pnode, proj_node);
+	rspell->proj_list = pnode;
+
+	pnode->attack_kind = GF_TELEKINESIS;
+	/* Needs a target, so STOP/BEAM/KILL/ITEM */
+	pnode->proj_flags = PROJECT_KILL | PROJECT_ITEM | PROJECT_GRID | PROJECT_STOP;
+	pnode->radius = 0;
+	pnode->safe = TRUE;
+	pnode->dam_dice = 0; /* No direct damage */
+	pnode->dam_sides = 0;
+
+	spell_num++;
+}
+
 /* 
  * Generate a new random spell, add it to the list. This takes a player level
  * as an argument.

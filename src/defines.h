@@ -762,6 +762,8 @@
 #define GF_TRANSMUTE        162
 #define GF_HEAVY_TRANSMUTE  163
 #define GF_MAKE_PET_SCALING 164
+#define GF_TELEKINESIS      165
+#define GF_PSIONIC_SPARK    166
 
 
 /*
@@ -2707,6 +2709,7 @@
 #define MFLAG_PACIFIST    0x0200 /* Monster is a pacifist. */
 #define MFLAG_ALPHA       0x0400 /* Monster is a powered-up breeder. */
 #define MFLAG_ANCIENT_ENRAGED 0x0800 /* Ancient is enraged */
+#define MFLAG_OIL_SOAKED  0x1000 /* Monster is soaked in oil */
 
 
 /*

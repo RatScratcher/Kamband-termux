@@ -5610,7 +5610,7 @@ static bool project_p(int who, int r, int y, int x, int dam, int typ)
 				if (rand_int(2))
 				{
 					mprint(MSG_WARNING, "Your body mutates!");
-					generate_mutation();
+					generate_mutation(FALSE);
 				}
 			}
 
@@ -6392,7 +6392,7 @@ static bool project_p(int who, int r, int y, int x, int dam, int typ)
 				mprint(MSG_WARNING, "You are hit by something!");
 
 			mprint(MSG_WARNING, "Your body mutates!");
-			generate_mutation();
+			generate_mutation(FALSE);
 			break;
 		}
 

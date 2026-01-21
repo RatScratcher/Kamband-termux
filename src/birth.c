@@ -940,8 +940,10 @@ static void get_extra(void)
 
 			while (banned && attempts < 1000)
 			{
+				int mut_idx;
+
 				banned = FALSE;
-				generate_mutation();
+				mut_idx = generate_mutation(TRUE);
 
 				/* Remove banned mutations */
 				/* Brain shrivels */
@@ -1005,7 +1007,15 @@ static void get_extra(void)
 					banned = TRUE;
 				}
 
-				if (banned) attempts++;
+				if (banned)
+				{
+					attempts++;
+				}
+				else if (mut_idx != -1)
+				{
+					mprint(MSG_WARNING, mutation_names[mut_idx][1]);
+					msg_print(NULL);
+				}
 			}
 		}
 	}

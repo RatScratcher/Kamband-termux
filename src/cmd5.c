@@ -1081,7 +1081,7 @@ void do_cmd_cast_power(void)
 
 /*********************** Mutation functions. ******/
 
-void generate_mutation(void)
+int generate_mutation(bool silent)
 {
 	int which_mut;
 	int which_var;
@@ -1124,9 +1124,12 @@ void generate_mutation(void)
 
 		if (i > 25)
 		{
-			msg_print("You keep your previous form.");
-			msg_print(NULL);
-			return;
+			if (!silent)
+			{
+				msg_print("You keep your previous form.");
+				msg_print(NULL);
+			}
+			return (-1);
 		}
 		i++;
 	}
@@ -1135,8 +1138,13 @@ void generate_mutation(void)
 	p_ptr->redraw |= (PR_STATE | PR_MAP);
 	handle_stuff();
 
-	mprint(MSG_WARNING, mutation_names[which_mut][1]);
-	msg_print(NULL);
+	if (!silent)
+	{
+		mprint(MSG_WARNING, mutation_names[which_mut][1]);
+		msg_print(NULL);
+	}
+
+	return (which_mut);
 }
 
 /*

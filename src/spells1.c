@@ -3425,6 +3425,9 @@ static bool project_o(int who, int r, int y, int x, int dam, int typ)
 
 
 
+/* Hack to allow deflected projectiles to be attributed to the original attacker */
+static int forced_projectile_source_idx = 0;
+
 /*
  * Helper function for "project()" below.
  *
@@ -3481,6 +3484,8 @@ static bool project_o(int who, int r, int y, int x, int dam, int typ)
 static bool project_m(int who, int r, int y, int x, int dam, int typ)
 {
 	int tmp;
+
+	if (forced_projectile_source_idx) who = forced_projectile_source_idx;
 
 	monster_type *m_ptr;
 	monster_race *r_ptr;
@@ -5381,6 +5386,75 @@ static bool project_p(int who, int r, int y, int x, int dam, int typ)
 	/* Never affect projector */
 	if (cave_m_idx[y][x] == who)
 		return (FALSE);
+
+	/* Psionic Deflection for Mutant Corrupted */
+	if ((who > 0) && (p_ptr->prace == RACE_MUTANT) && (p_ptr->pclass == CLASS_CORRUPTED))
+	{
+		monster_type *m_ptr = &m_list[who];
+		monster_race *r_ptr = &r_info[m_ptr->r_idx];
+
+		/* Check: (Intelligence + Player Level) vs (Monster Level) */
+		/* Added some randomness to the check */
+		if ((p_ptr->stat_use[A_INT] + p_ptr->lev) > (r_ptr->level + randint(20)))
+		{
+			int dir;
+			int dirs[3];
+			int tx, ty;
+
+			msg_print("You deflect the attack with your mind!");
+
+			/* Calculate direction back to source */
+			dir = motion_dir(y, x, m_ptr->fy, m_ptr->fx);
+
+			/* Default to "back at source" */
+			dirs[0] = dir;
+			dirs[1] = dir;
+			dirs[2] = dir;
+
+			/* Calculate adjacent directions (approximate) */
+			/* Cycle: 1 2 3 6 9 8 7 4 */
+			if (dir > 0)
+			{
+				/* Brute force adjacency */
+				switch (dir)
+				{
+					case 8: dirs[1] = 7; dirs[2] = 9; break;
+					case 9: dirs[1] = 8; dirs[2] = 6; break;
+					case 6: dirs[1] = 9; dirs[2] = 3; break;
+					case 3: dirs[1] = 6; dirs[2] = 2; break;
+					case 2: dirs[1] = 3; dirs[2] = 1; break;
+					case 1: dirs[1] = 2; dirs[2] = 4; break;
+					case 4: dirs[1] = 1; dirs[2] = 7; break;
+					case 7: dirs[1] = 4; dirs[2] = 8; break;
+				}
+			}
+
+			/* Pick one randomly */
+			dir = dirs[rand_int(3)];
+
+			/* Fire the deflected projectile */
+			/* We use '-1' as who (player) to avoid hurting self, but we want to hit monsters */
+			/* Use PROJECT_STOP | PROJECT_KILL | PROJECT_GRID | PROJECT_ITEM */
+
+			/* Fire beam/bolt from player position */
+			/* Note: we need to use a function that starts at player and goes in 'dir' */
+			/* project_hook uses p_ptr->py/px and ddy[dir]/ddx[dir] */
+
+			/* We can call project directly but we need target coordinates */
+			/* Let's compute target 99 grids away in dir */
+
+			if (dir > 0 && dir < 10 && dir != 5) {
+				tx = p_ptr->px + 99 * ddx[dir];
+				ty = p_ptr->py + 99 * ddy[dir];
+
+				forced_projectile_source_idx = who;
+				project(-1, 0, ty, tx, dam, typ, PROJECT_STOP | PROJECT_KILL | PROJECT_GRID | PROJECT_ITEM);
+				forced_projectile_source_idx = 0;
+			}
+
+			return (TRUE);
+		}
+	}
 
 
 	/* XXX XXX XXX */

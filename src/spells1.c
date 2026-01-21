@@ -3397,6 +3397,23 @@ static bool project_o(int who, int r, int y, int x, int dam, int typ)
 				break;
 			}
 
+		/* Telekinetic Toss (Fetch Item) */
+		case GF_TELEKINESIS:
+		{
+			if (fetch_item(100, y, x)) /* High weight limit */
+			{
+				obvious = TRUE;
+			}
+			break;
+		}
+
+		/* Psionic Spark (Ignite Oil) */
+		case GF_PSIONIC_SPARK:
+		{
+			/* Items in oil might get burned? Leaving simple for now */
+			break;
+		}
+
 			default:
 			{
 				break;
@@ -3637,6 +3654,7 @@ static bool project_m(int who, int r, int y, int x, int dam, int typ)
 			break;
 		}
 
+
 			/* Electricity */
 		case GF_ELEC:
 		{
@@ -3671,6 +3689,14 @@ static bool project_m(int who, int r, int y, int x, int dam, int typ)
 				dam *= 2;
 				if (seen)
 					r_ptr->r_flags3 |= RF3_HURT_FIRE;
+			}
+
+			if (m_ptr->mflag & MFLAG_OIL_SOAKED)
+			{
+				note = " catches fire!";
+				dam *= 2;
+				project(who, 2, m_ptr->fy, m_ptr->fx, dam, GF_FIRE, PROJECT_GRID | PROJECT_ITEM | PROJECT_KILL);
+				m_ptr->mflag &= ~(MFLAG_OIL_SOAKED);
 			}
 			break;
 		}
@@ -4941,6 +4967,112 @@ static bool project_m(int who, int r, int y, int x, int dam, int typ)
 
 				m_ptr->mflag |= MFLAG_DROP_CORPSE;
 			}
+			break;
+		}
+
+
+		/* Telekinetic Toss */
+		case GF_TELEKINESIS:
+		{
+			int ny, nx;
+			bool success = FALSE;
+
+			/* Check: (Player INT + Player Level) vs (Monster Level + 1d20) */
+			/* INT is 3-18/100. 18/100 is treated as 118. */
+			int player_power = p_ptr->stat_use[A_INT] + p_ptr->lev;
+			int monster_resist = r_ptr->level + randint(20);
+
+			/* Unique monsters are harder */
+			if (r_ptr->flags1 & RF1_UNIQUE) monster_resist += 50;
+
+			if (player_power > monster_resist)
+			{
+				/* Prompt for destination */
+				msg_print("Choose a location to throw the monster.");
+				if (target_set(TARGET_GRID))
+				{
+					ny = p_ptr->target_row;
+					nx = p_ptr->target_col;
+
+					/* Check distance (max 5) */
+					if (distance(y, x, ny, nx) <= 5)
+					{
+						/* Check if legal move (not into wall, unless passing wall) */
+						/* Allowing tossing into empty space */
+						if (cave_floor_bold(ny, nx) && cave_m_idx[ny][nx] == 0)
+						{
+							/* Move monster */
+							note = " is tossed!";
+
+							/* Swap monster to new location */
+							/* monster_swap checks boundaries and legality mostly, but let's be safe */
+							/* Actually teleport_away_to might be better but it doesn't guarantee exact spot if blocked */
+							/* But we checked blocked above */
+
+							/* We need to use cave_m_idx[y][x] which is current monster index */
+							int m_idx = cave_m_idx[y][x];
+
+							/* Move */
+							cave_m_idx[y][x] = 0;
+							cave_m_idx[ny][nx] = m_idx;
+							m_ptr->fy = ny;
+							m_ptr->fx = nx;
+							update_mon(m_idx, TRUE);
+							lite_spot(y, x);
+							lite_spot(ny, nx);
+
+							/* Check environmental effects */
+							if (cave_feat[ny][nx] == FEAT_DEEP_LAVA || cave_feat[ny][nx] == FEAT_SHAL_LAVA)
+							{
+								msg_format("%^s burns in the lava!", m_name);
+								project(who, 0, ny, nx, damroll(5, 10), GF_FIRE, PROJECT_KILL);
+							}
+							else if (cave_feat[ny][nx] == FEAT_ACID)
+							{
+								msg_format("%^s dissolves in the acid!", m_name);
+								project(who, 0, ny, nx, damroll(5, 10), GF_ACID, PROJECT_KILL);
+							}
+							else if (cave_feat[ny][nx] == FEAT_OIL)
+							{
+								msg_format("%^s is covered in oil!", m_name);
+								m_ptr->mflag |= MFLAG_OIL_SOAKED;
+							}
+                            else if (cave_feat[ny][nx] == FEAT_DEEP_WATER || cave_feat[ny][nx] == FEAT_SHAL_WATER)
+                            {
+                                /* Remove oil if dipped in water */
+                                if (m_ptr->mflag & MFLAG_OIL_SOAKED) {
+                                    msg_format("The oil washes off %^s.", m_name);
+                                    m_ptr->mflag &= ~(MFLAG_OIL_SOAKED);
+                                }
+                            }
+
+							success = TRUE;
+							obvious = TRUE;
+						}
+						else
+						{
+							msg_print("The destination is blocked.");
+							skipped = TRUE;
+						}
+					}
+					else
+					{
+						msg_print("That is too far.");
+						skipped = TRUE;
+					}
+				}
+				else
+				{
+					skipped = TRUE;
+				}
+			}
+			else
+			{
+				note = " resists your mental grip!";
+				obvious = TRUE;
+			}
+
+			dam = 0; /* No direct damage from the grab itself */
 			break;
 		}
 
@@ -7051,6 +7183,21 @@ static bool project_p(int who, int r, int y, int x, int dam, int typ)
 			break;
 		}
 
+		/* Telekinetic Toss (Item Fetch) */
+		case GF_TELEKINESIS:
+		{
+			/* No effect on player directly */
+			break;
+		}
+
+		/* Psionic Spark */
+		case GF_PSIONIC_SPARK:
+		{
+			/* Small damage to player */
+			if (fuzzy) msg_print("You feel a static shock.");
+			take_hit(dam, killer);
+			break;
+		}
 
 			/* Default */
 		default:

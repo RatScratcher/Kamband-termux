@@ -274,22 +274,20 @@ X:shouts for more beer.
 X:vomits.
 D:He makes you glad to be sober.
 
-N:12:Travelling merchant
+N:12:Aimless wandering merchant
 G:&:G
 I:110:3d3:10:1:255
-W:0:1:0:0
-B:HIT:HURT:1d3
+W:0:0:0:0
 F:MALE | 
 F:RAND_50 |  HUMANOID |
 F:ONLY_GOLD | DROP_60 | RANDOM_NAME | 
-F:TAKE_ITEM | OPEN_DOOR | BASH_DOOR | INNOCENT | FRIENDLY | SMART 
+F:TAKE_ITEM | OPEN_DOOR | BASH_DOOR | SMART
 X:asks if you want to buy an Amulet of Adorment.
 X:asks if you have goodies to sell.
 X:looks at you with scorn.
 X:laughs at you.
 X:tells you to stop staring at him.
-D:The typical ponce around town, with purse jingling, and looking for more 
-D:amulets of adornment to buy.
+D:An aimless wandering merchant. He looks like he has wares to sell.
 
 N:13:Mean looking mercenary
 G:t:r

@@ -1941,17 +1941,31 @@ player_class class_info[MAX_CLASS] = {
 			A_INT,
 		300},
 
-	{ /* XXX */
+	{
 			"Corrupted",
-			{-5, 5, 5, -5, -10, -5},
-			30, 36, 30, 2, 16, 20, 30, 15,
-			7, 13, 9, 0, 0, 0, 0, 0,
-			0, 35,
+			/* Stats: {STR, INT, WIS, DEX, CON, CHR} */
+			/* STR for loot, high INT for spells, lower WIS/DEX */
+			{4, 7, -3, 1, 2, -7},
 
+			/* Skills: dis, dev, sav, stl, srh, fos, thn, thb */
+			/* High 'dev' (Magic Device) for that Superb rating */
+			30, 45, 30, 2, 16, 20, 25, 15,
+
+			/* Skills (X-increase per level) */
+			/* Focus on magic growth over fighting */
+			7, 15, 9, 0, 0, 0, 0, 0,
+
+			/* HD (Hitdie) and Exp Penalty */
+			/* 9 HD + 8 Mutant = 17 total. Sturdy enough to survive a spell mishap. */
+			9, 35,
+
+			/* Magic setup */
 			SV_SPELLBOOK_NONE,
 			TRUE, TRUE,
 			A_INT,
-		25},
+
+			/* Weight allowance - Boosted to 50 for heavy loot and artifacts */
+			50},
 
 	{
 			"Beastmaster",

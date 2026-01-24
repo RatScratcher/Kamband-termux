@@ -486,6 +486,7 @@ extern s16b get_num_lines_old(char *fname);
 /* generate.c */
 extern void generate_cave(void);
 extern void wilderness_gen(void); /* -KMW- */
+extern void place_dungeon_merchant(int y, int x);
 
 /* init1.c */
 extern errr init_v_info_txt(FILE * fp, char *buf);

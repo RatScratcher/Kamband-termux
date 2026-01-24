@@ -5131,6 +5131,48 @@ static void quest_gen(void)
 
 
 /*
+ * Place the traveling merchant.
+ * If he exists, move him. If not, create him.
+ */
+void place_dungeon_merchant(int y, int x)
+{
+	int i;
+	int m_idx = 0;
+
+	/* Check if he is already alive */
+	for (i = 1; i < m_max; i++)
+	{
+		monster_type *m_ptr = &m_list[i];
+		if (!m_ptr->r_idx) continue;
+		if (m_ptr->r_idx == R_IDX_MERCHANT)
+		{
+			m_idx = i;
+			break;
+		}
+	}
+
+	if (m_idx)
+	{
+		/* He exists, move him here */
+		teleport_away_to(m_idx, y, x);
+	}
+	else
+	{
+		/* Create him */
+		if (!place_monster_aux(y, x, R_IDX_MERCHANT, MON_ALLOC_JUST_ONE))
+		{
+			int d, ny, nx;
+			for (d = 1; d < 10; d++)
+			{
+				scatter(&ny, &nx, y, x, d, 0);
+				if (place_monster_aux(ny, nx, R_IDX_MERCHANT, MON_ALLOC_JUST_ONE)) break;
+			}
+		}
+	}
+}
+
+
+/*
  * Generate a random dungeon level
  *
  * Hack -- regenerate any "overflow" levels
@@ -5361,6 +5403,26 @@ void generate_cave(void)
 		/* Accept */
 		if (okay)
 		{
+			/* Morgoth-style hard-spawn for the Merchant */
+			if (p_ptr->depth >= 6 && p_ptr->depth < 100)
+			{
+				int ty, tx;
+				int i;
+
+				/* Try to place him on a nice clean floor grid */
+				for (i = 0; i < 1000; i++)
+				{
+					ty = rand_int(DUNGEON_HGT);
+					tx = rand_int(DUNGEON_WID);
+
+					if (cave_naked_bold(ty, tx))
+					{
+						place_dungeon_merchant(ty, tx);
+						break;
+					}
+				}
+			}
+
 			/* Handle Ancients following between levels */
 			if (ancient_of_days_is_chasing)
 			{

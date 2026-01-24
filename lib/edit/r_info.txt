@@ -276,11 +276,10 @@ D:He makes you glad to be sober.
 
 N:12:Aimless wandering merchant
 G:&:G
-I:110:3d3:10:1:255
+I:110:30000d1:10:1:255
 W:0:0:0:0
-F:MALE | 
-F:RAND_50 |  HUMANOID |
-F:ONLY_GOLD | DROP_60 | RANDOM_NAME | 
+F:UNIQUE | MALE | FORCE_MAXHP | FORCE_SLEEP | FRIENDLY | NEVER_MOVE | NO_FEAR | INNOCENT |
+F:HUMANOID | ONLY_GOLD | DROP_60 | RANDOM_NAME |
 F:TAKE_ITEM | OPEN_DOOR | BASH_DOOR | SMART
 X:asks if you want to buy an Amulet of Adorment.
 X:asks if you have goodies to sell.

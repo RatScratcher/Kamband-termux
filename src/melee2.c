@@ -3759,6 +3759,13 @@ static void process_monster(int m_idx)
 			else if ((m_ptr->is_pet && !n_ptr->is_pet) || (!m_ptr->is_pet
 					&& n_ptr->is_pet))
 			{
+				/* Peace Treaty: Pets ignore the Merchant */
+				if (m_ptr->is_pet && n_ptr->r_idx == R_IDX_MERCHANT)
+				{
+					do_move = FALSE;
+					continue;
+				}
+
 				do_move = FALSE;
 
 				for (tmp_i = 0; tmp_i < 4; tmp_i++)

@@ -3012,6 +3012,12 @@ void do_cmd_store_aux(int which)
 
 	/* Redraw */
 	p_ptr->redraw |= (PR_WIPE | PR_BASIC | PR_EXTRA | PR_MAP);
+
+	/* Merchant Respawn Hack */
+	if (which == 6 && p_ptr->depth > 0)
+	{
+		place_dungeon_merchant(p_ptr->py, p_ptr->px);
+	}
 }
 
 /*

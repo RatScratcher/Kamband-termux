@@ -2123,6 +2123,36 @@ static bool project_f(int who, int r, int y, int x, int dam, int typ)
 			break;
 		}
 
+		case GF_TELEPORT_TO_MERCHANT:
+		{
+			int i;
+			int m_idx = 0;
+
+			/* Scan for merchant */
+			for (i = 1; i < m_max; i++)
+			{
+				monster_type *m_ptr = &m_list[i];
+				if (!m_ptr->r_idx) continue;
+				if (m_ptr->r_idx == R_IDX_MERCHANT)
+				{
+					m_idx = i;
+					break;
+				}
+			}
+
+			if (m_idx)
+			{
+				monster_type *m_ptr = &m_list[m_idx];
+				msg_print("You are yanked towards the merchant!");
+				teleport_player_to(m_ptr->fy, m_ptr->fx);
+			}
+			else
+			{
+				msg_print("The merchant is not here.");
+			}
+			break;
+		}
+
 		case GF_ELEC:
 		{
 			if ((cave_feat[y][x] == FEAT_ICE || cave_feat[y][x] == FEAT_WALL_ICE) && !(cave_info[y][x] & CAVE_TEMP)) {

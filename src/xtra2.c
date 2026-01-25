@@ -2390,7 +2390,41 @@ bool mon_take_hit(int m_idx, int dam, bool * fear, cptr note,
 
 	/* Wake it up if it's hurt */
 	if (dam > 0 || m_ptr->is_pet)
+	{
 		m_ptr->csleep = 0;
+
+		/* 50% chance to alert nearby monsters */
+		if (!m_ptr->is_pet && (rand_int(100) < 50))
+		{
+			int i;
+			for (i = 1; i < m_max; i++)
+			{
+				monster_type *other = &m_list[i];
+
+				/* Skip dead monsters */
+				if (!other->r_idx) continue;
+
+				/* Skip self */
+				if (i == m_idx) continue;
+
+				/* Skip pets */
+				if (other->is_pet) continue;
+
+				/* Skip if already awake */
+				if (!other->csleep) continue;
+
+				/* Check distance */
+				if (distance(m_ptr->fy, m_ptr->fx, other->fy, other->fx) <= 5)
+				{
+					/* Check LOS */
+					if (los(m_ptr->fy, m_ptr->fx, other->fy, other->fx))
+					{
+						other->csleep = 0;
+					}
+				}
+			}
+		}
+	}
 
 	/* Hurt it */
 	m_ptr->hp -= dam;

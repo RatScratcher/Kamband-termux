@@ -342,7 +342,6 @@ V:2.1.1
 # 30. Alteration
 # 31. Mass Polymorph
 # 32. Mana Storm
-# 33. Summon Pet
 # 34. Target Practice
 # 35. Sonic Blast
 # 36. Magic Dust
@@ -2461,36 +2460,31 @@ T:SAFE:MANA:10d8:20
 P:32:37
 D:Damage 10d8
 
-N:MAGE:42:Summon Pet
-F:GRID | PLAYER
-T:SAFE:MAKE_PET:1d1:0
-P:33:40
-
-N:MAGE:43:Target Practice
+N:MAGE:42:Target Practice
 F:GRID | STOP
 T:SAFE:MAKE_MONSTER:1d1:3
 P:34:35
 D:Radius 3
 
-N:MAGE:44:Sonic Blast
+N:MAGE:43:Sonic Blast
 F:KILL | ETHER | BLAST
 T:SAFE:SOUND:20d6:10
 P:35:46
 D:Damage 20d6, radius 10
 
-N:MAGE:45:Magic Dust
+N:MAGE:44:Magic Dust
 F:KILL | ALL
 T:SAFE:SLEEP:100d10:0
 P:36:48
 D:Sleep by 100d10
 
-N:MAGE:46:Charges
+N:MAGE:45:Charges
 F:KILL | ITEM | BLAST
 T:UNSAFE:RECHARGE:80d1:4
 P:37:47
 D:Recharge 80, radius 4
 
-N:MAGE:47:Breathing Space
+N:MAGE:46:Breathing Space
 F:GRID | KILL | ETHER | BLAST
 T:SAFE:KILL_WALL:10d7:15
 F:GRID | BLAST
@@ -2498,13 +2492,13 @@ T:SAFE:MAKE_GLYPH:1d1:15
 P:38:49
 D:Radius 15
 
-N:MAGE:48:Deathly Spores
+N:MAGE:47:Deathly Spores
 F:KILL | VIEWABLE
 T:SAFE:POIS:10d30:0
 P:39:50
 D:Damage 10d30
 
-N:MAGE:49:Soulcatcher
+N:MAGE:48:Soulcatcher
 F:KILL | ETHER | BLAST
 T:SAFE:NETHER:15d30:0
 P:40:55

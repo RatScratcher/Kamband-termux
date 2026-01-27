@@ -4302,6 +4302,91 @@ static void place_gold_small(int y, int x)
 }
 
 /*
+ * Place traps near doors
+ */
+static void place_traps_near_doors(int chance)
+{
+	int i, y, x;
+	int dy, dx;
+
+	for (i = 0; i < dun->door_n; i++)
+	{
+		/* Door location */
+		y = dun->door[i].y;
+		x = dun->door[i].x;
+
+		/* Try adjacent grids */
+		for (dy = -1; dy <= 1; dy++)
+		{
+			for (dx = -1; dx <= 1; dx++)
+			{
+				/* Skip self */
+				if (!dy && !dx) continue;
+
+				/* Check chance */
+				if (rand_int(100) >= chance) continue;
+
+				/* Place trap */
+				if (in_bounds(y + dy, x + dx) && cave_naked_bold(y + dy, x + dx))
+				{
+					place_trap(y + dy, x + dx);
+				}
+			}
+		}
+	}
+}
+
+/*
+ * Place traps near chests
+ */
+static void place_traps_near_chests(int chance)
+{
+	int y, x;
+	int dy, dx;
+
+	/* Scan dungeon for chests */
+	for (y = 0; y < DUNGEON_HGT; y++)
+	{
+		for (x = 0; x < DUNGEON_WID; x++)
+		{
+			object_type *o_ptr;
+			bool is_chest = FALSE;
+
+			/* Check for chest */
+			for (o_ptr = cave_o_idx[y][x]; o_ptr; o_ptr = o_ptr->next)
+			{
+				if (o_ptr->tval == TV_CHEST)
+				{
+					is_chest = TRUE;
+					break;
+				}
+			}
+
+			if (!is_chest) continue;
+
+			/* Try adjacent grids */
+			for (dy = -1; dy <= 1; dy++)
+			{
+				for (dx = -1; dx <= 1; dx++)
+				{
+					/* Skip self */
+					if (!dy && !dx) continue;
+
+					/* Check chance */
+					if (rand_int(100) >= chance) continue;
+
+					/* Place trap */
+					if (in_bounds(y + dy, x + dx) && cave_naked_bold(y + dy, x + dx))
+					{
+						place_trap(y + dy, x + dx);
+					}
+				}
+			}
+		}
+	}
+}
+
+/*
  * Populate the level with new features
  */
 static void populate_features(void)
@@ -4868,7 +4953,28 @@ static void cave_gen(void)
 	}
 
 	/* Place some traps in the dungeon */
-	alloc_object(ALLOC_SET_BOTH, ALLOC_TYP_TRAP, randint(k));
+	{
+		/* Scaled Density */
+		u32b level_area = (u32b)DUNGEON_HGT * DUNGEON_WID;
+		u32b standard_area = 64 * 64;
+		int scale = (level_area + standard_area - 1) / standard_area;
+		int base_traps, total_traps;
+
+		if (scale < 1) scale = 1;
+
+		/* Original was randint(k), where k approx 2-10. */
+		/* New target: 5-10 per 64x64 unit. */
+		base_traps = 5 + rand_int(6);
+		total_traps = base_traps * scale;
+
+		alloc_object(ALLOC_SET_BOTH, ALLOC_TYP_TRAP, total_traps / 2);
+		/* Corridors get extra love */
+		alloc_object(ALLOC_SET_CORR, ALLOC_TYP_TRAP, total_traps / 2);
+
+		/* High traffic areas */
+		place_traps_near_doors(20);
+		place_traps_near_chests(40);
+	}
 
 	/* Put some rubble in corridors */
 	alloc_object(ALLOC_SET_CORR, ALLOC_TYP_RUBBLE, randint(k));

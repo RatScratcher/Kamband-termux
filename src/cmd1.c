@@ -1329,6 +1329,41 @@ void hit_trap(int y, int x)
 			}
 			break;
 		}
+
+		case FEAT_TRAP_MANA:
+		{
+			mprint(MSG_STUPID, "You hit a draining rune!");
+			if (p_ptr->csp > 0)
+			{
+				int drain = p_ptr->csp / 2 + 10;
+				if (drain > p_ptr->csp) drain = p_ptr->csp;
+				p_ptr->csp -= drain;
+				p_ptr->redraw |= (PR_MANA);
+				mprint(MSG_WARNING, "Your mental energy is drained!");
+			}
+			else
+			{
+				mprint(MSG_STUPID, "You feel a sudden fatigue.");
+			}
+			break;
+		}
+
+		case FEAT_TRAP_DARK:
+		{
+			mprint(MSG_STUPID, "You are surrounded by a darkness trap!");
+			if (p_ptr->cur_lite > 0)
+			{
+				mprint(MSG_WARNING, "Your light dims!");
+				p_ptr->cur_lite -= 2500;
+				if (p_ptr->cur_lite < 0) p_ptr->cur_lite = 0;
+				p_ptr->update |= (PU_TORCH);
+			}
+			if (!p_ptr->resist_blind)
+			{
+				(void) set_blind(p_ptr->blind + rand_int(20) + 10);
+			}
+			break;
+		}
 	}
 }
 

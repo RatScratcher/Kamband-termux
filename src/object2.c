@@ -3316,7 +3316,19 @@ void pick_trap(int y, int x)
 	while (1)
 	{
 		/* Hack -- pick a trap */
-		feat = FEAT_TRAP_HEAD + rand_int(16);
+		int r = rand_int(18);
+		if (r < 16)
+		{
+			feat = FEAT_TRAP_HEAD + r;
+		}
+		else if (r == 16)
+		{
+			feat = FEAT_TRAP_MANA;
+		}
+		else
+		{
+			feat = FEAT_TRAP_DARK;
+		}
 
 		/* Hack -- no trap doors on quest levels,
 		 * bottoms of dungeons or wilderness. */

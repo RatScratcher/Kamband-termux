@@ -918,6 +918,9 @@
 #define FEAT_CRYSTAL            115
 #define FEAT_SANCTUM_DOOR       116
 
+#define FEAT_TRAP_MANA          117
+#define FEAT_TRAP_DARK          118
+
 #define FEAT_FOUNTAIN           218
 #define FEAT_CARTOGRAPHER       219
 #define FEAT_HEROIC_REMAINS     220

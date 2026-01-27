@@ -767,15 +767,16 @@ static void alloc_object(int set, int typ, int num)
  * basic vein, one with hidden gold, and one with known gold.  The
  * hidden gold types are currently unused.
  */
-static void build_streamer(int feat, int chance)
+static void build_streamer(int feat, int chance, int max_len)
 {
 	int i, tx, ty;
 	int y, x, dir;
+	int len = 0;
 
 
 	/* Hack -- Choose starting point */
-	y = rand_spread(DUNGEON_HGT / 2, 10);
-	x = rand_spread(DUNGEON_WID / 2, 15);
+	y = rand_range(1, DUNGEON_HGT - 2);
+	x = rand_range(1, DUNGEON_WID - 2);
 
 	/* Choose a random compass direction */
 	dir = ddd[rand_int(8)];
@@ -783,6 +784,9 @@ static void build_streamer(int feat, int chance)
 	/* Place streamer into dungeon */
 	while (TRUE)
 	{
+		if (len >= max_len) break;
+		len++;
+
 		/* One grid per density */
 		for (i = 0; i < DUN_STR_DEN; i++)
 		{
@@ -4696,15 +4700,19 @@ static void cave_gen(void)
 
 	if (level_bg == FEAT_WALL_EXTRA)
 	{
-		for (i = 0; i < DUN_STR_MAG; i++)
+		u32b level_area = (u32b)DUNGEON_HGT * DUNGEON_WID;
+		u32b standard_area = 64 * 64;
+		int scale = (level_area + standard_area - 1) / standard_area;
+
+		for (i = 0; i < DUN_STR_MAG * scale; i++)
 		{
-			build_streamer(FEAT_MAGMA, DUN_STR_MC);
+			build_streamer(FEAT_MAGMA, DUN_STR_MC, 32 + randint(32));
 		}
 
 		/* Hack -- Add some quartz streamers */
-		for (i = 0; i < DUN_STR_QUA; i++)
+		for (i = 0; i < DUN_STR_QUA * scale; i++)
 		{
-			build_streamer(FEAT_QUARTZ, DUN_STR_QC);
+			build_streamer(FEAT_QUARTZ, DUN_STR_QC, 32 + randint(32));
 		}
 	}
 

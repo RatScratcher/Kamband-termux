@@ -666,7 +666,10 @@ static void process_world(void)
 	if (turn % 10)
 		return;
 
-	process_crushing_room();
+	/* Delayed Contraction: walls move every 2 player turns (20 game turns) */
+	if ((turn % 20) == 0)
+		process_crushing_room();
+
 	process_environment();
 
 	update_dynamic_spell_costs();

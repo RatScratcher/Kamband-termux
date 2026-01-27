@@ -496,6 +496,12 @@ G:*:B
 N:116:sanctum door
 G:#:y
 
+N:117:mana drain rune
+G:^:B
+
+N:118:darkness trap
+G:^:D
+
 ####
 ####  128-160 some additional ``floor'' features.
 ####

@@ -994,6 +994,23 @@ static errr rd_dungeon(void)
 	rd_s16b(&py);
 	rd_s16b(&px);
 
+	if (sf_patch >= 2)
+	{
+		byte tmp;
+		rd_byte(&tmp);
+		crushing_active = (bool)tmp;
+		rd_s16b(&crushing_cy);
+		rd_s16b(&crushing_cx);
+		rd_s16b(&crushing_dist);
+	}
+	else
+	{
+		crushing_active = FALSE;
+		crushing_cy = 0;
+		crushing_cx = 0;
+		crushing_dist = 0;
+	}
+
 	rd_s16b(&ymax);
 	rd_s16b(&xmax);
 

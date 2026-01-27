@@ -146,6 +146,11 @@ bool good_item_flag; /* True if "Artifact" on this level */
 
 bool closing_flag; /* Dungeon is closing */
 
+bool crushing_active; /* Crushing trap active */
+int crushing_cy; /* Crushing trap center Y */
+int crushing_cx; /* Crushing trap center X */
+int crushing_dist; /* Crushing trap current distance */
+
 
 /*
  * Player info

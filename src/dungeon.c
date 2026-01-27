@@ -487,6 +487,75 @@ void dungeon_save_wilderness_location(void)
 }
 
 /*
+ * Process Crushing Room Trap
+ */
+static void process_crushing_room(void)
+{
+	int dy, dx, ny, nx;
+
+	if (!crushing_active) return;
+
+	/* Remove current walls */
+	for (dy = -crushing_dist; dy <= crushing_dist; dy++) {
+		for (dx = -crushing_dist; dx <= crushing_dist; dx++) {
+			if (ABS(dy) != crushing_dist && ABS(dx) != crushing_dist) continue;
+
+			ny = crushing_cy + dy;
+			nx = crushing_cx + dx;
+
+			if (!in_bounds(ny, nx)) continue;
+
+			/* Only remove if it's a wall we likely placed */
+			if (cave_feat[ny][nx] == FEAT_WALL_EXTRA) {
+				cave_set_feat(ny, nx, FEAT_FLOOR);
+				lite_spot(ny, nx);
+			}
+		}
+	}
+
+	crushing_dist--;
+
+	/* Crush center check if dist < 0 (meaning we just finished dist 0) */
+	/* Actually, dist 0 is a 1x1 wall at center.
+	   If dist goes to -1, we are done. */
+	if (crushing_dist < 0) {
+		crushing_active = FALSE;
+		mprint(MSG_TEMP, "The walls recede.");
+		p_ptr->update |= (PU_VIEW | PU_LITE | PU_FLOW | PU_MONSTERS);
+		return;
+	}
+
+	/* Place new walls */
+	for (dy = -crushing_dist; dy <= crushing_dist; dy++) {
+		for (dx = -crushing_dist; dx <= crushing_dist; dx++) {
+			if (ABS(dy) != crushing_dist && ABS(dx) != crushing_dist) continue;
+
+			ny = crushing_cy + dy;
+			nx = crushing_cx + dx;
+
+			if (!in_bounds(ny, nx)) continue;
+
+			/* Check for player hit */
+			if (ny == p_ptr->py && nx == p_ptr->px) {
+				if (!p_ptr->immaterial) {
+					mprint(MSG_DEADLY, "The wall crushes you!");
+					take_hit(5000, "a moving wall");
+				} else {
+					mprint(MSG_TEMP, "The wall passes through you.");
+				}
+			}
+
+			if (cave_perma_bold(ny, nx)) continue;
+
+			cave_set_feat(ny, nx, FEAT_WALL_EXTRA);
+			lite_spot(ny, nx);
+		}
+	}
+
+	p_ptr->update |= (PU_VIEW | PU_LITE | PU_FLOW | PU_MONSTERS);
+}
+
+/*
  * Process environment (Burning Oil, Acid, etc.)
  */
 static void process_environment(void)
@@ -597,6 +666,7 @@ static void process_world(void)
 	if (turn % 10)
 		return;
 
+	process_crushing_room();
 	process_environment();
 
 	update_dynamic_spell_costs();

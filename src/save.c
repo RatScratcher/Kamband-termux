@@ -985,6 +985,12 @@ static void wr_dungeon(void)
 	wr_s16b(p_ptr->py);
 	wr_s16b(p_ptr->px);
 
+	/* Crushing trap persistence */
+	wr_byte(crushing_active);
+	wr_s16b(crushing_cy);
+	wr_s16b(crushing_cx);
+	wr_s16b(crushing_dist);
+
 	wr_s16b(DUNGEON_HGT);
 	wr_s16b(DUNGEON_WID);
 
@@ -1771,6 +1777,14 @@ bool load_player(void)
 		/* Message (below) */
 		if (err)
 			what = "Cannot parse savefile";
+	}
+
+	/* Hack -- Upgrade the version number */
+	if (!err)
+	{
+		sf_major = KAM_VERSION_MAJOR;
+		sf_minor = KAM_VERSION_MINOR;
+		sf_patch = KAM_VERSION_PATCH;
 	}
 
 	/* Paranoia */

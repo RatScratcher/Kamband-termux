@@ -1072,7 +1072,7 @@ void hit_trap(int y, int x)
 	/* Analyze XXX XXX XXX */
 	switch (cave_feat[y][x])
 	{
-		case FEAT_TRAP_HEAD + 0x00:
+		case FEAT_TRAP_DOOR:
 		{
 			mprint(MSG_STUPID, "You fall through a trap door!");
 			if (p_ptr->ffall)
@@ -1362,6 +1362,44 @@ void hit_trap(int y, int x)
 			{
 				(void) set_blind(p_ptr->blind + rand_int(20) + 10);
 			}
+			break;
+		}
+
+		case FEAT_TRAP_CRUSHING:
+		{
+			int dy, dx, ny, nx;
+
+			if (crushing_active) {
+				msg_print("The walls shudder.");
+				break;
+			}
+
+			mprint(MSG_DEADLY, "The walls begin to close in!");
+
+			/* Activate */
+			crushing_active = TRUE;
+			crushing_cy = y;
+			crushing_cx = x;
+			crushing_dist = 2;
+
+			/* Build initial perimeter */
+			for (dy = -crushing_dist; dy <= crushing_dist; dy++) {
+				for (dx = -crushing_dist; dx <= crushing_dist; dx++) {
+					if (ABS(dy) != crushing_dist && ABS(dx) != crushing_dist) continue;
+
+					ny = y + dy;
+					nx = x + dx;
+
+					if (!in_bounds(ny, nx)) continue;
+
+					/* Only overwrite floor or weak terrain, preserve perm walls, stairs, shops */
+					if (cave_perma_bold(ny, nx)) continue;
+
+					cave_set_feat(ny, nx, FEAT_WALL_EXTRA);
+					lite_spot(ny, nx);
+				}
+			}
+			p_ptr->update |= (PU_VIEW | PU_LITE | PU_FLOW | PU_MONSTERS);
 			break;
 		}
 	}

@@ -502,6 +502,9 @@ G:^:B
 N:118:darkness trap
 G:^:D
 
+N:119:crushing trap
+G:^:R
+
 ####
 ####  128-160 some additional ``floor'' features.
 ####

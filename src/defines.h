@@ -47,7 +47,7 @@
 
 #define KAM_VERSION_MAJOR 2
 #define KAM_VERSION_MINOR 1
-#define KAM_VERSION_PATCH 1
+#define KAM_VERSION_PATCH 2
 
 
 /*
@@ -829,6 +829,7 @@
 /* Traps */
 #define FEAT_TRAP_HEAD		0x10
 #define FEAT_TRAP_TAIL		0x1F
+#define FEAT_TRAP_DOOR      (FEAT_TRAP_HEAD + 0x00)
 
 /* Doors */
 #define FEAT_DOOR_HEAD		0x20
@@ -920,6 +921,7 @@
 
 #define FEAT_TRAP_MANA          117
 #define FEAT_TRAP_DARK          118
+#define FEAT_TRAP_CRUSHING      119
 
 #define FEAT_FOUNTAIN           218
 #define FEAT_CARTOGRAPHER       219

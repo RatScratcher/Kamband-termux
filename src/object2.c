@@ -3316,7 +3316,7 @@ void pick_trap(int y, int x)
 	while (1)
 	{
 		/* Hack -- pick a trap */
-		int r = rand_int(18);
+		int r = rand_int(20);
 		if (r < 16)
 		{
 			feat = FEAT_TRAP_HEAD + r;
@@ -3325,9 +3325,13 @@ void pick_trap(int y, int x)
 		{
 			feat = FEAT_TRAP_MANA;
 		}
-		else
+		else if (r == 17)
 		{
 			feat = FEAT_TRAP_DARK;
+		}
+		else
+		{
+			feat = FEAT_TRAP_CRUSHING;
 		}
 
 		/* Hack -- no trap doors on quest levels,
@@ -3336,6 +3340,9 @@ void pick_trap(int y, int x)
 			(p_ptr->inside_special == SPECIAL_QUEST ||
 				p_ptr->depth >= MAX_DEPTH - 1 ||
 				p_ptr->inside_special == SPECIAL_WILD)) continue;
+
+		/* Hack -- high level traps */
+		if (feat == FEAT_TRAP_CRUSHING && p_ptr->depth < 30) continue;
 
 		/* Done */
 		break;

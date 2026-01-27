@@ -993,11 +993,16 @@ static bool do_cmd_tunnel_test(int y, int x)
 	/* Must be a wall/door/etc */
 	if (cave_floor_bold(y, x))
 	{
-		/* Message */
-		mprint(MSG_TEMP, "You see nothing there to tunnel.");
+		/* Check for digging tool */
+		object_type *o_ptr = equipment[EQUIP_WIELD];
+		if (!o_ptr || o_ptr->tval != TV_DIGGING)
+		{
+			/* Message */
+			mprint(MSG_TEMP, "You see nothing there to tunnel.");
 
-		/* Nope */
-		return (FALSE);
+			/* Nope */
+			return (FALSE);
+		}
 	}
 
 	/* Okay */
@@ -1058,8 +1063,45 @@ static bool do_cmd_tunnel_aux(int y, int x)
 	/* Sound XXX XXX XXX */
 	/* sound(SOUND_DIG); */
 
+	/* Floor */
+	if (cave_floor_bold(y, x))
+	{
+		object_type *o_ptr = equipment[EQUIP_WIELD];
+		if (!o_ptr || o_ptr->tval != TV_DIGGING)
+		{
+			msg_print("You need a digging tool to dig into the floor.");
+			return (FALSE);
+		}
+
+		/* Chance based on Strength and Pval */
+		/* Skill is 40 + str * 4 + lev + etc. */
+		/* Just use skill_dig */
+		if (rand_int(100) < (p_ptr->skill_dig / 20 + o_ptr->pval * 2))
+		{
+			/* Success */
+			msg_print("You dig a hole in the floor!");
+			sound(SOUND_DIG);
+
+			/* Create Trap Door */
+			cave_set_feat(y, x, FEAT_TRAP_DOOR);
+			note_spot(y, x);
+			lite_spot(y, x);
+
+			/* Fall if under player */
+			if (y == p_ptr->py && x == p_ptr->px)
+			{
+				hit_trap(y, x);
+			}
+		}
+		else
+		{
+			mprint(MSG_TEMP, "You scratch the floor.");
+			more = TRUE;
+		}
+	}
+
 	/* Titanium */
-	if ((cave_feat[y][x] >= FEAT_PERM_EXTRA) &&
+	else if ((cave_feat[y][x] >= FEAT_PERM_EXTRA) &&
 		(cave_feat[y][x] <= FEAT_PERM_SOLID))
 	{
 		msg_print("This seems to be permanent rock.");

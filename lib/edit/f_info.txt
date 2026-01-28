@@ -505,6 +505,12 @@ G:^:D
 N:119:crushing trap
 G:^:R
 
+N:120:magnetism trap
+G:^:W
+
+N:121:gravity trap
+G:^:B
+
 ####
 ####  128-160 some additional ``floor'' features.
 ####

@@ -573,6 +573,7 @@ struct monster_type
 	byte stunned; /* Monster is stunned */
 	byte confused; /* Monster is confused */
 	byte monfear; /* Monster is afraid */
+	s16b magnetized; /* Monster is magnetized */
 	byte is_pet; /* Is monster "friendly"? */
         byte fate; /* Monster's fate indicator. */
 
@@ -1109,6 +1110,7 @@ struct player_type
 	s16b poisoned; /* Timed -- Poisoned */
 	s16b cut; /* Timed -- Cut */
 	s16b stun; /* Timed -- Stun */
+	s16b magnetized; /* Timed -- Magnetized */
 
 	s16b protevil; /* Timed -- Protection */
 	s16b invuln; /* Timed -- Invulnerable */

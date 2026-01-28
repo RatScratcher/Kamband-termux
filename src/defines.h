@@ -922,6 +922,8 @@
 #define FEAT_TRAP_MANA          117
 #define FEAT_TRAP_DARK          118
 #define FEAT_TRAP_CRUSHING      119
+#define FEAT_TRAP_MAGNETISM     120
+#define FEAT_TRAP_GRAVITY       121
 
 #define FEAT_FOUNTAIN           218
 #define FEAT_CARTOGRAPHER       219
@@ -2971,7 +2973,7 @@
 #define RF7_XXX29		0x10000000
 #define RF7_XXX30		0x20000000
 #define RF7_XXX31		0x40000000
-#define RF7_XXX32		0x80000000
+#define RF7_METAL       0x80000000 /* Monster is made of metal */
 
 
 /*

@@ -399,7 +399,7 @@ static cptr r_info_flags7[] = {
 	"XXX29X7",
 	"XXX30X7",
 	"XXX31X7",
-	"XXX32X7"
+	"METAL"
 };
 
 

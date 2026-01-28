@@ -4159,8 +4159,77 @@ void process_monsters(void)
 			continue;
 		}
 
+		/* Decrement magnetism */
+		if (m_ptr->magnetized > 0) m_ptr->magnetized--;
+
+		/* Magnetism Trap Check */
+		if (TRUE) {
+			int dy, dx;
+			bool near_magnet = FALSE;
+			/* Check current and adjacent */
+			for (dy = -1; dy <= 1; dy++) {
+				for (dx = -1; dx <= 1; dx++) {
+					if (in_bounds(m_ptr->fy + dy, m_ptr->fx + dx) &&
+						cave_feat[m_ptr->fy + dy][m_ptr->fx + dx] == FEAT_TRAP_MAGNETISM) {
+						near_magnet = TRUE;
+					}
+				}
+			}
+			if (near_magnet && (r_ptr->flags7 & RF7_METAL)) {
+				m_ptr->magnetized = 10;
+			}
+		}
+
+		/* Gravity Trap Pull */
+		if (TRUE) {
+			int dy, dx, gy = 0, gx = 0;
+			int min_dist = 999;
+			/* Scan radius 3 */
+			for (dy = -3; dy <= 3; dy++) {
+				for (dx = -3; dx <= 3; dx++) {
+					if (!dy && !dx) continue;
+					if (in_bounds(m_ptr->fy + dy, m_ptr->fx + dx) &&
+						cave_feat[m_ptr->fy + dy][m_ptr->fx + dx] == FEAT_TRAP_GRAVITY) {
+						int d = distance(m_ptr->fy, m_ptr->fx, m_ptr->fy + dy, m_ptr->fx + dx);
+						if (d < min_dist) {
+							min_dist = d;
+							gy = m_ptr->fy + dy;
+							gx = m_ptr->fx + dx;
+						}
+					}
+				}
+			}
+			if (min_dist < 999) {
+				int dir = motion_dir(m_ptr->fy, m_ptr->fx, gy, gx);
+				if (dir) {
+					int ny = m_ptr->fy + ddy[dir];
+					int nx = m_ptr->fx + ddx[dir];
+					if (cave_floor_bold(ny, nx) && cave_m_idx[ny][nx] == 0 && (ny != p_ptr->py || nx != p_ptr->px)) {
+						monster_swap(m_ptr->fy, m_ptr->fx, ny, nx);
+						/* Trigger trap? Maybe monsters are smart enough or just fall in */
+						if (cave_feat[ny][nx] == FEAT_TRAP_GRAVITY) {
+							bool fear = FALSE;
+							mon_take_hit(i, damroll(2, 6) + p_ptr->depth / 2, &fear, " is crushed.", FALSE, FALSE);
+						}
+					}
+				}
+			}
+		}
+
 		/* Obtain the energy boost */
 		e = extract_energy[m_ptr->mspeed];
+
+		/* Magnetism Slow/Root */
+		if (m_ptr->magnetized) {
+			if ((r_ptr->flags3 & (RF3_TROLL | RF3_GIANT | RF3_DRAGON)) || r_ptr->level > 30) {
+				/* Heavy - Rooted */
+				e = 0;
+			} else {
+				/* Slowed */
+				e -= 2;
+				if (e < 0) e = 0;
+			}
+		}
 
 		/* Give this monster some energy */
 		m_ptr->energy += e;

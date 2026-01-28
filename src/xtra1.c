@@ -3745,6 +3745,34 @@ static void calc_bonuses(void)
 	/* Extract the current weight (in tenth pounds) */
 	j = p_ptr->total_weight;
 
+	/* Magnetism: double/triple weight of metal items */
+	if (p_ptr->magnetized)
+	{
+		int k;
+		for (k = 0; k < EQUIP_MAX; k++)
+		{
+			o_ptr = equipment[k];
+			if (!o_ptr || !o_ptr->k_idx) continue;
+			if (o_ptr->stuff == STUFF_IRON || o_ptr->stuff == STUFF_STEEL ||
+				o_ptr->stuff == STUFF_MITHRIL || o_ptr->stuff == STUFF_ADAMANTITE ||
+				o_ptr->stuff == STUFF_GOLD || o_ptr->stuff == STUFF_SILVER ||
+				o_ptr->stuff == STUFF_COPPER)
+			{
+				j += o_ptr->weight * 2; /* Tripled effective weight */
+			}
+		}
+		for (o_ptr = inventory; o_ptr; o_ptr = o_ptr->next)
+		{
+			if (o_ptr->stuff == STUFF_IRON || o_ptr->stuff == STUFF_STEEL ||
+				o_ptr->stuff == STUFF_MITHRIL || o_ptr->stuff == STUFF_ADAMANTITE ||
+				o_ptr->stuff == STUFF_GOLD || o_ptr->stuff == STUFF_SILVER ||
+				o_ptr->stuff == STUFF_COPPER)
+			{
+				j += o_ptr->weight * 2; /* Tripled effective weight */
+			}
+		}
+	}
+
 	/* Extract the "weight limit" (in tenth pounds) */
 	i = weight_limit();
 

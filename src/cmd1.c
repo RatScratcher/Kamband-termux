@@ -1402,6 +1402,61 @@ void hit_trap(int y, int x)
 			p_ptr->update |= (PU_VIEW | PU_LITE | PU_FLOW | PU_MONSTERS);
 			break;
 		}
+
+		case FEAT_TRAP_MAGNETISM:
+		{
+			bool has_metal = FALSE;
+			int k;
+			object_type *o_ptr;
+
+			/* Check for metal items */
+			for (k = 0; k < EQUIP_MAX; k++)
+			{
+				o_ptr = equipment[k];
+				if (!o_ptr || !o_ptr->k_idx) continue;
+				if (o_ptr->stuff == STUFF_IRON || o_ptr->stuff == STUFF_STEEL ||
+					o_ptr->stuff == STUFF_MITHRIL || o_ptr->stuff == STUFF_ADAMANTITE ||
+					o_ptr->stuff == STUFF_GOLD || o_ptr->stuff == STUFF_SILVER ||
+					o_ptr->stuff == STUFF_COPPER)
+				{
+					has_metal = TRUE;
+					break;
+				}
+			}
+			if (!has_metal)
+			{
+				for (o_ptr = inventory; o_ptr; o_ptr = o_ptr->next)
+				{
+					if (o_ptr->stuff == STUFF_IRON || o_ptr->stuff == STUFF_STEEL ||
+						o_ptr->stuff == STUFF_MITHRIL || o_ptr->stuff == STUFF_ADAMANTITE ||
+						o_ptr->stuff == STUFF_GOLD || o_ptr->stuff == STUFF_SILVER ||
+						o_ptr->stuff == STUFF_COPPER)
+					{
+						has_metal = TRUE;
+						break;
+					}
+				}
+			}
+
+			if (has_metal)
+			{
+				msg_print("You feel a strong magnetic force!");
+				p_ptr->magnetized = 10 + rand_int(10);
+				p_ptr->update |= (PU_BONUS);
+			}
+			else
+			{
+				msg_print("You feel a strange static in the air.");
+			}
+			break;
+		}
+
+		case FEAT_TRAP_GRAVITY:
+		{
+			msg_print("The gravity crushes you!");
+			take_hit(damroll(2, 6) + p_ptr->depth / 2, "gravity");
+			break;
+		}
 	}
 }
 
@@ -1579,6 +1634,11 @@ void py_attack(int y, int x)
 
 	if (o_ptr)
 		bonus += o_ptr->to_h;
+
+	/* Heavy Metal Interaction */
+	if (p_ptr->magnetized && m_ptr->magnetized) {
+		bonus -= 20;
+	}
 
 	chance = (p_ptr->skill_thn + (bonus * BTH_PLUS_ADJ));
 
@@ -1890,6 +1950,19 @@ void move_player(int dir, int jumping)
 
 	bool oktomove = TRUE;
 	monster_type *m_ptr;
+
+	/* Gravity Hold */
+	if (cave_feat[py][px] == FEAT_TRAP_GRAVITY && !jumping)
+	{
+		int str_chk = p_ptr->stat_use[A_STR];
+		if (rand_int(120) > str_chk)
+		{
+			msg_print("The gravity holds you!");
+			/* Slight crush damage */
+			take_hit(damroll(1, 4), "gravity");
+			return;
+		}
+	}
 
 	/* Find the new grid */
 	y = py + ddy[dir];

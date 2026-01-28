@@ -1184,6 +1184,76 @@ static void process_world(void)
 		p_ptr->immov_cntr--;
 	}
 
+	if (p_ptr->magnetized)
+	{
+		p_ptr->magnetized--;
+		if (!p_ptr->magnetized)
+		{
+			msg_print("The magnetic force dissipates.");
+			p_ptr->update |= (PU_BONUS);
+		}
+	}
+
+	/* Gravity Pull */
+	if (TRUE)
+	{
+		int dy, dx, gy = 0, gx = 0;
+		int min_dist = 999;
+		int y = p_ptr->py;
+		int x = p_ptr->px;
+
+		/* Scan for nearby gravity trap */
+		for (dy = -3; dy <= 3; dy++)
+		{
+			for (dx = -3; dx <= 3; dx++)
+			{
+				if (!dy && !dx) continue;
+				if (in_bounds(y + dy, x + dx) &&
+					cave_feat[y + dy][x + dx] == FEAT_TRAP_GRAVITY)
+				{
+					int d = distance(y, x, y + dy, x + dx);
+					if (d < min_dist)
+					{
+						min_dist = d;
+						gy = y + dy;
+						gx = x + dx;
+					}
+				}
+			}
+		}
+
+		if (min_dist < 999)
+		{
+			int dir = motion_dir(y, x, gy, gx);
+			if (dir)
+			{
+				/* Pull player */
+				/* We use move_player logic to handle collisions */
+				/* But move_player costs energy. This is a forced move. */
+				/* We can use monster_swap if we handle effects manually. */
+				/* Or simpler, just force a move if possible. */
+
+				int ny = y + ddy[dir];
+				int nx = x + ddx[dir];
+
+				if (cave_floor_bold(ny, nx) && cave_m_idx[ny][nx] == 0)
+				{
+					msg_print("You are pulled by gravity!");
+					monster_swap(y, x, ny, nx);
+					lite_spot(y, x);
+					lite_spot(ny, nx);
+					verify_panel();
+					/* Trigger trap if pulled into it */
+					if (cave_feat[ny][nx] >= FEAT_TRAP_HEAD &&
+						cave_feat[ny][nx] <= FEAT_TRAP_TAIL)
+					{
+						hit_trap(ny, nx);
+					}
+				}
+			}
+		}
+	}
+
 	/*** Process Religion. ***/
 
 	if (p_ptr->pgod > 0)

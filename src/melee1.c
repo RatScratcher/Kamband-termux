@@ -539,6 +539,11 @@ bool make_attack_normal(int m_idx)
 		}
 
 
+		/* Heavy Metal Interaction */
+		if (p_ptr->magnetized && m_ptr->magnetized && m_ptr->cdis <= 1) {
+			power -= 20;
+		}
+
 		/* Monster hits player */
 		if (!effect || check_hit(power, rlev))
 		{

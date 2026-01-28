@@ -1024,7 +1024,13 @@ static bool twall(int y, int x)
 {
 	/* Paranoia -- Require a wall or door or some such */
 	if (cave_floor_bold(y, x))
-		return (FALSE);
+	{
+		if (!((cave_feat[y][x] >= FEAT_MAGMA) &&
+			(cave_feat[y][x] <= FEAT_QUARTZ_K)))
+		{
+			return (FALSE);
+		}
+	}
 
 	/* Sound */
 	sound(SOUND_DIG);
@@ -1063,8 +1069,74 @@ static bool do_cmd_tunnel_aux(int y, int x)
 	/* Sound XXX XXX XXX */
 	/* sound(SOUND_DIG); */
 
+	/* Quartz / Magma */
+	if ((cave_feat[y][x] >= FEAT_MAGMA) &&
+		(cave_feat[y][x] <= FEAT_QUARTZ_K))
+	{
+		bool okay = FALSE;
+		bool gold = FALSE;
+		bool hard = FALSE;
+
+		/* Found gold */
+		if (cave_feat[y][x] >= FEAT_MAGMA_H)
+			gold = TRUE;
+
+		/* Extract "quartz" flag XXX XXX XXX */
+		if ((cave_feat[y][x] - FEAT_MAGMA) & 0x01)
+			hard = TRUE;
+
+		/* Quartz */
+		if (hard)
+		{
+			okay = (p_ptr->skill_dig > 20 + rand_int(800));
+		}
+
+		/* Magma */
+		else
+		{
+			okay = (p_ptr->skill_dig > 10 + rand_int(400));
+		}
+
+		/* Success */
+		if (okay && twall(y, x))
+		{
+			/* Found treasure */
+			if (gold)
+			{
+				/* Place some gold */
+				place_object(y, x, FALSE, FALSE);
+
+				/* Message */
+				mprint(MSG_BONUS, "You have found something!");
+			}
+
+			/* Found nothing */
+			else
+			{
+				/* Message */
+				msg_print("You have finished the tunnel.");
+			}
+		}
+
+		/* Failure (quartz) */
+		else if (hard)
+		{
+			/* Message, continue digging */
+			mprint(MSG_TEMP, "You tunnel into the quartz vein.");
+			more = TRUE;
+		}
+
+		/* Failure (magma) */
+		else
+		{
+			/* Message, continue digging */
+			mprint(MSG_TEMP, "You tunnel into the magma vein.");
+			more = TRUE;
+		}
+	}
+
 	/* Floor */
-	if (cave_floor_bold(y, x))
+	else if (cave_floor_bold(y, x))
 	{
 		object_type *o_ptr = equipment[EQUIP_WIELD];
 		if (!o_ptr || o_ptr->tval != TV_DIGGING)
@@ -1157,71 +1229,6 @@ static bool do_cmd_tunnel_aux(int y, int x)
 		}
 	}
 
-	/* Quartz / Magma */
-	else if ((cave_feat[y][x] >= FEAT_MAGMA) &&
-		(cave_feat[y][x] <= FEAT_QUARTZ_K))
-	{
-		bool okay = FALSE;
-		bool gold = FALSE;
-		bool hard = FALSE;
-
-		/* Found gold */
-		if (cave_feat[y][x] >= FEAT_MAGMA_H)
-			gold = TRUE;
-
-		/* Extract "quartz" flag XXX XXX XXX */
-		if ((cave_feat[y][x] - FEAT_MAGMA) & 0x01)
-			hard = TRUE;
-
-		/* Quartz */
-		if (hard)
-		{
-			okay = (p_ptr->skill_dig > 20 + rand_int(800));
-		}
-
-		/* Magma */
-		else
-		{
-			okay = (p_ptr->skill_dig > 10 + rand_int(400));
-		}
-
-		/* Success */
-		if (okay && twall(y, x))
-		{
-			/* Found treasure */
-			if (gold)
-			{
-				/* Place some gold */
-				place_object(y, x, FALSE, FALSE);
-
-				/* Message */
-				mprint(MSG_BONUS, "You have found something!");
-			}
-
-			/* Found nothing */
-			else
-			{
-				/* Message */
-				msg_print("You have finished the tunnel.");
-			}
-		}
-
-		/* Failure (quartz) */
-		else if (hard)
-		{
-			/* Message, continue digging */
-			mprint(MSG_TEMP, "You tunnel into the quartz vein.");
-			more = TRUE;
-		}
-
-		/* Failure (magma) */
-		else
-		{
-			/* Message, continue digging */
-			mprint(MSG_TEMP, "You tunnel into the magma vein.");
-			more = TRUE;
-		}
-	}
 
 	/* Rubble */
 	else if (cave_feat[y][x] == FEAT_RUBBLE)

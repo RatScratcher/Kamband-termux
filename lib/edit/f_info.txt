@@ -511,6 +511,21 @@ G:^:W
 N:121:gravity trap
 G:^:B
 
+N:122:boulder trap
+G:^:u
+
+N:123:massive boulder
+G:0:s
+
+N:124:massive boulder
+G:0:s
+
+N:125:massive boulder
+G:0:s
+
+N:126:massive boulder
+G:0:s
+
 ####
 ####  128-160 some additional ``floor'' features.
 ####

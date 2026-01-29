@@ -1330,6 +1330,93 @@ void hit_trap(int y, int x)
 			break;
 		}
 
+		case FEAT_TRAP_BOULDER_START:
+		{
+			int len[4]; /* 0=S, 1=N, 2=E, 3=W (using dirs array order) */
+			int dirs[4]; /* 2, 8, 6, 4 */
+			int d, i;
+			int spawn_y = y, spawn_x = x;
+			int boulder_feat = 0;
+
+			mprint(MSG_STUPID, "You hear a loud click!");
+
+			dirs[0] = 2; dirs[1] = 8; dirs[2] = 6; dirs[3] = 4;
+
+			for (d = 0; d < 4; d++)
+			{
+				int dir = dirs[d];
+				int dy = ddy[dir];
+				int dx = ddx[dir];
+
+				len[d] = 0;
+				for (i = 1; i < 100; i++)
+				{
+					int ty = y + dy * i;
+					int tx = x + dx * i;
+					if (!in_bounds(ty, tx)) break;
+					if (!cave_floor_bold(ty, tx)) break;
+					len[d]++;
+				}
+			}
+
+			/* NS Axis */
+			if (len[0] + len[1] >= len[2] + len[3])
+			{
+				if (len[0] + len[1] >= 10) /* Threshold */
+				{
+					/* Pick further end */
+					if (len[0] > len[1]) /* South is further */
+					{
+						/* Go South len[0] tiles */
+						spawn_y = y + ddy[2] * len[0];
+						spawn_x = x + ddx[2] * len[0];
+						boulder_feat = FEAT_BOULDER_N; /* Move North */
+					}
+					else
+					{
+						/* Go North len[1] tiles */
+						spawn_y = y + ddy[8] * len[1];
+						spawn_x = x + ddx[8] * len[1];
+						boulder_feat = FEAT_BOULDER_S; /* Move South */
+					}
+				}
+			}
+			/* EW Axis */
+			else
+			{
+				if (len[2] + len[3] >= 10)
+				{
+					if (len[2] > len[3]) /* East is further */
+					{
+						spawn_y = y + ddy[6] * len[2];
+						spawn_x = x + ddx[6] * len[2];
+						boulder_feat = FEAT_BOULDER_W; /* Move West */
+					}
+					else
+					{
+						spawn_y = y + ddy[4] * len[3];
+						spawn_x = x + ddx[4] * len[3];
+						boulder_feat = FEAT_BOULDER_E; /* Move East */
+					}
+				}
+			}
+
+			if (boulder_feat)
+			{
+				msg_print("You hear a low rumble... a massive boulder is careening toward you!");
+				cave_set_feat(spawn_y, spawn_x, boulder_feat);
+				note_spot(spawn_y, spawn_x);
+				lite_spot(spawn_y, spawn_x);
+				p_ptr->update |= (PU_VIEW | PU_LITE | PU_FLOW | PU_MONSTERS);
+			}
+			else
+			{
+				msg_print("You hear a grinding noise, but nothing happens.");
+			}
+
+			break;
+		}
+
 		case FEAT_TRAP_MANA:
 		{
 			mprint(MSG_STUPID, "You hit a draining rune!");

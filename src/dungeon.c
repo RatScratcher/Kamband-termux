@@ -556,6 +556,105 @@ static void process_crushing_room(void)
 }
 
 /*
+ * Process Rolling Boulders
+ */
+static void process_boulders(void)
+{
+	int y, x;
+	int dy = 0, dx = 0;
+	int ny, nx;
+	int pny, pnx;
+	int feat;
+	char m_name[80];
+
+	/* Clear CAVE_TEMP on boulders */
+	for (y = 0; y < DUNGEON_HGT; y++) {
+		for (x = 0; x < DUNGEON_WID; x++) {
+			if (cave_feat[y][x] >= FEAT_BOULDER_N && cave_feat[y][x] <= FEAT_BOULDER_W) {
+				cave_info[y][x] &= ~CAVE_TEMP;
+			}
+		}
+	}
+
+	for (y = 0; y < DUNGEON_HGT; y++) {
+		for (x = 0; x < DUNGEON_WID; x++) {
+			feat = cave_feat[y][x];
+			if (feat >= FEAT_BOULDER_N && feat <= FEAT_BOULDER_W) {
+				if (!(cave_info[y][x] & CAVE_TEMP)) {
+					dy = 0; dx = 0;
+
+					if (feat == FEAT_BOULDER_N) dy = -1;
+					else if (feat == FEAT_BOULDER_S) dy = 1;
+					else if (feat == FEAT_BOULDER_E) dx = 1;
+					else if (feat == FEAT_BOULDER_W) dx = -1;
+
+					ny = y + dy;
+					nx = x + dx;
+
+					if (!in_bounds(ny, nx)) {
+						cave_set_feat(y, x, FEAT_RUBBLE);
+						continue;
+					}
+
+					/* Collision with Player */
+					if (ny == p_ptr->py && nx == p_ptr->px) {
+						mprint(MSG_DEADLY, "The boulder slams into you!");
+						take_hit(damroll(10, 10), "a rolling boulder");
+
+						/* Push player */
+						pny = ny + dy;
+						pnx = nx + dx;
+
+						if (in_bounds(pny, pnx) && cave_floor_bold(pny, pnx) && cave_m_idx[pny][pnx] == 0) {
+							mprint(MSG_URGENT, "You are pushed back!");
+							monster_swap(ny, nx, pny, pnx);
+						} else {
+							mprint(MSG_DEADLY, "You are crushed against the wall!");
+							take_hit(damroll(20, 10), "a rolling boulder");
+							cave_set_feat(y, x, FEAT_RUBBLE);
+							continue;
+						}
+					}
+
+					/* Collision with Monster */
+					if (cave_m_idx[ny][nx] > 0) {
+						int m_idx = cave_m_idx[ny][nx];
+						bool fear = FALSE;
+						monster_desc(m_name, &m_list[m_idx], 0);
+						msg_format("%^s is flattened.", m_name);
+						mon_take_hit(m_idx, 500, &fear, " is flattened.", FALSE, FALSE);
+
+						if (cave_m_idx[ny][nx] > 0) {
+							cave_set_feat(y, x, FEAT_RUBBLE);
+							if (player_can_see_bold(y, x))
+								msg_print("The boulder crashes into the monster and shatters!");
+							continue;
+						}
+					}
+
+					/* Collision with Wall/Obstacle */
+					if (!cave_floor_bold(ny, nx)) {
+						cave_set_feat(y, x, FEAT_RUBBLE);
+						if (player_can_see_bold(y, x))
+							msg_print("The boulder shatters against the wall!");
+						continue;
+					}
+
+					/* Move Boulder */
+					cave_set_feat(y, x, FEAT_FLOOR);
+					cave_set_feat(ny, nx, feat);
+					cave_info[ny][nx] |= CAVE_TEMP;
+					note_spot(y, x);
+					note_spot(ny, nx);
+					lite_spot(y, x);
+					lite_spot(ny, nx);
+				}
+			}
+		}
+	}
+}
+
+/*
  * Process environment (Burning Oil, Acid, etc.)
  */
 static void process_environment(void)
@@ -670,6 +769,7 @@ static void process_world(void)
 	if ((turn % 20) == 0)
 		process_crushing_room();
 
+	process_boulders();
 	process_environment();
 
 	update_dynamic_spell_costs();

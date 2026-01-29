@@ -925,6 +925,12 @@
 #define FEAT_TRAP_MAGNETISM     120
 #define FEAT_TRAP_GRAVITY       121
 
+#define FEAT_TRAP_BOULDER_START 122
+#define FEAT_BOULDER_N          123
+#define FEAT_BOULDER_S          124
+#define FEAT_BOULDER_E          125
+#define FEAT_BOULDER_W          126
+
 #define FEAT_FOUNTAIN           218
 #define FEAT_CARTOGRAPHER       219
 #define FEAT_HEROIC_REMAINS     220

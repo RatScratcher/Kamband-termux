@@ -150,6 +150,7 @@ extern bool crushing_active;
 extern int crushing_cy;
 extern int crushing_cx;
 extern int crushing_dist;
+extern s16b tome_decipher_turns;
 extern int player_uid;
 extern int player_euid;
 extern int player_egid;

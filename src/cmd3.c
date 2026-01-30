@@ -438,6 +438,36 @@ void do_cmd_drop(void)
 	/* Handle fate here. */
 	fate_effect(o_ptr->fate, FATE_DROP);
 
+	/* Tome Drop Logic */
+	if (o_ptr->tval == TV_TOME && p_ptr->depth == 0)
+	{
+		int i;
+		bool near_scholar = FALSE;
+		/* Check adjacent grids for Scholar */
+		for (i = 0; i < 9; i++) {
+			int ny = p_ptr->py + ddy_ddd[i];
+			int nx = p_ptr->px + ddx_ddd[i];
+			if (in_bounds(ny, nx) && cave_m_idx[ny][nx] > 0) {
+				monster_type *m_ptr = &m_list[cave_m_idx[ny][nx]];
+				if (m_ptr->r_idx == R_IDX_SCHOLAR) {
+					near_scholar = TRUE;
+					break;
+				}
+			}
+		}
+
+		if (near_scholar) {
+			msg_print("You hand the tome to the Scholar.");
+			msg_print("The Scholar says: 'Ah, fascinating! Give me some time to decipher this.'");
+			tome_decipher_turns = 1000;
+
+			/* Remove from inventory */
+			inven_item_increase(item, -1);
+			inven_item_optimize(item);
+			return;
+		}
+	}
+
 	drop_near(o_ptr, FALSE, p_ptr->py, p_ptr->px);
 
 }

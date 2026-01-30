@@ -1111,6 +1111,7 @@ struct player_type
 	s16b cut; /* Timed -- Cut */
 	s16b stun; /* Timed -- Stun */
 	s16b magnetized; /* Timed -- Magnetized */
+    s16b anti_magic; /* Timed -- Anti-magic field */
 
 	s16b protevil; /* Timed -- Protection */
 	s16b invuln; /* Timed -- Invulnerable */

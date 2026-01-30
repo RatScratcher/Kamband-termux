@@ -4387,11 +4387,105 @@ static void place_traps_near_chests(int chance)
 }
 
 /*
+ * Place Ancient Ruin
+ */
+static void place_ancient_ruin(void)
+{
+	int y, x, dy, dx;
+	int y1, x1, y2, x2;
+	int tries;
+
+	for (tries = 0; tries < 100; tries++)
+	{
+		y = rand_range(10, DUNGEON_HGT - 30);
+		x = rand_range(10, DUNGEON_WID - 30);
+
+		/* Check space */
+		bool safe = TRUE;
+		for (dy = 0; dy < 20; dy++)
+		{
+			for (dx = 0; dx < 20; dx++)
+			{
+				if (!in_bounds(y + dy, x + dx)) { safe = FALSE; break; }
+				if (cave_perma_bold(y + dy, x + dx)) { safe = FALSE; break; }
+				if (cave_feat[y+dy][x+dx] == FEAT_SHAFT ||
+				    cave_feat[y+dy][x+dx] == FEAT_QUEST_ENTER ||
+				    cave_feat[y+dy][x+dx] == FEAT_QUEST_EXIT) { safe = FALSE; break; }
+				/* Avoid existing rooms? */
+				if (cave_info[y+dy][x+dx] & CAVE_ROOM) { safe = FALSE; break; }
+			}
+			if (!safe) break;
+		}
+		if (!safe) continue;
+
+		/* Build */
+		y1 = y; x1 = x;
+		y2 = y + 19; x2 = x + 19;
+
+		/* Base: Rubble and Floor mix */
+		for (dy = 0; dy < 20; dy++) {
+			for (dx = 0; dx < 20; dx++) {
+				if (rand_int(100) < 70) cave_set_feat(y+dy, x+dx, FEAT_RUBBLE);
+				else cave_set_feat(y+dy, x+dx, FEAT_FLOOR);
+				cave_info[y+dy][x+dx] |= CAVE_ROOM; /* Mark as room so stairs avoid it */
+			}
+		}
+
+		/* Streets: Cross */
+		for (dy = 0; dy < 20; dy++) cave_set_feat(y+dy, x+10, FEAT_FLOOR);
+		for (dx = 0; dx < 20; dx++) cave_set_feat(y+10, x+dx, FEAT_FLOOR);
+
+		/* Points of Interest: Doors */
+		int doors = rand_range(1, 3);
+		int i;
+		for (i = 0; i < doors; i++) {
+			int ty, tx;
+			int d_tries = 0;
+			while (d_tries++ < 100) {
+				ty = rand_range(y1 + 1, y2 - 1);
+				tx = rand_range(x1 + 1, x2 - 1);
+				if (cave_feat[ty][tx] == FEAT_RUBBLE) {
+					cave_set_feat(ty, tx, FEAT_RUIN_DOOR);
+					break;
+				}
+			}
+		}
+
+		if (cheat_room) msg_print("Ancient Ruin generated.");
+		return;
+	}
+}
+
+/*
  * Populate the level with new features
  */
 static void populate_features(void)
 {
 	int y, x, i;
+
+	/* Place Ancient Ruins (Rarely) */
+	if (p_ptr->depth > 0 && rand_int(100) < 5)
+	{
+		place_ancient_ruin();
+	}
+
+	/* Place Glowing Tiles (Secret Discovery) */
+	if (p_ptr->depth > 0)
+	{
+		for (i = 0; i < rand_range(3, 8); i++)
+		{
+			int d = 0;
+			while (d < 1000) {
+				d++;
+				y = rand_range(1, DUNGEON_HGT - 2);
+				x = rand_range(1, DUNGEON_WID - 2);
+				if (cave_floor_bold(y, x) && cave_naked_bold(y, x)) {
+					cave_set_feat(y, x, FEAT_GLOWING_TILE);
+					break;
+				}
+			}
+		}
+	}
 
 	/* Place Fountains */
 	for (i = 0; i < rand_range(2, 5); i++) {
@@ -5172,6 +5266,19 @@ static void town_gen(void) {
     p_ptr->prace_info = 1;
     p_ptr->max_depth = 0;
     msg_print("You return to your corporeal form.");
+  }
+
+  /* Place the Scholar */
+  {
+      int y, x, i;
+      for (i = 0; i < 1000; i++) {
+          y = rand_range(20, DUNGEON_HGT - 20);
+          x = rand_range(20, DUNGEON_WID - 20);
+          if (cave_floor_bold(y, x) && cave_naked_bold(y, x)) {
+              place_monster_aux(y, x, R_IDX_SCHOLAR, MON_ALLOC_JUST_ONE);
+              break;
+          }
+      }
   }
 }
 

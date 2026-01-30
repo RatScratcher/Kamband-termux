@@ -151,6 +151,7 @@ int crushing_cy; /* Crushing trap center Y */
 int crushing_cx; /* Crushing trap center X */
 int crushing_dist; /* Crushing trap current distance */
 
+s16b tome_decipher_turns = 0; /* Turns until tome is deciphered */
 
 /*
  * Player info

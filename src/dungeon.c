@@ -769,6 +769,31 @@ static void process_world(void)
 	if ((turn % 20) == 0)
 		process_crushing_room();
 
+	/* Tome Decipher Timer */
+	if (tome_decipher_turns > 0) {
+		tome_decipher_turns--;
+		if (tome_decipher_turns == 0) {
+			msg_print("Your tome has been completed!");
+			/* Reward */
+			int outcome = rand_int(3);
+			if (outcome == 0) {
+				msg_print("It was a recipe for Toasted Marshmallows. You feel slightly disappointed but hungry.");
+				/* Food */
+				object_type *i_ptr = new_object();
+				object_prep(i_ptr, lookup_kind(TV_FOOD, SV_FOOD_BISCUIT));
+				drop_near(i_ptr, -1, p_ptr->py, p_ptr->px);
+			} else if (outcome == 1) {
+				msg_print("It reveals a high-level spell!");
+				/* Scroll of *Destruction* */
+				object_type *i_ptr = new_object();
+				object_prep(i_ptr, lookup_kind(TV_SCROLL, SV_SCROLL_STAR_DESTRUCTION));
+				drop_near(i_ptr, -1, p_ptr->py, p_ptr->px);
+			} else {
+				msg_print("It was just a historical account of goblin breeding habits. Boring.");
+			}
+		}
+	}
+
 	process_boulders();
 	process_environment();
 
@@ -1293,6 +1318,8 @@ static void process_world(void)
 			p_ptr->update |= (PU_BONUS);
 		}
 	}
+
+	if (p_ptr->anti_magic > 0) p_ptr->anti_magic--;
 
 	/* Gravity Pull */
 	if (TRUE)

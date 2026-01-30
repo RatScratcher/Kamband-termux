@@ -390,7 +390,7 @@ static bool item_tester_hook_activate(object_type * o_ptr)
 	u32b f1, f2, f3;
 	int i;
 
-	if (o_ptr->tval == TV_RANDART)
+	if (o_ptr->tval == TV_RANDART || o_ptr->tval == TV_STRANGE_ARTIFACT)
 		return TRUE;
 
 	/* Not known */
@@ -424,6 +424,42 @@ void do_cmd_activate(void)
 }
 
 
+
+/*
+ * Activate Strange Artifact
+ */
+static void experimental_use(void)
+{
+	int effect = rand_int(4);
+	switch (effect)
+	{
+		case 0: /* The Quiet */
+			msg_print("A wave of silence washes over the level.");
+			sleep_monsters(p_ptr->depth);
+			break;
+		case 1: /* The Pulse */
+			msg_print("You feel a pulse of magic.");
+			detect_treasure();
+			break;
+		case 2: /* The Aggravation */
+			msg_print("An irritating high-pitched whine fills the air!");
+			aggravate_monsters(0);
+			{
+				int i;
+				for (i = 1; i < m_max; i++) {
+					monster_type *m_ptr = &m_list[i];
+					if (!m_ptr->r_idx) continue;
+					if (m_ptr->mspeed < 150) m_ptr->mspeed += 10;
+				}
+			}
+			break;
+		case 3: /* The Field */
+			msg_print("An anti-magic field surrounds you!");
+			p_ptr->anti_magic = 5;
+			p_ptr->update |= (PU_BONUS);
+			break;
+	}
+}
 
 /*
  * This is a generic function to ``activate'' an item -- i.e. drink potion,
@@ -568,6 +604,14 @@ object_type *item_effect(cptr name, cptr act, bool obvious,
 	if (snd)
 	{
 		sound(snd);
+	}
+
+	if (o_ptr->tval == TV_STRANGE_ARTIFACT)
+	{
+		experimental_use();
+		o_ptr->timeout = rand_int(100) + 100;
+		p_ptr->window |= (PW_INVEN | PW_EQUIP);
+		return o_ptr;
 	}
 
 	if (o_ptr->tval == TV_RANDART)

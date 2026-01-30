@@ -1596,7 +1596,7 @@ bool apply_disenchant(int mode)
 
 
 	/* Unused */
-	mode = mode;
+	(void)mode;
 
 
 	/* Pick a random slot */

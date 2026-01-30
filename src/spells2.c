@@ -3036,6 +3036,12 @@ bool detect_stairs(void)
 	return (project(-1, MAX_SIGHT * 5, p_ptr->py, p_ptr->px, 0, GF_DETECT_STAIR, flg));
 }
 
+bool detect_treasure(void)
+{
+	u32b flg = PROJECT_GRID | PROJECT_ITEM;
+	return (project(-1, MAX_SIGHT * 5, p_ptr->py, p_ptr->px, 0, GF_DETECT_TREASURE, flg));
+}
+
 bool fetch_item(int wgt, int y, int x)
 {
 

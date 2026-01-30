@@ -936,6 +936,10 @@
 #define FEAT_CARTOGRAPHER       219
 #define FEAT_HEROIC_REMAINS     220
 
+#define FEAT_GLOWING_TILE       221
+#define FEAT_HIDDEN_FLOOR       222
+#define FEAT_RUIN_DOOR          223
+
 /* Altars. */
 #define FEAT_ALTAR_HEAD         128
 #define FEAT_ALTAR_TAIL         159

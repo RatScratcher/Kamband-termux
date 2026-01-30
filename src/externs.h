@@ -771,6 +771,7 @@ extern void summon_pet_monster(void);
 extern bool detect_traps(void);
 extern bool detect_doors(void);
 extern bool detect_stairs(void);
+extern bool detect_treasure(void);
 extern bool fetch_item(int wgt, int y, int x);
 
 /* store.c */

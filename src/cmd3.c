@@ -462,8 +462,7 @@ void do_cmd_drop(void)
 			tome_decipher_turns = 1000;
 
 			/* Remove from inventory */
-			inven_item_increase(item, -1);
-			inven_item_optimize(item);
+			remove_object(o_ptr);
 			return;
 		}
 	}

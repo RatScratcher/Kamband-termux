@@ -435,7 +435,7 @@ static void experimental_use(void)
 	{
 		case 0: /* The Quiet */
 			msg_print("A wave of silence washes over the level.");
-			sleep_monsters(p_ptr->depth);
+			sleep_monsters();
 			break;
 		case 1: /* The Pulse */
 			msg_print("You feel a pulse of magic.");

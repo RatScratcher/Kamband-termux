@@ -110,7 +110,7 @@
 # (P)   @ => Player
 #
 
-V:2.1.2
+V:2.1.3
 
 
 ### Simple Vaults (type 7) -- maximum size 44x22 ###

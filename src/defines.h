@@ -47,7 +47,7 @@
 
 #define KAM_VERSION_MAJOR 2
 #define KAM_VERSION_MINOR 1
-#define KAM_VERSION_PATCH 2
+#define KAM_VERSION_PATCH 3
 
 
 /*
@@ -171,6 +171,7 @@
 #define MAX_E_IDX		150	/* Max size for "e_info[]" */
 #define MAX_R_IDX		1024	/* Max size for "r_info[]" */
 #define R_IDX_MERCHANT  12 /* Traveling Merchant */
+#define R_IDX_SCHOLAR   693 /* Scholar */
 #define MAX_V_IDX		200	/* Max size for "v_info[]" -KMW- */
 
 
@@ -1378,9 +1379,11 @@
 #define TV_RANDART       97	/* Random artifact */
 #define TV_GOLD		100	/* Gold can only be picked up by players */
 #define TV_CORPSE       101	/* Corpses. */
+#define TV_TOME         103 /* Ancient Tome */
+#define TV_STRANGE_ARTIFACT 104 /* Strange Artifact */
 
 /* Maximum TV_XXX value */
-#define MAX_TVAL 102
+#define MAX_TVAL 105
 
 /* The sval codes for TV_JUNK */
 #define SV_BROKEN_STICK         6

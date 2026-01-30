@@ -930,6 +930,10 @@ static void wr_extra(void)
     for (i = 0; i < 8; i++) wr_byte(p_ptr->puzzle_attempt[i]);
     wr_byte(p_ptr->puzzle_next);
 
+    /* Write extra state */
+    wr_s16b(tome_decipher_turns);
+    wr_s16b(p_ptr->anti_magic);
+
 	/* Write the "object seeds" */
 	wr_u32b(seed_flavor);
 	wr_u32b(seed_town);

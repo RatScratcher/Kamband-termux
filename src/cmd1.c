@@ -2197,6 +2197,73 @@ void move_player(int dir, int jumping)
 			}
 		}
 
+		/* Landed on Glowing Tile */
+		else if (cave_feat[y][x] == FEAT_GLOWING_TILE)
+		{
+			msg_print("The tile glows beneath your feet!");
+			if (rand_int(100) < 50)
+			{
+				/* Teleport to Hidden Pocket */
+				msg_print("You are teleported to a hidden pocket!");
+				/* Find solid rock and carve room */
+				int ty, tx, dy, dx;
+				int tries = 0;
+				while (tries++ < 1000) {
+					ty = rand_range(1, DUNGEON_HGT - 2);
+					tx = rand_range(1, DUNGEON_WID - 2);
+					/* Check for solid rock 3x3 */
+					bool solid = TRUE;
+					for (dy = -1; dy <= 1; dy++) {
+						for (dx = -1; dx <= 1; dx++) {
+							 if (!in_bounds(ty+dy, tx+dx) || cave_feat[ty+dy][tx+dx] < FEAT_WALL_EXTRA) {
+								 solid = FALSE; break;
+							 }
+						}
+						if (!solid) break;
+					}
+					if (solid) {
+						/* Carve */
+						for (dy = -1; dy <= 1; dy++) {
+							for (dx = -1; dx <= 1; dx++) {
+								cave_set_feat(ty+dy, tx+dx, FEAT_HIDDEN_FLOOR);
+								cave_info[ty+dy][tx+dx] |= (CAVE_ROOM | CAVE_GLOW);
+							}
+						}
+						teleport_player_to(ty, tx);
+						break;
+					}
+				}
+			}
+			else
+			{
+				/* Transform nearby wall to door */
+				int d;
+				bool done = FALSE;
+				for (d = 0; d < 8; d++) {
+					 int ny = y + ddy_ddd[d];
+					 int nx = x + ddx_ddd[d];
+					 if (cave_feat[ny][nx] >= FEAT_WALL_EXTRA && cave_feat[ny][nx] <= FEAT_WALL_SOLID) {
+						 msg_print("A wall transforms into a door!");
+						 cave_set_feat(ny, nx, FEAT_OPEN);
+						 lite_spot(ny, nx);
+						 done = TRUE;
+						 break;
+					 }
+				}
+				if (!done) msg_print("Nothing happens.");
+			}
+			cave_set_feat(y, x, FEAT_FLOOR);
+		}
+
+		/* Landed on Ruin Door */
+		else if (cave_feat[y][x] == FEAT_RUIN_DOOR)
+		{
+			msg_print("You open the ancient door.");
+			/* Drop loot */
+			place_object(y, x, TRUE, FALSE);
+			cave_set_feat(y, x, FEAT_OPEN);
+		}
+
 		/* Landed on an invisible trap */
 		else if (cave_feat[y][x] == FEAT_INVIS && !p_ptr->flying)
 		{

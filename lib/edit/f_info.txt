@@ -735,3 +735,12 @@ G:?:y
 
 N:220:Heroic Remains
 G:&:w
+
+N:221:glowing tile
+G:;:G
+
+N:222:hidden floor
+G:.:w
+
+N:223:ruin door
+G:+:y

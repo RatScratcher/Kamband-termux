@@ -1023,6 +1023,12 @@ void do_cmd_cast_power(void)
 
 	spell *s_ptr;
 
+	if (p_ptr->anti_magic)
+	{
+		msg_print("An anti-magic field prevents you from casting!");
+		return;
+	}
+
 	if (!cp_ptr->magic_innate && (p_ptr->blind || no_lite()))
 	{
 		msg_print("You cannot see!");

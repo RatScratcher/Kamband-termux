@@ -10084,3 +10084,12 @@ F:NO_FEAR | NO_SLEEP | NO_CONF |
 F:RES_NETH | RES_NEXU | RES_DISE | RES_PLAS
 D:A primordial being from beyond time. It ignores you completely,
 D:unless you are foolish enough to disturb it.
+
+N:693:Scholar
+G:p:W
+I:110:10d10:20:10:0
+W:0:1:0:0
+F:UNIQUE | MALE | FORCE_MAXHP | FORCE_SLEEP | FRIENDLY | NEVER_MOVE | NO_FEAR | INNOCENT |
+F:HUMANOID | ONLY_GOLD | DROP_60 | RANDOM_NAME |
+F:TAKE_ITEM | OPEN_DOOR | BASH_DOOR | SMART
+D:A learned scholar studying ancient texts.

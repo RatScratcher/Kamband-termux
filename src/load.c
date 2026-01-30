@@ -832,6 +832,17 @@ static errr rd_extra(void)
 		p_ptr->puzzle_next = 0;
 	}
 
+	if (sf_patch >= 3)
+	{
+		rd_s16b(&tome_decipher_turns);
+		rd_s16b(&p_ptr->anti_magic);
+	}
+	else
+	{
+		tome_decipher_turns = 0;
+		p_ptr->anti_magic = 0;
+	}
+
 	/* Hack -- the two "special seeds" */
 	rd_u32b(&seed_flavor);
 	rd_u32b(&seed_town);

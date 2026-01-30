@@ -2879,6 +2879,7 @@ static bool project_f(int who, int r, int y, int x, int dam, int typ)
 				(cave_feat[y][x] < FEAT_WALL_EXTRA ||
 					cave_feat[y][x] > FEAT_WALL_SOLID))
 			{
+				if (cave_feat[y][x] == FEAT_HIDDEN_FLOOR) break;
 
 				cave_info[y][x] |= CAVE_MARK;
 				lite_spot(y, x);
@@ -2894,6 +2895,8 @@ static bool project_f(int who, int r, int y, int x, int dam, int typ)
 			 * neighbors different from itself. */
 
 			int x1, y1;
+
+			if (cave_feat[y][x] == FEAT_HIDDEN_FLOOR) break;
 
 			for (y1 = -1; y1 <= 1; y1++)
 			{

@@ -2809,6 +2809,35 @@ void apply_magic(object_type * o_ptr, int lev, bool okay, bool good,
 	/* Apply magic */
 	switch (o_ptr->tval)
 	{
+		case TV_TOME:
+		{
+			if (lev < 20)
+			{
+				/* Phase I: 0-6 */
+				o_ptr->pval = rand_int(7);
+			}
+			else if (lev < 50)
+			{
+				/* Phase II: 7-13 */
+				o_ptr->pval = 7 + rand_int(7);
+			}
+			else
+			{
+				/* Phase III: 14-21 */
+				/* Index 21 has lower weight (1/15 chance vs 2/15 for others) */
+				int r = rand_int(15);
+				if (r < 14)
+				{
+					o_ptr->pval = 14 + (r / 2);
+				}
+				else
+				{
+					o_ptr->pval = 21;
+				}
+			}
+			break;
+		}
+
 		case TV_RANDART:
 		{
 			finalize_randart(o_ptr, lev);

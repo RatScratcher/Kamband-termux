@@ -843,6 +843,17 @@ static errr rd_extra(void)
 		p_ptr->anti_magic = 0;
 	}
 
+	if (sf_patch >= 4)
+	{
+		rd_u32b(&lore_known);
+		rd_s16b(&tome_decipher_idx);
+	}
+	else
+	{
+		lore_known = 0;
+		tome_decipher_idx = 0;
+	}
+
 	/* Hack -- the two "special seeds" */
 	rd_u32b(&seed_flavor);
 	rd_u32b(&seed_town);

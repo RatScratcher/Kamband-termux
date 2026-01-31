@@ -9,6 +9,7 @@
  */
 
 #include "angband.h"
+#include "lore.h"
 
 
 
@@ -4016,4 +4017,37 @@ cli_comm cli_info[MAX_COMMANDS] = {
 	{"sacrifice", "god-info", "Sacrifice something", do_cmd_sacrifice},
 	{"pray", NULL, "Pray to your god", do_cmd_pray},
 	{NULL, NULL, NULL}
+};
+
+/*
+ * Lore strings for Ancient Tomes.
+ */
+cptr lore_text[MAX_LORE] = {
+	/* Phase I: The Golden Age of Expansion (0-6) */
+	"Fradert noted that on this day a great day was celebrated - the building of the first great tunnel beneath Shiderm.",
+	"The Master Mason declared the Great Hall finished. It is so large that clouds have begun to form beneath the ceiling.",
+	"The heat from the core provides all the warmth our gardens require; we shall never see the sun again, and we do not care.",
+	"Records show a surplus of 10,000 gems this quarter. The King has ordered the construction of the 'Aethel-Gate' to showcase our wealth to the stone itself.",
+	"To live within the rock is to be cradled by the world. We are safe. We are eternal. The surface is but a fading dream of wind and cold.",
+	"A child was born today in the Fourth Stratum. They say his first word was 'Stone.' The augurs claim it is a sign of a thousand-year reign.",
+	"The Great Aqueduct now carries the subterranean river through the city. We have mastered the water as we have mastered the dark.",
+
+	/* Phase II: The Discovery (7-13) */
+	"Gurst found a strange glowing gem in the depths of the dig; he tried to etch his name into it, but the stone seemed to swallow the light...",
+	"The miners report a rhythmic thrumming in the lower strata. Not the sound of shifting rock, but the sound of a heart.",
+	"We have found a door that was not built by our hands. It is cold to the touch, even in the heat of the forge.",
+	"The High Scholar spent three days staring into the 'Void-Glass.' He has stopped eating, claiming he can see 'The Geometry of the Unspoken'.",
+	"We have tapped a vein of liquid silver that flows upward, defying gravity. The workers who touched it are... changing. Their skin has a metallic sheen.",
+	"The incantations found etched on the black pillars do not require breath to speak. They vibrate in the marrow of the bone.",
+	"Gurst has gone missing. We found his pickaxe fused into a wall of solid diamond. There was no sign of a struggle, only a faint smell of ozone.",
+
+	/* Phase III: The Collapse (The Final Descent) (14-21) */
+	"Something is moving in the depths, it comes closer. The torches refuse to light near the western breach.",
+	"They are not monsters. They are what we become when the light of Shiderm finally flickers out.",
+	"The King has locked himself in the Treasury. He says the gold is screaming. I can hear it too.",
+	"The transformation is nearly complete. My hands are no longer flesh, but a grey, pulsing silt. I find I no longer remember the taste of bread.",
+	"The Great Hall is silent now. The clouds above have turned black and rain a fine, stinging ash. We meddled with a power that did not want to be known.",
+	"If you find this, do not seek the Aethel-Gate. It is no longer a door. It is a mouth.",
+	"The stone is breathing. We are all part of the mountain now. Every scream is just another crack in the wall.",
+	"A saviour has arisen from the deepest void! The Lord Morgoth has come to deliver us from the screaming stone! We offer him our shadows, and he promises us an end to the light."
 };

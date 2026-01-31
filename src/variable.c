@@ -152,6 +152,8 @@ int crushing_cx; /* Crushing trap center X */
 int crushing_dist; /* Crushing trap current distance */
 
 s16b tome_decipher_turns = 0; /* Turns until tome is deciphered */
+u32b lore_known = 0; /* Bitfield of known lore */
+s16b tome_decipher_idx = 0; /* Index of lore being deciphered */
 
 /*
  * Player info

@@ -9,6 +9,7 @@
  */
 
 #include "angband.h"
+#include "lore.h"
 
 
 
@@ -774,23 +775,18 @@ static void process_world(void)
 		tome_decipher_turns--;
 		if (tome_decipher_turns == 0) {
 			msg_print("Your tome has been completed!");
-			/* Reward */
-			int outcome = rand_int(3);
-			if (outcome == 0) {
-				msg_print("It was a recipe for Toasted Marshmallows. You feel slightly disappointed but hungry.");
-				/* Food */
-				object_type *i_ptr = new_object();
-				object_prep(i_ptr, lookup_kind(TV_FOOD, SV_FOOD_BISCUIT));
-				drop_near(i_ptr, -1, p_ptr->py, p_ptr->px);
-			} else if (outcome == 1) {
-				msg_print("It reveals a high-level spell!");
-				/* Scroll of *Destruction* */
-				object_type *i_ptr = new_object();
-				object_prep(i_ptr, lookup_kind(TV_SCROLL, SV_SCROLL_STAR_DESTRUCTION));
-				drop_near(i_ptr, -1, p_ptr->py, p_ptr->px);
-			} else {
-				msg_print("It was just a historical account of goblin breeding habits. Boring.");
+
+			if (tome_decipher_idx >= 0 && tome_decipher_idx < MAX_LORE)
+			{
+				lore_known |= (1L << tome_decipher_idx);
+				msg_format("You decipher the ancient text: %s", lore_text[tome_decipher_idx]);
 			}
+			else
+			{
+				msg_print("The tome contained gibberish.");
+			}
+
+			tome_decipher_idx = 0;
 		}
 	}
 

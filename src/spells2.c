@@ -520,7 +520,21 @@ static int remove_curse_aux(int all)
  */
 bool remove_curse(void)
 {
-	return (remove_curse_aux(FALSE));
+	bool cured = FALSE;
+	if (p_ptr->anchored)
+	{
+		p_ptr->anchored = FALSE;
+		p_ptr->slow = 0;
+		p_ptr->fast = 0;
+		p_ptr->shero = 0;
+		p_ptr->hero = 0;
+		p_ptr->blessed = 0;
+		p_ptr->shield = 0;
+		msg_print("The anchoring curse is lifted!");
+		p_ptr->update |= (PU_BONUS);
+		cured = TRUE;
+	}
+	return (remove_curse_aux(FALSE) || cured);
 }
 
 /*
@@ -528,7 +542,21 @@ bool remove_curse(void)
  */
 bool remove_all_curse(void)
 {
-	return (remove_curse_aux(TRUE));
+	bool cured = FALSE;
+	if (p_ptr->anchored)
+	{
+		p_ptr->anchored = FALSE;
+		p_ptr->slow = 0;
+		p_ptr->fast = 0;
+		p_ptr->shero = 0;
+		p_ptr->hero = 0;
+		p_ptr->blessed = 0;
+		p_ptr->shield = 0;
+		msg_print("The anchoring curse is lifted!");
+		p_ptr->update |= (PU_BONUS);
+		cured = TRUE;
+	}
+	return (remove_curse_aux(TRUE) || cured);
 }
 
 

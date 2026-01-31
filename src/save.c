@@ -935,6 +935,10 @@ static void wr_extra(void)
     wr_s16b(p_ptr->anti_magic);
     wr_u32b(lore_known);
     wr_s16b(tome_decipher_idx);
+    wr_s16b(p_ptr->scroll_delay);
+    wr_byte(p_ptr->scroll_pending_effect);
+    wr_byte(p_ptr->anchored);
+    for (i = 0; i < 15; i++) wr_byte(unstable_scroll_map[i]);
 
 	/* Write the "object seeds" */
 	wr_u32b(seed_flavor);

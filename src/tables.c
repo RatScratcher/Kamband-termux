@@ -4051,3 +4051,24 @@ cptr lore_text[MAX_LORE] = {
 	"The stone is breathing. We are all part of the mountain now. Every scream is just another crack in the wall.",
 	"A saviour has arisen from the deepest void! The Lord Morgoth has come to deliver us from the screaming stone! We offer him our shadows, and he promises us an end to the light."
 };
+
+/*
+ * Names for Unstable Scrolls
+ */
+cptr unstable_scroll_names[15] = {
+	"Vellum of the First Hum",
+	"Chronos-Bleed Parchment",
+	"Scroll of Entropy",
+	"Parchment of Chaos",
+	"Sigil of the Void",
+	"Codex of Paradox",
+	"Leaf of Yggdrasil",
+	"Skin of the Old One",
+	"Glyphs of Madness",
+	"Rune of Unmaking",
+	"Script of the Star-Spawn",
+	"Text of the Vortex",
+	"Papyrus of the Abyss",
+	"Tablet of Dysnomia",
+	"Scroll of Limbo"
+};

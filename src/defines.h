@@ -47,7 +47,7 @@
 
 #define KAM_VERSION_MAJOR 2
 #define KAM_VERSION_MINOR 1
-#define KAM_VERSION_PATCH 4
+#define KAM_VERSION_PATCH 5
 
 
 /*
@@ -166,7 +166,7 @@
  *
  */
 #define MAX_F_IDX		255	/* Max size for "f_info[]" -KMW- */
-#define MAX_K_IDX		611	/* Max size for "k_info[]" */
+#define MAX_K_IDX 640
 #define MAX_A_IDX		2048	/* Max size for "a_info[]" */
 #define MAX_E_IDX		150	/* Max size for "e_info[]" */
 #define MAX_R_IDX		1024	/* Max size for "r_info[]" */
@@ -1385,9 +1385,10 @@
 #define TV_CORPSE       101	/* Corpses. */
 #define TV_TOME         103 /* Ancient Tome */
 #define TV_STRANGE_ARTIFACT 104 /* Strange Artifact */
+#define TV_UNSTABLE_SCROLL 105
 
 /* Maximum TV_XXX value */
-#define MAX_TVAL 105
+#define MAX_TVAL 106
 
 /* The sval codes for TV_JUNK */
 #define SV_BROKEN_STICK         6

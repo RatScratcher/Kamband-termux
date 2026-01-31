@@ -757,3 +757,8 @@ byte object_desc_mode = 0;
  */
 bool store_combine_flag = TRUE;
 
+
+/*
+ * Mapping for Unstable Scrolls (sval -> effect)
+ */
+byte unstable_scroll_map[15];

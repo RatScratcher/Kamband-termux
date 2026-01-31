@@ -9,6 +9,7 @@
  */
 
 #include "angband.h"
+#include "lore.h"
 
 
 
@@ -3229,6 +3230,35 @@ static void do_cmd_knowledge_recipes(void)
 	fd_kill(file_name);
 }
 
+/*
+ * Display known lore.
+ */
+static void do_cmd_knowledge_lore(void)
+{
+	int i;
+	FILE *fff;
+	char file_name[1024];
+
+	if (path_temp(file_name, 1024))
+		return;
+
+	fff = my_fopen(file_name, "w");
+
+	for (i = 0; i < MAX_LORE; i++)
+	{
+		if (lore_known & (1L << i))
+		{
+			fprintf(fff, "%s\n\n", lore_text[i]);
+		}
+	}
+
+	my_fclose(fff);
+
+	show_file(file_name, "Known Lore", 0, 0);
+
+	fd_kill(file_name);
+}
+
 
 
 
@@ -4102,9 +4132,10 @@ void do_cmd_knowledge(void)
 		prt("(7) Display your quests", 10, 5);
 		prt("(8) Display learned spells", 11, 5);
 		prt("(9) Display character dump", 12, 5);
+		prt("(0) Display known lore", 13, 5);
 
 		/* Prompt */
-		prt("Command: ", 14, 0);
+		prt("Command: ", 15, 0);
 
 		/* Prompt */
 		i = inkey();
@@ -4174,6 +4205,13 @@ void do_cmd_knowledge(void)
 		{
 			/* Spawn */
 			do_cmd_knowledge_dump();
+		}
+
+		/* Lore */
+		else if (i == '0')
+		{
+			/* Spawn */
+			do_cmd_knowledge_lore();
 		}
 
 		/* Unknown option */

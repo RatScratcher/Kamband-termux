@@ -460,6 +460,7 @@ void do_cmd_drop(void)
 			msg_print("You hand the tome to the Scholar.");
 			msg_print("The Scholar says: 'Ah, fascinating! Give me some time to decipher this.'");
 			tome_decipher_turns = 1000;
+			tome_decipher_idx = o_ptr->pval;
 
 			/* Remove from inventory */
 			remove_object(o_ptr);

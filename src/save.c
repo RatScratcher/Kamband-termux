@@ -933,6 +933,8 @@ static void wr_extra(void)
     /* Write extra state */
     wr_s16b(tome_decipher_turns);
     wr_s16b(p_ptr->anti_magic);
+    wr_u32b(lore_known);
+    wr_s16b(tome_decipher_idx);
 
 	/* Write the "object seeds" */
 	wr_u32b(seed_flavor);

@@ -9,6 +9,7 @@
  */
 
 #include "angband.h"
+static bool tport_vertically(bool how);
 
 
 
@@ -271,30 +272,303 @@ void show_book_number(int num)
 /*
  * Read a scroll (from the pack or floor).
  */
+/*
+ * Unstable Scroll Logic
+ */
+
+static bool item_tester_hook_read(object_type * o_ptr)
+{
+	if (o_ptr->tval == TV_SCROLL) return TRUE;
+	if (o_ptr->tval == TV_UNSTABLE_SCROLL) return TRUE;
+	return FALSE;
+}
+
+void trigger_unstable_effect(int effect_id, bool stabilized)
+{
+	int py = p_ptr->py;
+	int px = p_ptr->px;
+	int i;
+
+	/* The Outcome Engine */
+	if (!stabilized)
+	{
+		int roll = rand_int(100);
+		if (roll < 33)
+		{
+			/* Success (33%) */
+		}
+		else if (roll < 66)
+		{
+			/* Fizzle (33%) */
+			msg_print("The ancient ink fades as you speak... nothing happens.");
+			return;
+		}
+		else
+		{
+			/* Backfire (33%) */
+			/* Negative effects only */
+			int bad_effects_list[] = {2, 3, 7, 12, 13};
+			effect_id = bad_effects_list[rand_int(5)];
+			msg_print("The scroll backfires!");
+		}
+	}
+
+	/* Execute Effect */
+	switch (effect_id)
+	{
+		case 0: /* Lust for Gold */
+			msg_print("You feel a sudden lust for gold!");
+			{
+				object_type *i_ptr = new_object();
+				object_prep(i_ptr, lookup_kind(TV_GOLD, 9)); /* Gold */
+				i_ptr->pval = 5000 + randint(5000);
+				drop_near(i_ptr, -1, py, px);
+			}
+			break;
+
+		case 1: /* Crumbling Veins */
+			msg_print("The walls around you crumble!");
+			project(0, 3, py, px, 0, GF_KILL_WALL, PROJECT_GRID | PROJECT_ITEM | PROJECT_KILL);
+			break;
+
+		case 2: /* Gravity-Shorn */
+			msg_print("Gravity reverses!");
+			tport_vertically(TRUE);
+			break;
+
+		case 3: /* Screaming Litany */
+			msg_print("A screaming litany fills the air!");
+			aggravate_monsters(0);
+			break;
+
+		case 4: /* Atlas of Deep Eye */
+			msg_print("You perceive the location of ancient knowledge.");
+			/* Detect only TV_TOME and TV_UNSTABLE_SCROLL */
+			{
+				int y, x;
+				bool detected = FALSE;
+				for (y = 0; y < DUNGEON_HGT; y++)
+				{
+					for (x = 0; x < DUNGEON_WID; x++)
+					{
+						object_type *o_ptr;
+						for (o_ptr = cave_o_idx[y][x]; o_ptr; o_ptr = o_ptr->next)
+						{
+							if (o_ptr->tval == TV_TOME || o_ptr->tval == TV_UNSTABLE_SCROLL)
+							{
+								o_ptr->marked = TRUE;
+								lite_spot(y, x);
+								detected = TRUE;
+							}
+						}
+					}
+				}
+				if (detected) msg_print("You sense the presence of ancient texts.");
+			}
+			break;
+
+		case 5: /* Hollow Call */
+			if (rand_int(2) == 0)
+			{
+				msg_print("You summon help from the void!");
+				for (i = 0; i < 3; i++) summon_specific_friendly(py, px, p_ptr->depth, 0);
+			}
+			else
+			{
+				msg_print("Something answers your call... and it is hungry!");
+				for (i = 0; i < 3; i++) summon_specific(py, px, p_ptr->depth, 0);
+			}
+			break;
+
+		case 6: /* Static Incantation */
+			msg_print("Static fills the air!");
+			project(0, 10, py, px, 50, GF_CONFUSION, PROJECT_KILL);
+			break;
+
+		case 7: /* Cipher of Betrayal */
+			msg_print("Your followers turn against you!");
+			for (i = 1; i < m_max; i++)
+			{
+				monster_type *m_ptr = &m_list[i];
+				if (m_ptr->r_idx && m_ptr->is_pet)
+				{
+					m_ptr->is_pet = FALSE;
+				}
+			}
+			break;
+
+		case 8: /* Evolutionary Codex */
+			msg_print("The creatures around you evolve!");
+			project(0, 10, py, px, 0, GF_POLY, PROJECT_KILL);
+			break;
+
+		case 9: /* Apotheosis */
+			msg_print("You feel godlike power!");
+			for (i = 0; i < 6; i++) do_inc_stat(i);
+			set_shero(p_ptr->shero + 100);
+			break;
+
+		case 10: /* Smith's Last Prayer */
+			msg_print("Your weapon vibrates with ancient skill.");
+			brand_weapon();
+			break;
+
+		case 11: /* Chronos-Bleed */
+			msg_print("Time accelerates!");
+			set_fast(p_ptr->fast + 100);
+			break;
+
+		case 12: /* The Anchoring Curse */
+			msg_print("You feel extremely heavy.");
+			set_slow(p_ptr->slow + 100);
+			p_ptr->anchored = TRUE;
+			break;
+
+		case 13: /* Void-Ink Contract */
+			msg_print("Your possessions vanish into the void!");
+			/* Move inventory to home */
+			{
+				object_type *o_ptr;
+				object_type *j_ptr;
+				int k;
+				store_type *st_ptr = &store[7]; /* Home */
+                int home_count = 0;
+
+                for (j_ptr = st_ptr->stock; j_ptr; j_ptr = j_ptr->next_global) home_count++;
+
+				/* Process Equipment */
+				for (k = 0; k < EQUIP_MAX; k++)
+				{
+					if (equipment[k])
+					{
+						o_ptr = equipment[k];
+						/* Attempt to add to home */
+
+                        /* Check combine */
+						bool combined = FALSE;
+						for (j_ptr = st_ptr->stock; j_ptr; j_ptr = j_ptr->next_global)
+						{
+							if (store_object_similar(j_ptr, o_ptr))
+							{
+								store_object_absorb(j_ptr, o_ptr);
+								combined = TRUE;
+								break;
+							}
+						}
+
+						if (!combined)
+						{
+						    if (home_count < 24)
+						    {
+						        j_ptr = new_object();
+						        *j_ptr = *o_ptr;
+						        j_ptr->next = NULL;
+						        j_ptr->next_global = NULL;
+						        insert_to_global_list(j_ptr, &(st_ptr->stock), WORLD_HOME);
+						        home_count++;
+						    }
+						    else
+						    {
+						        /* Scatter */
+                                int ty, tx;
+                                int d = 0;
+                                while (d < 1000)
+                                {
+                                    d++;
+                                    ty = rand_int(DUNGEON_HGT);
+                                    tx = rand_int(DUNGEON_WID);
+                                    if (cave_naked_bold(ty, tx))
+                                    {
+                                        drop_near(o_ptr, -1, ty, tx);
+                                        break;
+                                    }
+                                }
+						    }
+						}
+
+						WIPE(o_ptr, object_type);
+						equipment[k] = NULL;
+					}
+				}
+
+				/* Process Inventory */
+				o_ptr = inventory;
+				while (o_ptr)
+				{
+				    object_type *next_o = o_ptr->next;
+
+				        /* Check combine */
+						bool combined = FALSE;
+						for (j_ptr = st_ptr->stock; j_ptr; j_ptr = j_ptr->next_global)
+						{
+							if (store_object_similar(j_ptr, o_ptr))
+							{
+								store_object_absorb(j_ptr, o_ptr);
+								combined = TRUE;
+								break;
+							}
+						}
+
+						if (!combined)
+						{
+						    if (home_count < 24)
+						    {
+						        j_ptr = new_object();
+						        *j_ptr = *o_ptr;
+						        j_ptr->next = NULL;
+						        j_ptr->next_global = NULL;
+						        insert_to_global_list(j_ptr, &(st_ptr->stock), WORLD_HOME);
+						        home_count++;
+						    }
+						    else
+						    {
+						        /* Scatter */
+                                int ty, tx;
+                                int d = 0;
+                                while (d < 1000)
+                                {
+                                    d++;
+                                    ty = rand_int(DUNGEON_HGT);
+                                    tx = rand_int(DUNGEON_WID);
+                                    if (cave_naked_bold(ty, tx))
+                                    {
+                                        drop_near(o_ptr, -1, ty, tx);
+                                        break;
+                                    }
+                                }
+						    }
+						}
+
+				    o_ptr = next_o;
+				}
+				inventory = NULL;
+
+				/* Recalc */
+				p_ptr->update |= (PU_BONUS | PU_TORCH | PU_MANA);
+				p_ptr->window |= (PW_INVEN | PW_EQUIP | PW_PLAYER);
+				p_ptr->total_weight = 0;
+			}
+			set_tim_invis(p_ptr->tim_invis + 50);
+			break;
+
+		case 14: /* Solar Flare */
+			msg_print("A burst of sunlight erupts!");
+			lite_area(100, 10);
+			project(0, 5, py, px, 200, GF_LITE, PROJECT_KILL | PROJECT_GRID);
+			break;
+	}
+}
+
 void do_cmd_read_scroll(void)
 {
-
-	/* Check some conditions */
-	if (p_ptr->blind)
-	{
-		mprint(MSG_TEMP, "You can't see anything.");
-		return;
-	}
-
-	if (no_lite())
-	{
-		mprint(MSG_TEMP, "You have no light to read by.");
-		return;
-	}
-
 	if (p_ptr->confused)
 	{
 		mprint(MSG_TEMP, "You are too confused!");
 		return;
 	}
 
-	item_effect("scroll", "read", TRUE, TRUE, 0, NULL, TV_SCROLL);
-};
+	item_effect("scroll", "read", TRUE, TRUE, 0, item_tester_hook_read, 0);
+}
 
 
 /*
@@ -606,6 +880,24 @@ object_type *item_effect(cptr name, cptr act, bool obvious,
 		sound(snd);
 	}
 
+	if (o_ptr->tval == TV_UNSTABLE_SCROLL)
+	{
+		/* Unstable Logic */
+		if (o_ptr->pval == 1)
+		{
+			/* Stabilized */
+			trigger_unstable_effect(unstable_scroll_map[o_ptr->sval], TRUE);
+		}
+		else
+		{
+			/* Incubation */
+			p_ptr->scroll_delay = rand_range(1, 10);
+			p_ptr->scroll_pending_effect = unstable_scroll_map[o_ptr->sval];
+			msg_print("You read the unstable scroll... and feel a strange vibration.");
+		}
+		success = TRUE;
+		goto done;
+	}
 	if (o_ptr->tval == TV_STRANGE_ARTIFACT)
 	{
 		experimental_use();

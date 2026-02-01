@@ -853,6 +853,20 @@ static errr rd_extra(void)
 		lore_known = 0;
 		tome_decipher_idx = 0;
 	}
+	if (sf_patch >= 5)
+	{
+		rd_s16b(&p_ptr->scroll_delay);
+		rd_byte(&p_ptr->scroll_pending_effect);
+		rd_byte((byte*)&p_ptr->anchored);
+		for (i = 0; i < 15; i++) rd_byte(&unstable_scroll_map[i]);
+	}
+	else
+	{
+		p_ptr->scroll_delay = 0;
+		p_ptr->scroll_pending_effect = 0;
+		p_ptr->anchored = FALSE;
+		for (i = 0; i < 15; i++) unstable_scroll_map[i] = i;
+	}
 
 	/* Hack -- the two "special seeds" */
 	rd_u32b(&seed_flavor);

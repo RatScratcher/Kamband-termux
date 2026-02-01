@@ -1136,6 +1136,8 @@ struct player_type
 	u32b mutations3; /* Mutation flags 3 */
 
 	s16b word_recall; /* Word of recall counter */
+	s16b scroll_delay; /* Unstable scroll delay */
+	byte scroll_pending_effect; /* Pending effect ID */
 
 	s16b energy; /* Current energy */
 
@@ -1310,6 +1312,7 @@ struct player_type
 	bool no_equip; /* Can't use equipment. */
 	bool engulfs; /* Has an innate engulfing attack. */
         bool fated; /* Fated character. */
+	bool anchored; /* Anchoring curse active */
 
 	byte perma_blind; /* Permanent blindness */
 

@@ -5402,6 +5402,7 @@ void place_dungeon_merchant(int y, int x)
  *
  * Allow quasi-persistent dungeons using a seeded RNG.
  */
+static void shuffle_unstable_scrolls(void);
 void generate_cave(void)
 {
 	int y, x, num;
@@ -5409,6 +5410,8 @@ void generate_cave(void)
 
 	/* The dungeon is not ready */
 	character_dungeon = FALSE;
+	/* Shuffle unstable scrolls */
+	shuffle_unstable_scrolls();
 
 	/* Seed the RNG if appropriate */
 	if (seed_dungeon)
@@ -5740,5 +5743,23 @@ void generate_cave(void)
 	if (seed_dungeon)
 	{
 		Rand_quick = FALSE;
+	}
+}
+
+/*
+ * Shuffle the Unstable Scroll mapping.
+ * Each sval (0-14) maps to one of the 15 effects.
+ */
+static void shuffle_unstable_scrolls(void)
+{
+	int i;
+	for (i = 0; i < 15; i++)
+		unstable_scroll_map[i] = i;
+	for (i = 0; i < 15; i++)
+	{
+		int j = rand_int(15);
+		byte temp = unstable_scroll_map[i];
+		unstable_scroll_map[i] = unstable_scroll_map[j];
+		unstable_scroll_map[j] = temp;
 	}
 }

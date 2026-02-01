@@ -468,6 +468,44 @@ void do_cmd_drop(void)
 		}
 	}
 
+	/* Unstable Scroll Stabilization Logic */
+	if (o_ptr->tval == TV_UNSTABLE_SCROLL && p_ptr->depth == 0)
+	{
+		int i;
+		bool near_scholar = FALSE;
+		/* Check adjacent grids for Scholar */
+		for (i = 0; i < 9; i++) {
+			int ny = p_ptr->py + ddy_ddd[i];
+			int nx = p_ptr->px + ddx_ddd[i];
+			if (in_bounds(ny, nx) && cave_m_idx[ny][nx] > 0) {
+				monster_type *m_ptr = &m_list[cave_m_idx[ny][nx]];
+				if (m_ptr->r_idx == R_IDX_SCHOLAR) {
+					near_scholar = TRUE;
+					break;
+				}
+			}
+		}
+
+		if (near_scholar) {
+			if (o_ptr->pval == 1) {
+				msg_print("The Scholar says: 'This scroll is already stabilized.'");
+			} else {
+				msg_print("The Scholar examines the scroll.");
+				if (get_check("Stabilize it for 500 gold? ")) {
+					if (p_ptr->au >= 500) {
+						p_ptr->au -= 500;
+						o_ptr->pval = 1;
+						msg_print("The Scholar traces a rune. 'It is done.'");
+						p_ptr->redraw |= (PR_GOLD);
+						p_ptr->window |= (PW_INVEN);
+					} else {
+						msg_print("You do not have enough gold!");
+					}
+				}
+			}
+			return;
+		}
+	}
 	drop_near(o_ptr, FALSE, p_ptr->py, p_ptr->px);
 
 }

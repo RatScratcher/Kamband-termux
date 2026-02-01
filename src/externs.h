@@ -277,6 +277,8 @@ extern byte cave_info[DUNGEON_HGT][DUNGEON_WID];
 extern byte cave_feat[DUNGEON_HGT][DUNGEON_WID];
 extern object_type *cave_o_idx[DUNGEON_HGT][DUNGEON_WID];
 extern s16b cave_m_idx[DUNGEON_HGT][DUNGEON_WID];
+extern byte unstable_scroll_map[15];
+extern cptr unstable_scroll_names[15];
 
 
 /*
@@ -400,6 +402,7 @@ extern void do_cmd_browse(void);
 extern void do_cmd_study(void);	/* -KMW- */
 extern void do_cmd_cast(void);
 extern void do_cmd_pray(void);
+extern void trigger_unstable_effect(int effect_id, bool stabilized);
 
 extern bool cause_spell_effect(spell * s_ptr);
 extern void spell_generate_new(int plev);
@@ -442,6 +445,7 @@ extern void do_cmd_unwalk(void);
 extern void do_cmd_immovable_special(void);
 extern void do_cmd_change_shape(void);
 extern void do_cmd_pray(void);
+extern void trigger_unstable_effect(int effect_id, bool stabilized);
 
 extern object_type *item_effect(cptr, cptr, bool, bool, int,
 	bool(hook) (object_type *), s16b);

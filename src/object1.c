@@ -457,6 +457,11 @@ static byte default_tval_to_attr(int tval)
 			return (TERM_L_WHITE);
 		}
 
+		case TV_UNSTABLE_SCROLL:
+		{
+			return (TERM_VIOLET);
+		}
+
 		case TV_SCROLL:
 		{
 			return (TERM_WHITE);
@@ -1552,6 +1557,13 @@ void object_desc(char *buf, object_type * o_ptr, int pref, int mode)
 			break;
 		}
 
+		case TV_UNSTABLE_SCROLL:
+		{
+			if (o_ptr->sval < 15)
+				basenm = unstable_scroll_names[o_ptr->sval];
+			break;
+		}
+
 		case TV_SCROLL:
 		{
 			/* Color the object */
@@ -2389,6 +2401,11 @@ void object_desc(char *buf, object_type * o_ptr, int pref, int mode)
 	tmp_val[0] = '\0';
 
 	/* Use the standard inscription if available */
+	if (o_ptr->tval == TV_UNSTABLE_SCROLL && o_ptr->pval == 1)
+	{
+		t = object_desc_str(t, &len, " (Stabilized)");
+	}
+
 	if (o_ptr->note)
 	{
 		strcpy(tmp_val, quark_str(o_ptr->note));
@@ -2582,6 +2599,7 @@ cptr damage_status(object_type * o_ptr)
 
 			case TV_SPELLBOOK:
 			case TV_SCROLL:
+			case TV_UNSTABLE_SCROLL:
 			case TV_MIMIC_BOOK:
 			case TV_TEXT:
 				return "a little crumpled";
@@ -2614,6 +2632,7 @@ cptr damage_status(object_type * o_ptr)
 
 			case TV_SPELLBOOK:
 			case TV_SCROLL:
+			case TV_UNSTABLE_SCROLL:
 			case TV_MIMIC_BOOK:
 			case TV_TEXT:
 				return "crumpled";
@@ -2647,6 +2666,7 @@ cptr damage_status(object_type * o_ptr)
 
 			case TV_SPELLBOOK:
 			case TV_SCROLL:
+			case TV_UNSTABLE_SCROLL:
 			case TV_MIMIC_BOOK:
 			case TV_TEXT:
 				return "a little ripped";
@@ -2666,6 +2686,7 @@ cptr damage_status(object_type * o_ptr)
 
 			case TV_SPELLBOOK:
 			case TV_SCROLL:
+			case TV_UNSTABLE_SCROLL:
 			case TV_MIMIC_BOOK:
 			case TV_TEXT:
 				return "ripped";
@@ -2698,6 +2719,7 @@ cptr damage_status(object_type * o_ptr)
 
 			case TV_SPELLBOOK:
 			case TV_SCROLL:
+			case TV_UNSTABLE_SCROLL:
 			case TV_MIMIC_BOOK:
 			case TV_TEXT:
 				return "ripped to shreds";
@@ -3148,6 +3170,11 @@ void identify_fully_aux(object_type * o_ptr)
 	{
 		info[i++] = "It has been blessed by the gods.";
 	}
+	if (o_ptr->tval == TV_UNSTABLE_SCROLL && o_ptr->pval == 1)
+	{
+		info[i++] = "It is stabilized.";
+	}
+
 
 	if (cursed_p(o_ptr))
 	{

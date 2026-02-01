@@ -15,6 +15,13 @@ static int ambush_maxhp[MAX_AMBUSH];
 
 static s32b level_start_turn = 0;
 
+/* Smart triggers state */
+static int last_py = -1;
+static int last_px = -1;
+static int last_move_turn = 0;
+static bool paranoia_triggered = FALSE;
+static bool ruin_triggered = FALSE;
+
 static cptr dread_messages[20] = {
     "The rhythm of your own heartbeat starts to sound like drums in the distance.",
     "You suddenly realize the dungeon has fallen completely silent. Even the stones seem to be listening.",
@@ -36,6 +43,19 @@ static cptr dread_messages[20] = {
     "You feel a phantom touch graze your arm.",
     "The silence is broken by a distant, mournful wail.",
     "You feel a sudden drop in temperature."
+};
+
+static cptr resonance_messages[10] = {
+    "The shadows embrace you like an old friend.",
+    "You hear the song of the void, and it is beautiful.",
+    "The decay here smells sweet, like home.",
+    "You feel the dungeon pulse in time with your own blood.",
+    "Something watches from the dark, and you smile back.",
+    "The chaos whispers secrets that only you can understand.",
+    "Your mutation itches pleasantly.",
+    "You feel a kinship with the lurking horrors.",
+    "The darkness wraps around you like a warm cloak.",
+    "You hear a heartbeat in the stone, syncing with your own."
 };
 
 static cptr decay_messages[4] = {
@@ -172,18 +192,63 @@ void execute_recall_ambush(void)
 void reset_dread(void)
 {
     level_start_turn = turn;
+    last_move_turn = turn;
+    paranoia_triggered = FALSE;
+    ruin_triggered = FALSE;
+    last_py = -1;
+    last_px = -1;
 }
 
 void process_dread(void)
 {
-    int chance = 1;
-    if (turn - level_start_turn > 1000) chance = 5;
+    int chance;
+    bool trigger_msg = FALSE;
 
-    if (rand_int(100) < chance)
+    /* 1. Depth Threshold */
+    if (p_ptr->depth < 10) return;
+
+    /* Movement Tracking */
+    if (p_ptr->py != last_py || p_ptr->px != last_px) {
+        last_py = p_ptr->py;
+        last_px = p_ptr->px;
+        last_move_turn = turn;
+        paranoia_triggered = FALSE;
+    }
+
+    /* 3. Smart Triggers */
+    /* Paranoia */
+    if ((turn - last_move_turn > 20) && !paranoia_triggered) {
+        trigger_msg = TRUE;
+        paranoia_triggered = TRUE;
+    }
+
+    /* Ruined Structure */
+    if (cave_feat[p_ptr->py][p_ptr->px] == FEAT_RUIN_DOOR && !ruin_triggered) {
+        trigger_msg = TRUE;
+        ruin_triggered = TRUE;
+    }
+
+    /* 2. Frequency Calibration */
+    if (!trigger_msg) {
+        chance = 2000 - p_ptr->depth;
+        if (chance < 1) chance = 1;
+
+        if (rand_int(chance) == 0) {
+            trigger_msg = TRUE;
+        }
+    }
+
+    if (trigger_msg)
     {
-        if (p_ptr->depth >= 50 && rand_int(2) == 0)
+        /* 4. Class-Specific Flavor */
+        if (p_ptr->pclass == CLASS_CORRUPTED)
         {
-            msg_print(decay_messages[rand_int(4)]);
+            msg_print(resonance_messages[rand_int(10)]);
+        }
+        else if (p_ptr->depth >= 50 && rand_int(2) == 0)
+        {
+             /* Environmental decay messages for deep levels */
+             msg_print(decay_messages[rand_int(4)]);
         }
         else
         {

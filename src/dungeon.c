@@ -10,6 +10,7 @@
 
 #include "angband.h"
 #include "lore.h"
+#include "pursuit.h"
 
 
 
@@ -761,6 +762,10 @@ static void process_world(void)
 
 	object_type *o_ptr;
 
+
+	/* Every turn */
+	process_dread();
+	process_breathing_walls();
 
 	/* Every 10 game turns */
 	/* Unstable Scroll Incubation */
@@ -1629,6 +1634,7 @@ static void process_world(void)
 			if (p_ptr->depth && 
 			    p_ptr->inside_special != SPECIAL_WILD)
 			{
+				prepare_recall_ambush();
 				mprint(MSG_BONUS, "You feel yourself yanked upwards!");
 				p_ptr->inside_special = SPECIAL_WILD;
 				p_ptr->leaving = TRUE;

@@ -9,6 +9,7 @@
  */
 
 #include "angband.h"
+#include "pursuit.h"
 
 
 /*
@@ -56,6 +57,9 @@ void do_cmd_go_up(void)
 			p_ptr->wild_y = 0;
 		}
 	}
+
+	/* Prepare pursuit */
+	prepare_staircase_pursuit();
 
 	/* Leaving */
 	p_ptr->leaving = TRUE;

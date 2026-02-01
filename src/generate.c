@@ -9,6 +9,7 @@
  */
 
 #include "angband.h"
+#include "pursuit.h"
 
 
 /*
@@ -5410,6 +5411,7 @@ void generate_cave(void)
 
 	/* The dungeon is not ready */
 	character_dungeon = FALSE;
+	reset_dread();
 	/* Shuffle unstable scrolls */
 	shuffle_unstable_scrolls();
 
@@ -5744,6 +5746,9 @@ void generate_cave(void)
 	{
 		Rand_quick = FALSE;
 	}
+
+	execute_staircase_pursuit();
+	execute_recall_ambush();
 }
 
 /*

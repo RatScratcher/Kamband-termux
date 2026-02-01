@@ -2888,7 +2888,11 @@ cptr mutation_names[MAX_MUTS][3] = {
 
 	{"Stunted fingers",
 			"You're not as good with weapons as you used to be...",
-		"Your stunted fingers return to normal size."}
+		"Your stunted fingers return to normal size."},
+
+	{"Echolocation Pulse",
+			"You feel a thrumming in your mind.",
+		"The thrumming in your mind stops."}
 
 };
 

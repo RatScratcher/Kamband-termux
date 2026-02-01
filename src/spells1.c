@@ -2123,6 +2123,17 @@ static bool project_f(int who, int r, int y, int x, int dam, int typ)
 			break;
 		}
 
+		case GF_ECHO_PULSE:
+		{
+			if (cave_feat[y][x] == FEAT_RUIN_DOOR)
+			{
+				cave_info[y][x] |= (CAVE_GLOW | CAVE_MARK);
+				lite_spot(y, x);
+				obvious = TRUE;
+			}
+			break;
+		}
+
 		case GF_TELEPORT_TO_MERCHANT:
 		{
 			int i;
@@ -3444,6 +3455,23 @@ static bool project_o(int who, int r, int y, int x, int dam, int typ)
 		case GF_PSIONIC_SPARK:
 		{
 			/* Items in oil might get burned? Leaving simple for now */
+			break;
+		}
+
+		case GF_ECHO_PULSE:
+		{
+			if (o_ptr->tval == TV_TOME || o_ptr->tval == TV_UNSTABLE_SCROLL)
+			{
+				o_ptr->marked = TRUE;
+				lite_spot(y, x);
+				obvious = TRUE;
+
+				if (o_ptr->tval == TV_UNSTABLE_SCROLL && p_ptr->lev >= 40)
+				{
+					object_aware(o_ptr);
+					object_known(o_ptr);
+				}
+			}
 			break;
 		}
 
@@ -5106,6 +5134,25 @@ static bool project_m(int who, int r, int y, int x, int dam, int typ)
 			}
 
 			dam = 0; /* No direct damage from the grab itself */
+			break;
+		}
+
+		case GF_ECHO_PULSE:
+		{
+			if ((r_ptr->flags2 & RF2_SMART) || (r_ptr->flags3 & RF3_ANIMAL))
+			{
+				/* Wake up */
+				m_ptr->csleep = 0;
+				do_wake = TRUE;
+
+				/* Aggravate/Haste */
+				if (m_ptr->mspeed < r_ptr->speed + 10)
+					m_ptr->mspeed = r_ptr->speed + 10;
+
+				note = " answers back from the dark.";
+				obvious = TRUE;
+			}
+			dam = 0;
 			break;
 		}
 

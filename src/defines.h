@@ -128,7 +128,7 @@
 
 #define MAX_GODS   32
 #define MAX_SHAPES 25
-#define MAX_MUTS   66
+#define MAX_MUTS   67
 #define MAX_T_ACT  51
 
 #define MAX_COMMANDS 100
@@ -766,6 +766,7 @@
 #define GF_TELEKINESIS      165
 #define GF_PSIONIC_SPARK    166
 #define GF_TELEPORT_TO_MERCHANT 167
+#define GF_ECHO_PULSE       168
 
 
 /*
@@ -2074,6 +2075,7 @@
 #define MUT_MINUS_SAVE    63
 #define MUT_MINUS_STEALTH 64
 #define MUT_MINUS_FIGHT   65
+#define MUT_ECHO_PULSE    66
 
 
 /*

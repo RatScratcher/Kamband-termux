@@ -661,6 +661,63 @@ void add_telekinetic_toss_spell(void)
 	spell_num++;
 }
 
+/*
+ * Add a "Echolocation Pulse" spell.
+ */
+void add_echo_pulse_spell(void)
+{
+	spell *rspell;
+	proj_node *pnode;
+
+	if (spell_num == MAX_SPELLS) return;
+
+	rspell = &spells[spell_num];
+
+	rspell->class = 0;
+	rspell->level = 1;
+	rspell->mana = 20;
+	rspell->untried = TRUE;
+	rspell->unknown = FALSE;
+	strcpy(rspell->name, "Echolocation Pulse");
+	strcpy(rspell->desc, "Detects tomes, scrolls, and ruins. Disturbs sensitive creatures.");
+
+	/* Fill in the projection info. */
+	MAKE(pnode, proj_node);
+	rspell->proj_list = pnode;
+
+	pnode->attack_kind = GF_ECHO_PULSE;
+	pnode->proj_flags = PROJECT_KILL | PROJECT_ITEM | PROJECT_GRID | PROJECT_STOP | PROJECT_VIEWABLE;
+	pnode->radius = 20;
+	pnode->safe = TRUE;
+	pnode->dam_dice = 0;
+	pnode->dam_sides = 0;
+
+	spell_num++;
+}
+
+/*
+ * Remove "Echolocation Pulse" spell.
+ */
+void remove_echo_pulse_spell(void)
+{
+	int indexes[MAX_SPELLS];
+	int i, num = 0;
+
+	for (i = 0; i < spell_num; i++)
+	{
+		if (strcmp(spells[i].name, "Echolocation Pulse") == 0)
+		{
+			indexes[num] = i;
+			num++;
+		}
+	}
+
+	if (num)
+	{
+		remove_spells(indexes, num);
+	}
+}
+
 /* 
  * Generate a new random spell, add it to the list. This takes a player level
  * as an argument.
@@ -960,6 +1017,11 @@ bool cause_spell_effect(spell * s_ptr)
 
 	while (pnode)
 	{
+		if (pnode->attack_kind == GF_ECHO_PULSE)
+		{
+			msg_print("You let out a low-frequency hum.");
+		}
+
 		/* Hack -- Spell needs a target */
 		if (pnode->proj_flags & PROJECT_BEAM ||
 			pnode->proj_flags & PROJECT_STOP)
@@ -1192,6 +1254,7 @@ int generate_mutation(bool silent)
 				if (!(p_ptr->mutations3 & which_flg))
 				{
 					p_ptr->mutations3 |= which_flg;
+					if (which_mut == MUT_ECHO_PULSE) add_echo_pulse_spell();
 					looper = FALSE;
 				}
 				break;
@@ -1266,6 +1329,7 @@ void remove_mutation(void)
 				if (p_ptr->mutations3 & which_flg)
 				{
 					p_ptr->mutations3 &= ~(which_flg);
+					if (which_mut == MUT_ECHO_PULSE) remove_echo_pulse_spell();
 					looper = FALSE;
 				}
 				break;

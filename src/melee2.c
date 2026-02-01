@@ -3415,6 +3415,16 @@ static void process_monster(int m_idx)
 			/* Go ahead and move */
 			do_move = TRUE;
 
+			/* Smart monsters avoid hazards */
+			if ((r_ptr->flags2 & RF2_SMART) && !(r_ptr->flags2 & RF2_FLY))
+			{
+				int f = cave_feat[ny][nx];
+				if (f == FEAT_SHAL_LAVA || f == FEAT_DEEP_LAVA || f == FEAT_ACID || f == FEAT_ICE)
+				{
+					do_move = FALSE;
+				}
+			}
+
 			/* handle deep water -KMW- */
 			if (cave_feat[ny][nx] == FEAT_DEEP_WATER &&
 				!(r_ptr->flags2 & RF2_SWIM) &&

@@ -4053,7 +4053,14 @@ cptr lore_text[MAX_LORE] = {
 	"The Great Hall is silent now. The clouds above have turned black and rain a fine, stinging ash. We meddled with a power that did not want to be known.",
 	"If you find this, do not seek the Aethel-Gate. It is no longer a door. It is a mouth.",
 	"The stone is breathing. We are all part of the mountain now. Every scream is just another crack in the wall.",
-	"A saviour has arisen from the deepest void! The Lord Morgoth has come to deliver us from the screaming stone! We offer him our shadows, and he promises us an end to the light."
+	"A saviour has arisen from the deepest void! The Lord Morgoth has come to deliver us from the screaming stone! We offer him our shadows, and he promises us an end to the light.",
+
+	/* Ancient Tomes (22-26) */
+	"The soil here does not merely feed; it hungers to grow. We broke ground at the mountain’s foot and found not rock, but a hollow throat—a tunnel of glass-smooth stone. We called it a gift of the earth, a natural cellar for our bounty. How fools we were to mistake a gullet for a gift.",
+	"Old Hrolf struck the first vein. The rock was dark, pitted, and oily—Kimberlite, the womb of the star-stone. By the week’s end, the plows were left to rust in the rain. Why toil in the dirt for bread when the deep-veins offer the ransom of kings? We traded our sun-sight for the glitter of the dark.",
+	"We have built past the reach of the sun. Down here, in the Second City, the air is thick with the hum of the mages' looms. Bread is woven from mana; water is called from the dry stone. We are masters of the mountain’s heart, and we listen no longer to the warnings of the surface-bound.",
+	"The seasons have changed, though there is no sky here. A cold, grey malice seeps through the fissures. It is a rot of the spirit. The wealth remains, yet the gold feels heavy—leaden—and the diamonds reflect faces that are not our own. The High Council calls it 'geological shifting.' I call it the awakening of a Great Hate.",
+	"The gates of the Third City did not fall; they dissolved. I saw a man I once knew as a brother emerge from the lower shafts. His skin was the color of bruised Kimberlite, and he clutched a scroll that bled purple light. He did not speak; he only pointed upward. The mountain is no longer ours. It never was."
 };
 
 /*

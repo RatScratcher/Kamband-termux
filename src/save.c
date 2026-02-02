@@ -940,6 +940,9 @@ static void wr_extra(void)
     wr_byte(p_ptr->anchored);
     for (i = 0; i < 15; i++) wr_byte(unstable_scroll_map[i]);
 
+	/* Ancient Tomes */
+	for (i = 0; i < 5; i++) wr_byte(p_ptr->lore_tomes_found[i]);
+
 	/* Write the "object seeds" */
 	wr_u32b(seed_flavor);
 	wr_u32b(seed_town);

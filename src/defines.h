@@ -47,7 +47,7 @@
 
 #define KAM_VERSION_MAJOR 2
 #define KAM_VERSION_MINOR 1
-#define KAM_VERSION_PATCH 5
+#define KAM_VERSION_PATCH 6
 
 
 /*
@@ -1385,6 +1385,11 @@
 #define TV_GOLD		100	/* Gold can only be picked up by players */
 #define TV_CORPSE       101	/* Corpses. */
 #define TV_TOME         103 /* Ancient Tome */
+#define SV_TOME_1       1
+#define SV_TOME_2       2
+#define SV_TOME_3       3
+#define SV_TOME_4       4
+#define SV_TOME_5       5
 #define TV_STRANGE_ARTIFACT 104 /* Strange Artifact */
 #define TV_UNSTABLE_SCROLL 105
 
@@ -2653,7 +2658,7 @@
 #define TR3_TELEPORT		0x00002000L	/* Random teleportation */
 #define TR3_AGGRAVATE		0x00004000L	/* Aggravate monsters */
 #define TR3_DRAIN_EXP		0x00008000L	/* Experience drain */
-#define TR3_XXX7		0x00010000L
+#define TR3_RES_CORRUPT		0x00010000L /* Resist Corruption */
 #define TR3_XXX8		0x00020000L
 #define TR3_XXX9		0x00040000L
 #define TR3_XXX10		0x00080000L

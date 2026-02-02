@@ -3530,3 +3530,97 @@ static bool insert_str(char *buf, cptr target, cptr insert)
 
 
 #endif
+
+/*
+ * Scramble text into a buffer based on clarity level.
+ * Uses seed_flavor for consistency.
+ */
+void scramble_text_to_buffer(char *out, const char *in, int clarity)
+{
+	int i = 0;
+	int word_idx = 0;
+	u32b seed = seed_flavor;
+	const char *s = in;
+	char *d = out;
+
+	while (*s)
+	{
+		if (isalpha(*s))
+		{
+			/* Start of a word */
+			const char *start = s;
+			while (isalpha(*s)) s++;
+
+			/* Check scramble */
+			/* Simple deterministic RNG based on seed and word index */
+			seed = (seed * 1103515245 + 12345);
+			if (((seed / 65536) % 100) >= clarity)
+			{
+				/* Scrambled */
+				strcpy(d, "...");
+				d += 3;
+			}
+			else
+			{
+				/* Legible */
+				int len = s - start;
+				strncpy(d, start, len);
+				d += len;
+			}
+			word_idx++;
+		}
+		else
+		{
+			/* Copy non-alpha char */
+			*d++ = *s++;
+		}
+	}
+	*d = '\0';
+}
+
+/*
+ * Print scrambled text to screen with color codes.
+ * Scrambled parts are TERM_L_DARK, legible are TERM_WHITE.
+ */
+void print_scrambled_lore(const char *text, int clarity)
+{
+	int word_idx = 0;
+	u32b seed = seed_flavor;
+	const char *s = text;
+	char buf[1024];
+
+	/* We use c_roff to handle wrapping and color. */
+
+	while (*s)
+	{
+		if (isalpha(*s))
+		{
+			/* Start of a word */
+			const char *start = s;
+			while (isalpha(*s)) s++;
+
+			/* Check scramble */
+			seed = (seed * 1103515245 + 12345);
+			if (((seed / 65536) % 100) >= clarity)
+			{
+				c_roff(TERM_L_DARK, "...");
+			}
+			else
+			{
+				int len = s - start;
+				strncpy(buf, start, len);
+				buf[len] = '\0';
+				c_roff(TERM_WHITE, buf);
+			}
+			word_idx++;
+		}
+		else
+		{
+			/* Copy non-alpha char */
+			buf[0] = *s;
+			buf[1] = '\0';
+			c_roff(TERM_WHITE, buf);
+			s++;
+		}
+	}
+}

@@ -868,6 +868,15 @@ static errr rd_extra(void)
 		for (i = 0; i < 15; i++) unstable_scroll_map[i] = i;
 	}
 
+	if (sf_patch >= 6)
+	{
+		for (i = 0; i < 5; i++) rd_byte(&p_ptr->lore_tomes_found[i]);
+	}
+	else
+	{
+		for (i = 0; i < 5; i++) p_ptr->lore_tomes_found[i] = FALSE;
+	}
+
 	/* Hack -- the two "special seeds" */
 	rd_u32b(&seed_flavor);
 	rd_u32b(&seed_town);

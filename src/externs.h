@@ -979,3 +979,7 @@ extern void user_name(char *buf, int id);
 
 /* main.c */
 /* extern int main(int argc, char *argv[]); */
+
+/* util.c */
+extern void scramble_text_to_buffer(char *out, const char *in, int clarity);
+extern void print_scrambled_lore(const char *text, int clarity);

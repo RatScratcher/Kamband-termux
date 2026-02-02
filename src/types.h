@@ -1135,6 +1135,8 @@ struct player_type
 	u32b mutations2; /* Mutation flags 2 */
 	u32b mutations3; /* Mutation flags 3 */
 
+	bool lore_tomes_found[5]; /* Found ancient tomes */
+
 	s16b word_recall; /* Word of recall counter */
 	s16b scroll_delay; /* Unstable scroll delay */
 	byte scroll_pending_effect; /* Pending effect ID */
@@ -1273,6 +1275,7 @@ struct player_type
 	bool resist_nethr; /* Resist nether */
 	bool resist_chaos; /* Resist chaos */
 	bool resist_disen; /* Resist disenchant */
+	bool resist_corrupt; /* Resist corruption */
 
 	bool sustain_str; /* Keep strength */
 	bool sustain_int; /* Keep intelligence */

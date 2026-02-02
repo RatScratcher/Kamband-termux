@@ -5,7 +5,7 @@
 
 #include "h-basic.h"
 
-#define MAX_LORE 22
+#define MAX_LORE 27
 
 extern cptr lore_text[MAX_LORE];
 

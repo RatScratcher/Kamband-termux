@@ -3095,6 +3095,7 @@ static void calc_bonuses(void)
 	p_ptr->immune_elec = FALSE;
 	p_ptr->immune_fire = FALSE;
 	p_ptr->immune_cold = FALSE;
+	p_ptr->resist_corrupt = FALSE;
 
 	p_ptr->immaterial = FALSE;
 	p_ptr->allseeing = FALSE;
@@ -3494,6 +3495,9 @@ static void calc_bonuses(void)
 			p_ptr->resist_chaos = TRUE;
 		if (f2 & (TR2_RES_DISEN))
 			p_ptr->resist_disen = TRUE;
+
+		if (f3 & (TR3_RES_CORRUPT))
+			p_ptr->resist_corrupt = TRUE;
 
 		/* Sustain flags */
 		if (f2 & (TR2_SUST_STR))

@@ -9,6 +9,7 @@
  */
 
 #include "angband.h"
+#include "lore.h"
 static bool tport_vertically(bool how);
 
 
@@ -280,6 +281,7 @@ static bool item_tester_hook_read(object_type * o_ptr)
 {
 	if (o_ptr->tval == TV_SCROLL) return TRUE;
 	if (o_ptr->tval == TV_UNSTABLE_SCROLL) return TRUE;
+	if (o_ptr->tval == TV_TOME && object_known_p(o_ptr)) return TRUE;
 	return FALSE;
 }
 
@@ -878,6 +880,96 @@ object_type *item_effect(cptr name, cptr act, bool obvious,
 	if (snd)
 	{
 		sound(snd);
+	}
+
+	if (o_ptr->tval == TV_TOME)
+	{
+		int clarity = 0;
+		int i;
+		int found_cnt = 0;
+		int tome_idx = o_ptr->sval - 1; /* 0 to 4 */
+
+		if (tome_idx < 0 || tome_idx > 4)
+		{
+			msg_print("This tome seems to be gibberish.");
+			return NULL;
+		}
+
+		/* Calculate clarity based on preceding tomes found */
+		/* If sval=1, it is 100%. If sval=3, requires 1 and 2 for 100%. */
+
+		if (tome_idx == 0)
+		{
+			clarity = 100;
+		}
+		else
+		{
+			for (i = 0; i < tome_idx; i++)
+			{
+				if (p_ptr->lore_tomes_found[i]) found_cnt++;
+			}
+			clarity = (found_cnt * 100) / tome_idx;
+		}
+
+		/* Mark as found */
+		if (!p_ptr->lore_tomes_found[tome_idx])
+		{
+			p_ptr->lore_tomes_found[tome_idx] = TRUE;
+			msg_print("You commit the tome's knowledge to memory.");
+			p_ptr->update |= (PU_BONUS);
+		}
+
+		/* Display Lore */
+		screen_save();
+		Term_clear();
+		print_scrambled_lore(lore_text[o_ptr->pval], clarity);
+		Term_fresh();
+		inkey();
+		screen_load();
+
+		/* Check completion */
+		{
+			bool all_found = TRUE;
+			for (i = 0; i < 5; i++)
+			{
+				if (!p_ptr->lore_tomes_found[i]) all_found = FALSE;
+			}
+			if (all_found)
+			{
+				msg_print("The fragments of the past align. The true nature of the Mountain's rot is revealed.");
+				if (!p_ptr->resist_corrupt)
+				{
+					p_ptr->resist_corrupt = TRUE;
+					msg_print("You feel a newfound resilience against the creeping corruption.");
+					p_ptr->update |= (PU_BONUS);
+				}
+			}
+		}
+
+		success = TRUE;
+		/* Tomes are not consumed? Usually books are not. Scrolls are. */
+		/* Prompt says "Create a non-linear lore discovery system... Item Definitions... All Tomes... require Translation... before they can be Read" */
+		/* It doesn't explicitly say if they are consumed. TV_TOME implies a book. */
+		/* But if it's "Read" via "read scroll", it might be consumed if I set `one_time_use`? */
+		/* `do_cmd_read_scroll` sets `one_time_use` to TRUE! */
+		/* If tomes are books, they shouldn't be consumed. */
+		/* I should probably NOT consume it. But `do_cmd_read_scroll` forces consumption. */
+		/* I can hack `item_effect` or `do_cmd_read_scroll`. */
+		/* `item_effect` argument `one_time_use` controls consumption. */
+		/* If I return NULL from `item_effect` or manage consumption myself. */
+		/* But `item_effect` destroys the item at the end if `one_time_use` is true. */
+		/* I can set `one_time_use` to FALSE for Tomes inside `item_effect`? */
+		/* `item_effect` has local variable `one_time_use` passed as arg. Modifying arg works. */
+		/* Wait, `item_effect` logic: if (one_time_use) mode |= USE_REMOVE. */
+		/* That happens at start. */
+		/* If I want to avoid consumption, I should call `item_effect` with `one_time_use=FALSE` from `do_cmd_read_scroll` if it's a Tome? */
+		/* But `do_cmd_read_scroll` is generic. */
+		/* I'll assume Tomes ARE consumed like scrolls if read via "Read Scroll". */
+		/* Or I can just check `tval` in `do_cmd_read_scroll` before calling `item_effect`. */
+		/* But `get_item` inside `item_effect` handles selection. */
+		/* I will just let it be consumed. The prompt implies "Historical Fragments" in Knowledge Menu persist the info. */
+
+		goto done;
 	}
 
 	if (o_ptr->tval == TV_UNSTABLE_SCROLL)

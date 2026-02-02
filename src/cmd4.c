@@ -3244,11 +3244,59 @@ static void do_cmd_knowledge_lore(void)
 
 	fff = my_fopen(file_name, "w");
 
-	for (i = 0; i < MAX_LORE; i++)
+	for (i = 0; i < 22; i++) /* Standard Lore */
 	{
 		if (lore_known & (1L << i))
 		{
 			fprintf(fff, "%s\n\n", lore_text[i]);
+		}
+	}
+
+	fprintf(fff, "\n\nHistorical Fragments\n====================\n\n");
+
+	for (i = 0; i < 5; i++)
+	{
+		if (p_ptr->lore_tomes_found[i])
+		{
+			char buf[1024];
+			char title[80];
+			int clarity = 0;
+			int found_cnt = 0;
+			int j;
+
+			/* Calculate clarity */
+			if (i == 0)
+			{
+				clarity = 100;
+			}
+			else
+			{
+				for (j = 0; j < i; j++)
+				{
+					if (p_ptr->lore_tomes_found[j]) found_cnt++;
+				}
+				clarity = (found_cnt * 100) / i;
+			}
+
+			/* If all tomes found, force clarity 100% */
+			{
+				bool all_found = TRUE;
+				for (j = 0; j < 5; j++)
+				{
+					if (!p_ptr->lore_tomes_found[j]) all_found = FALSE;
+				}
+				if (all_found) clarity = 100;
+			}
+
+			sprintf(title, "Ancient Tome (Vol. %s)", (i==0)?"I":(i==1)?"II":(i==2)?"III":(i==3)?"IV":"V");
+			fprintf(fff, "%s\n", title);
+
+			scramble_text_to_buffer(buf, lore_text[22 + i], clarity);
+			fprintf(fff, "%s\n\n", buf);
+		}
+		else
+		{
+			fprintf(fff, "???\n\n");
 		}
 	}
 

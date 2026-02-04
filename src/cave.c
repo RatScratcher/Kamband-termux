@@ -368,6 +368,8 @@ bool player_can_see_bold(int y, int x)
 	if (!player_has_los_bold(y, x))
 		return (FALSE);
 
+	if (vision_pulse) return (TRUE);
+
 	/* Require "perma-lite" of the grid */
 	if (!(cave_info[y][x] & (CAVE_GLOW)))
 		return (FALSE);
@@ -658,7 +660,8 @@ void map_info(int y, int x, byte * ap, char *cp)
 			(((cave_info[y][x] & (CAVE_LITE)) ||
 					((cave_info[y][x] & (CAVE_GLOW)) &&
 						(cave_info[y][x] & (CAVE_VIEW)))) &&
-				!p_ptr->blind))
+				!p_ptr->blind) ||
+            (vision_pulse && (cave_info[y][x] & CAVE_VIEW)))
 		{
 			/* Access floor */
 			f_ptr = &f_info[feat];
@@ -736,7 +739,8 @@ void map_info(int y, int x, byte * ap, char *cp)
 	else
 	{
 		/* Memorized grids */
-		if (cave_info[y][x] & (CAVE_MARK))
+		if (((cave_info[y][x] & (CAVE_MARK)) || (vision_pulse && (cave_info[y][x] & CAVE_VIEW))) &&
+            !(cave_sector[y][x] == SECTOR_DARK && !vision_pulse && distance(y, x, p_ptr->py, p_ptr->px) > 1))
 		{
 			/* Apply "mimic" field */
 			feat = f_info[feat].mimic;
@@ -1163,6 +1167,16 @@ void note_spot(int y, int x)
 	/* Hack -- memorize grids */
 	if (!(cave_info[y][x] & (CAVE_MARK)))
 	{
+		/* Vision Suppression in Dark Sectors */
+		if (cave_sector[y][x] == SECTOR_DARK && !vision_pulse)
+		{
+			/* Do not memorize floors */
+			if (cave_feat[y][x] <= FEAT_INVIS) return;
+
+			/* Do not memorize distant walls */
+			if (distance(y, x, p_ptr->py, p_ptr->px) > 1) return;
+		}
+
 		/* Handle floor grids first */
 		if (cave_feat[y][x] <= FEAT_INVIS)
 		{

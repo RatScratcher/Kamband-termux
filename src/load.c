@@ -1209,6 +1209,48 @@ static errr rd_dungeon(void)
 				}
 			}
 		}
+
+		debug_log("rd_dungeon: start RLE 4 (sector)");
+		if (sf_patch >= 6)
+		{
+			cells_count = 0;
+			while (cells_count < cells_total)
+			{
+				/* Grab RLE info */
+				rd_byte(&count);
+				rd_byte(&tmp8u);
+
+				if (count == 0)
+				{
+					if (sf_error) break;
+					continue;
+				}
+
+				/* Apply the RLE info */
+				for (i = 0; i < count; i++)
+				{
+					if (cells_count < cells_total)
+					{
+						int cur_y = cells_count / DUNGEON_WID;
+						int cur_x = cells_count % DUNGEON_WID;
+
+						cave_sector[cur_y][cur_x] = tmp8u;
+						cells_count++;
+					}
+				}
+			}
+		}
+		else
+		{
+			/* Clear the sector array */
+			for (y = 0; y < DUNGEON_HGT; y++)
+			{
+				for (x = 0; x < DUNGEON_WID; x++)
+				{
+					cave_sector[y][x] = SECTOR_RUINS;
+				}
+			}
+		}
 	}
 
 

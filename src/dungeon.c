@@ -752,11 +752,55 @@ static void process_environment(void)
 }
 
 /*
+ * Rearrange Dark Sectors
+ */
+static void rearrange_dark_sectors(void)
+{
+	int y, x;
+	/* Iterate over dungeon */
+	for (y = 1; y < DUNGEON_HGT - 1; y++) {
+		for (x = 1; x < DUNGEON_WID - 1; x++) {
+			if (cave_sector[y][x] == SECTOR_DARK) {
+				/* Skip visible grids */
+				if (cave_info[y][x] & CAVE_VIEW) continue;
+				/* Skip perma grids */
+				if (cave_perma_bold(y, x)) continue;
+				/* Skip monsters/objects */
+				if (cave_m_idx[y][x] != 0) continue;
+				if (cave_o_idx[y][x]) continue;
+
+				/* 5% chance to swap */
+				if (rand_int(100) < 5) {
+					if (cave_feat[y][x] == FEAT_FLOOR) {
+						cave_set_feat(y, x, FEAT_WALL_EXTRA);
+					} else if (cave_feat[y][x] == FEAT_WALL_EXTRA) {
+						cave_set_feat(y, x, FEAT_FLOOR);
+					}
+				}
+			}
+		}
+	}
+
+	/* Check player pinning */
+	if (cave_sector[p_ptr->py][p_ptr->px] == SECTOR_DARK) {
+		if (cave_feat[p_ptr->py][p_ptr->px] == FEAT_WALL_EXTRA) {
+			msg_print("The rock around you groans and thirsts for your light.");
+            /* Pin the player */
+            if (!p_ptr->paralyzed) {
+                set_paralyzed(50);
+            }
+		}
+	}
+}
+
+/*
  * Handle certain things once every 10 game turns
  */
 static void process_world(void)
 {
 	int x, y, i, j;
+    static int pulse_timer = 0;
+    static int shift_timer = 0;
 
 	int regen_amount;
 
@@ -766,6 +810,29 @@ static void process_world(void)
 	/* Every turn */
 	process_dread();
 	process_breathing_walls();
+
+    /* Pulse */
+    pulse_timer++;
+    if (pulse_timer >= 10) {
+        pulse_timer = 0;
+        vision_pulse = TRUE;
+        /* Force Update */
+        p_ptr->update |= (PU_VIEW | PU_LITE | PU_MONSTERS);
+        p_ptr->redraw |= (PR_MAP);
+        handle_stuff();
+        Term_fresh();
+        usleep(150000); /* 150ms flash */
+        vision_pulse = FALSE;
+        p_ptr->update |= (PU_VIEW | PU_LITE | PU_MONSTERS);
+        p_ptr->redraw |= (PR_MAP);
+    }
+
+    /* Shift */
+    shift_timer++;
+    if (shift_timer >= 50) {
+        shift_timer = 0;
+        rearrange_dark_sectors();
+    }
 
 	/* Every 10 game turns */
 	/* Unstable Scroll Incubation */

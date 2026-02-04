@@ -184,13 +184,6 @@
  */
 #define ROOM_MAX	16
 
-/*
- * Sector Types
- */
-#define SECTOR_RUINS  0
-#define SECTOR_CAVERN 1
-#define SECTOR_PLAZA  2
-
 
 /*
  * Simple structure to hold a map location
@@ -251,9 +244,6 @@ struct dun_data
 
 	/* Array of which blocks are used */
 	bool room_map[MAX_ROOMS_ROW][MAX_ROOMS_COL];
-
-	/* Sector map */
-	byte sector_map[MAX_ROOMS_ROW][MAX_ROOMS_COL];
 
 	/* Hack -- there is a pit/nest on this level */
 	bool crowded;
@@ -4631,6 +4621,97 @@ static void build_sector_plaza(int y0, int x0)
 }
 
 /*
+ * Build a Dark Sector (Shifting Labyrinth)
+ */
+static void build_sector_dark(int y0, int x0)
+{
+	int y1 = y0 * BLOCK_HGT;
+	int x1 = x0 * BLOCK_WID;
+	int y2 = (y0 + 2) * BLOCK_HGT;
+	int x2 = (x0 + 2) * BLOCK_WID;
+	int x, y, i;
+
+	/* Safety */
+	if (y2 >= DUNGEON_HGT) y2 = DUNGEON_HGT - 1;
+	if (x2 >= DUNGEON_WID) x2 = DUNGEON_WID - 1;
+
+	/* Initialize with noise */
+	for (y = y1; y <= y2; y++)
+	{
+		for (x = x1; x <= x2; x++)
+		{
+			if (rand_int(100) < 40) cave_feat[y][x] = FEAT_WALL_EXTRA;
+			else cave_feat[y][x] = FEAT_FLOOR;
+			cave_info[y][x] |= CAVE_ROOM;
+		}
+	}
+
+	/* Cellular Automata Smoothing (4 iterations) */
+	for (i = 0; i < 4; i++)
+	{
+		bool next_grid[33][33];
+        int h = y2 - y1 + 1;
+        int w = x2 - x1 + 1;
+
+		for (y = 0; y < h; y++) {
+			for (x = 0; x < w; x++) {
+				int walls = 0;
+				int dy, dx;
+                int cy = y1 + y;
+                int cx = x1 + x;
+
+				for (dy = -1; dy <= 1; dy++)
+					for (dx = -1; dx <= 1; dx++) {
+                        int ny = cy + dy;
+                        int nx = cx + dx;
+                        if (in_bounds(ny, nx)) {
+                            if (cave_feat[ny][nx] == FEAT_WALL_EXTRA) walls++;
+                        } else {
+                            walls++; /* Edge is wall */
+                        }
+                    }
+
+				if (cave_feat[cy][cx] == FEAT_WALL_EXTRA)
+					next_grid[y][x] = (walls >= 4);
+				else
+					next_grid[y][x] = (walls >= 5);
+			}
+		}
+
+        /* Apply back */
+		for (y = 0; y < h; y++) {
+			for (x = 0; x < w; x++) {
+                if (next_grid[y][x]) cave_feat[y1+y][x1+x] = FEAT_WALL_EXTRA;
+                else cave_feat[y1+y][x1+x] = FEAT_FLOOR;
+            }
+        }
+	}
+
+    /* Ensure connectivity */
+    ensure_connectivity(y1, x1, y2, x2);
+
+    /* Place Heart of the Maze */
+    {
+        int ty, tx;
+        int tries = 0;
+        while (tries++ < 1000) {
+            ty = rand_range(y1 + 1, y2 - 1);
+            tx = rand_range(x1 + 1, x2 - 1);
+            if (cave_floor_bold(ty, tx)) {
+                /* Place item */
+                object_level += 10;
+                place_object(ty, tx, TRUE, TRUE);
+                object_level -= 10;
+
+                /* Glowing beacon */
+                cave_set_feat(ty, tx, FEAT_GLOWING_TILE);
+                break;
+            }
+        }
+    }
+}
+
+/*
  * Place Ancient Ruin
  */
 static void place_ancient_ruin(void)
@@ -4907,12 +4988,13 @@ static void cave_gen(void)
 			int sect_type = SECTOR_RUINS;
 			if (rand_int(100) < (p_ptr->depth / 2)) sect_type = SECTOR_CAVERN;
 			else if (rand_int(100) < 10) sect_type = SECTOR_PLAZA;
+			else if (rand_int(100) < 10) sect_type = SECTOR_DARK;
 
 			/* Assign to 2x2 block */
-			dun->sector_map[y][x] = sect_type;
-			if (y + 1 < dun->row_rooms) dun->sector_map[y+1][x] = sect_type;
-			if (x + 1 < dun->col_rooms) dun->sector_map[y][x+1] = sect_type;
-			if (y + 1 < dun->row_rooms && x + 1 < dun->col_rooms) dun->sector_map[y+1][x+1] = sect_type;
+			cave_sector[y][x] = sect_type;
+			if (y + 1 < dun->row_rooms) cave_sector[y+1][x] = sect_type;
+			if (x + 1 < dun->col_rooms) cave_sector[y][x+1] = sect_type;
+			if (y + 1 < dun->row_rooms && x + 1 < dun->col_rooms) cave_sector[y+1][x+1] = sect_type;
 		}
 	}
 
@@ -4928,10 +5010,26 @@ static void cave_gen(void)
 	{
 		for (x = 0; x < dun->col_rooms; x += 2)
 		{
-			int sect = dun->sector_map[y][x];
+			int sect = cave_sector[y][x];
 			if (sect == SECTOR_CAVERN)
 			{
 				build_sector_cavern(y, x);
+				/* Mark blocks as used */
+				dun->room_map[y][x] = TRUE;
+				if (y + 1 < dun->row_rooms) dun->room_map[y + 1][x] = TRUE;
+				if (x + 1 < dun->col_rooms) dun->room_map[y][x + 1] = TRUE;
+				if (y + 1 < dun->row_rooms && x + 1 < dun->col_rooms) dun->room_map[y + 1][x + 1] = TRUE;
+
+				/* Add center for tunnels */
+				if (dun->cent_n < CENT_MAX) {
+					dun->cent[dun->cent_n].y = (y * BLOCK_HGT) + BLOCK_HGT;
+					dun->cent[dun->cent_n].x = (x * BLOCK_WID) + BLOCK_WID;
+					dun->cent_n++;
+				}
+			}
+			else if (sect == SECTOR_DARK)
+			{
+				build_sector_dark(y, x);
 				/* Mark blocks as used */
 				dun->room_map[y][x] = TRUE;
 				if (y + 1 < dun->row_rooms) dun->room_map[y + 1][x] = TRUE;
@@ -4972,7 +5070,7 @@ static void cave_gen(void)
 		x = rand_int(dun->col_rooms);
 
 		/* Only build in RUINS sectors */
-		if (dun->sector_map[y][x] != SECTOR_RUINS) continue;
+		if (cave_sector[y][x] != SECTOR_RUINS) continue;
 
 		/* Align dungeon rooms */
 		if (dungeon_align)

@@ -146,6 +146,8 @@ bool good_item_flag; /* True if "Artifact" on this level */
 
 bool closing_flag; /* Dungeon is closing */
 
+bool vision_pulse = FALSE; /* Flash of Revelation active */
+
 bool crushing_active; /* Crushing trap active */
 int crushing_cy; /* Crushing trap center Y */
 int crushing_cx; /* Crushing trap center X */
@@ -357,6 +359,11 @@ u16b cave_fire_life[DUNGEON_HGT][DUNGEON_WID];
  * The array of cave grid info flags
  */
 byte cave_info[DUNGEON_HGT][DUNGEON_WID];
+
+/*
+ * The array of cave grid sector types
+ */
+byte cave_sector[DUNGEON_HGT][DUNGEON_WID];
 
 /*
  * The array of cave grid feature codes

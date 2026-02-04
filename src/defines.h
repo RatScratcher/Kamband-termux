@@ -47,8 +47,15 @@
 
 #define KAM_VERSION_MAJOR 2
 #define KAM_VERSION_MINOR 1
-#define KAM_VERSION_PATCH 5
+#define KAM_VERSION_PATCH 6
 
+/*
+ * Sector Types
+ */
+#define SECTOR_RUINS  0
+#define SECTOR_CAVERN 1
+#define SECTOR_PLAZA  2
+#define SECTOR_DARK   3
 
 /*
  * This value is not currently used

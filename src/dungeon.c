@@ -813,18 +813,21 @@ static void process_world(void)
 
     /* Pulse */
     pulse_timer++;
-    if (pulse_timer >= 10) {
+    if (pulse_timer >= 20) {
         pulse_timer = 0;
-        vision_pulse = TRUE;
-        /* Force Update */
-        p_ptr->update |= (PU_VIEW | PU_LITE | PU_MONSTERS);
-        p_ptr->redraw |= (PR_MAP);
-        handle_stuff();
-        Term_fresh();
-        usleep(150000); /* 150ms flash */
-        vision_pulse = FALSE;
-        p_ptr->update |= (PU_VIEW | PU_LITE | PU_MONSTERS);
-        p_ptr->redraw |= (PR_MAP);
+        if (cave_sector[p_ptr->py][p_ptr->px] == SECTOR_DARK) {
+            msg_print("The shadows thin for a brief moment...");
+            vision_pulse = TRUE;
+            /* Force Update */
+            p_ptr->update |= (PU_VIEW | PU_LITE | PU_MONSTERS);
+            p_ptr->redraw |= (PR_MAP);
+            handle_stuff();
+            Term_fresh();
+            usleep(150000); /* 150ms flash */
+            vision_pulse = FALSE;
+            p_ptr->update |= (PU_VIEW | PU_LITE | PU_MONSTERS);
+            p_ptr->redraw |= (PR_MAP);
+        }
     }
 
     /* Shift */

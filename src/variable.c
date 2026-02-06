@@ -559,6 +559,7 @@ player_type *p_ptr = &player_type_body;
  */
 header *v_head;
 vault_type *v_info;
+dungeon_info d_info[MAX_DEPTH];
 char *v_name;
 char *v_text;
 char *q_text;

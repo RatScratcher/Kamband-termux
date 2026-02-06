@@ -794,6 +794,15 @@ static void rearrange_dark_sectors(void)
 }
 
 /*
+ * Get sector type of a location
+ */
+static int get_sector_type(int y, int x)
+{
+	if (!in_bounds(y, x)) return -1;
+	return cave_sector[y][x];
+}
+
+/*
  * Handle certain things once every 10 game turns
  */
 static void process_world(void)
@@ -813,18 +822,25 @@ static void process_world(void)
 
     /* Pulse */
     pulse_timer++;
-    if (pulse_timer >= 10) {
+    if (pulse_timer >= 50) {
         pulse_timer = 0;
-        vision_pulse = TRUE;
-        /* Force Update */
-        p_ptr->update |= (PU_VIEW | PU_LITE | PU_MONSTERS);
-        p_ptr->redraw |= (PR_MAP);
-        handle_stuff();
-        Term_fresh();
-        usleep(150000); /* 150ms flash */
-        vision_pulse = FALSE;
-        p_ptr->update |= (PU_VIEW | PU_LITE | PU_MONSTERS);
-        p_ptr->redraw |= (PR_MAP);
+
+        /* ONLY trigger if the player is in a "Dark Sector" or specific area */
+        if (d_info[p_ptr->depth].flags & DF_DARK_PULSE || get_sector_type(p_ptr->py, p_ptr->px) == SECTOR_VOID) {
+
+            vision_pulse = TRUE;
+            /* Force Update */
+            p_ptr->update |= (PU_VIEW | PU_LITE | PU_MONSTERS);
+            p_ptr->redraw |= (PR_MAP);
+            handle_stuff();
+            Term_fresh();
+
+            usleep(150000); /* 150ms flash */
+
+            vision_pulse = FALSE;
+            p_ptr->update |= (PU_VIEW | PU_LITE | PU_MONSTERS);
+            p_ptr->redraw |= (PR_MAP);
+        }
     }
 
     /* Shift */

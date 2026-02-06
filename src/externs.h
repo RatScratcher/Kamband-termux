@@ -219,6 +219,7 @@ extern player_other *op_ptr;
 extern player_type *p_ptr;
 extern header *v_head;
 extern vault_type *v_info;
+extern dungeon_info d_info[MAX_DEPTH];
 extern char *v_name;
 extern char *v_text;
 extern char *q_text;

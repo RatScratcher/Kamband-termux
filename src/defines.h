@@ -56,6 +56,12 @@
 #define SECTOR_CAVERN 1
 #define SECTOR_PLAZA  2
 #define SECTOR_DARK   3
+#define SECTOR_VOID   4
+
+/*
+ * Dungeon Flags
+ */
+#define DF_DARK_PULSE 0x01
 
 /*
  * This value is not currently used

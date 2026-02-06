@@ -48,6 +48,7 @@ typedef struct artifact_type artifact_type;
 typedef struct ego_item_type ego_item_type;
 typedef struct monster_blow monster_blow;
 typedef struct monster_race monster_race;
+typedef struct dungeon_info dungeon_info;
 typedef struct vault_type vault_type;
 typedef struct object_type object_type;
 typedef struct monster_type monster_type;
@@ -424,6 +425,14 @@ struct monster_race
 };
 
 
+
+/*
+ * Information about "dungeon levels"
+ */
+struct dungeon_info
+{
+	u32b flags;
+};
 
 /*
  * Information about "vault generation"

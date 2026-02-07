@@ -641,7 +641,7 @@ void add_telekinetic_toss_spell(void)
 	rspell->class = 0;
 	rspell->level = 5;
 	rspell->mana = 5;
-	rspell->untried = TRUE;
+	rspell->untried = FALSE;
 	rspell->unknown = FALSE;
 	strcpy(rspell->name, "Telekinetic Toss");
 	strcpy(rspell->desc, "Throw a monster or fetch an item.");

@@ -1047,47 +1047,6 @@ static void wr_dungeon(void)
 	}
 
 
-	/*** Simple "Run-Length-Encoding" of cave sector ***/
-
-	/* Note that this will induce two wasted bytes */
-	count = 0;
-	prev_char = 0;
-
-	/* Dump the cave */
-	for (y = 0; y < DUNGEON_HGT; y++)
-	{
-		for (x = 0; x < DUNGEON_WID; x++)
-		{
-			/* Extract a byte */
-			tmp8u = cave_sector[y][x];
-
-			/* If the run is broken, or too full, flush it */
-			if ((tmp8u != prev_char) || (count == MAX_UCHAR))
-			{
-				if (count)
-				{
-					wr_byte((byte) count);
-					wr_byte((byte) prev_char);
-				}
-				prev_char = tmp8u;
-				count = 1;
-			}
-
-			/* Continue the run */
-			else
-			{
-				count++;
-			}
-		}
-	}
-
-	/* Flush the data (if any) */
-	if (count)
-	{
-		wr_byte((byte) count);
-		wr_byte((byte) prev_char);
-	}
-
 	/*** Simple "Run-Length-Encoding" of cave fire life ***/
 
 	/* Note that this will induce two wasted bytes */
@@ -1143,6 +1102,48 @@ static void wr_dungeon(void)
 		{
 			/* Extract a byte */
 			tmp8u = cave_feat[y][x];
+
+			/* If the run is broken, or too full, flush it */
+			if ((tmp8u != prev_char) || (count == MAX_UCHAR))
+			{
+				if (count)
+				{
+					wr_byte((byte) count);
+					wr_byte((byte) prev_char);
+				}
+				prev_char = tmp8u;
+				count = 1;
+			}
+
+			/* Continue the run */
+			else
+			{
+				count++;
+			}
+		}
+	}
+
+	/* Flush the data (if any) */
+	if (count)
+	{
+		wr_byte((byte) count);
+		wr_byte((byte) prev_char);
+	}
+
+
+	/*** Simple "Run-Length-Encoding" of cave sector ***/
+
+	/* Note that this will induce two wasted bytes */
+	count = 0;
+	prev_char = 0;
+
+	/* Dump the cave */
+	for (y = 0; y < DUNGEON_HGT; y++)
+	{
+		for (x = 0; x < DUNGEON_WID; x++)
+		{
+			/* Extract a byte */
+			tmp8u = cave_sector[y][x];
 
 			/* If the run is broken, or too full, flush it */
 			if ((tmp8u != prev_char) || (count == MAX_UCHAR))

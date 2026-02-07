@@ -3211,6 +3211,15 @@ void drop_near(object_type * j_ptr, bool do_dam, int y, int x)
 		/* Give it to the floor */
 		floor_carry(ty, tx, j_ptr);
 
+		/* Torch on oil -> ignite */
+		if (j_ptr->tval == TV_LITE && j_ptr->sval == SV_LITE_TORCH && cave_feat[ty][tx] == FEAT_OIL)
+		{
+			cave_set_feat(ty, tx, FEAT_OIL_BURNING);
+			cave_fire_life[ty][tx] = 5;
+			note_spot(ty, tx);
+			lite_spot(ty, tx);
+		}
+
 		/* Sound */
 		sound(SOUND_DROP);
 

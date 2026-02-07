@@ -2107,6 +2107,7 @@ static bool project_f(int who, int r, int y, int x, int dam, int typ)
 	switch (typ)
 	{
 		case GF_FIRE:
+		case GF_PSIONIC_SPARK:
 		{
 			/* Melt ice, burn oil */
 			if (cave_feat[y][x] == FEAT_ICE)

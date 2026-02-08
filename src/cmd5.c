@@ -639,8 +639,8 @@ void add_telekinetic_toss_spell(void)
 	rspell = &spells[spell_num];
 
 	rspell->class = 0;
-	rspell->level = 5;
-	rspell->mana = 5;
+	rspell->level = 1;
+	rspell->mana = 0;
 	rspell->untried = FALSE;
 	rspell->unknown = FALSE;
 	strcpy(rspell->name, "Telekinetic Toss");
@@ -893,6 +893,8 @@ int spell_chance(spell * rspell)
 {
 	int chance, minfail;
 
+	/* Hack -- Telekinetic Toss is always successful */
+	if (strcmp(rspell->name, "Telekinetic Toss") == 0) return 0;
 
 	/* Extract the base spell failure rate */
 	chance = rspell->level + 25;

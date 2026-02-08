@@ -47,7 +47,7 @@
 
 #define KAM_VERSION_MAJOR 2
 #define KAM_VERSION_MINOR 1
-#define KAM_VERSION_PATCH 6
+#define KAM_VERSION_PATCH 7
 
 /*
  * Sector Types
@@ -297,6 +297,7 @@
 /*
  * Misc constants
  */
+#define MAX_GUARD_DIST      5   /* Pet guard distance */
 #define TOWN_DAWN			10000 /* Number of turns from dawn to dawn XXX */
 #define BREAK_GLYPH		550	/* Rune of protection resistance */
 #define BTH_PLUS_ADJ		3 /* Adjust BTH per plus-to-hit */

@@ -858,6 +858,14 @@ static errr rd_extra(void)
 		rd_s16b(&p_ptr->scroll_delay);
 		rd_byte(&p_ptr->scroll_pending_effect);
 		rd_byte((byte*)&p_ptr->anchored);
+		if (sf_patch >= 7)
+		{
+			rd_s32b(&p_ptr->last_attacked_turn);
+		}
+		else
+		{
+			p_ptr->last_attacked_turn = 0;
+		}
 		for (i = 0; i < 15; i++) rd_byte(&unstable_scroll_map[i]);
 	}
 	else
@@ -865,6 +873,7 @@ static errr rd_extra(void)
 		p_ptr->scroll_delay = 0;
 		p_ptr->scroll_pending_effect = 0;
 		p_ptr->anchored = FALSE;
+		p_ptr->last_attacked_turn = 0;
 		for (i = 0; i < 15; i++) unstable_scroll_map[i] = i;
 	}
 

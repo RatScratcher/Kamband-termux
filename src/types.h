@@ -1155,6 +1155,8 @@ struct player_type
 	byte confusing;	/* Glowing hands */
 	byte searching;	/* Currently searching */
 
+	s32b last_attacked_turn; /* Last turn player was attacked */
+
 	s16b player_hp[PY_MAX_LEVEL]; /* HP Array */
 
 	char died_from[80];	/* Cause of death */

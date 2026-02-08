@@ -938,6 +938,7 @@ static void wr_extra(void)
     wr_s16b(p_ptr->scroll_delay);
     wr_byte(p_ptr->scroll_pending_effect);
     wr_byte(p_ptr->anchored);
+    wr_s32b(p_ptr->last_attacked_turn);
     for (i = 0; i < 15; i++) wr_byte(unstable_scroll_map[i]);
 
 	/* Write the "object seeds" */

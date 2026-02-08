@@ -5600,6 +5600,12 @@ static bool project_p(int who, int r, int y, int x, int dam, int typ)
 	if (cave_m_idx[y][x] == who)
 		return (FALSE);
 
+	/* Track attacks by enemies */
+	if (who > 0 && !m_list[who].is_pet)
+	{
+		p_ptr->last_attacked_turn = turn;
+	}
+
 	/* Psionic Deflection for Mutant Corrupted */
 	if ((who > 0) && (p_ptr->prace == RACE_MUTANT) && (p_ptr->pclass == CLASS_CORRUPTED))
 	{

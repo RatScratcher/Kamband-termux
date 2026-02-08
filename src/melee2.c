@@ -2234,6 +2234,23 @@ bool make_attack_spell(int m_idx)
 			return FALSE;
 
 		direct = FALSE;
+
+		/* Reactive Guard Logic */
+		if (p_ptr->last_attacked_turn < turn - 1)
+		{
+			/* Not reactive: Only attack adjacent (Self Defense) */
+			if (distance(m_ptr->fy, m_ptr->fx, py, px) > 1)
+				return FALSE;
+		}
+		else
+		{
+			/* Reactive: Check if target is valid threat */
+			int dist_target_player = distance(py, px, p_ptr->py, p_ptr->px);
+			int dist_target_pet = distance(py, px, m_ptr->fy, m_ptr->fx);
+
+			if (dist_target_player > MAX_GUARD_DIST && dist_target_pet > 1)
+				return FALSE;
+		}
 	}
 	else
 	{
@@ -2675,8 +2692,47 @@ static void get_moves(int m_idx, int mm[5])
 	int y2;
 	int x2;
 
-	/* Choose the appropriate target. */
-	find_target_nearest(m_ptr, r_ptr, &py, &px);
+	/* Pet AI: Reactive Guard / Tether Logic */
+	if (m_ptr->is_pet)
+	{
+		int dist_to_player = distance(m_ptr->fy, m_ptr->fx, p_ptr->py, p_ptr->px);
+
+		if (dist_to_player > MAX_GUARD_DIST)
+		{
+			/* Tether: Too far, return to player */
+			py = p_ptr->py;
+			px = p_ptr->px;
+		}
+		else if (p_ptr->last_attacked_turn < turn - 1)
+		{
+			/* Passive: Stay near player */
+			py = p_ptr->py;
+			px = p_ptr->px;
+		}
+		else
+		{
+			/* Reactive: Find target */
+			find_target_nearest(m_ptr, r_ptr, &py, &px);
+
+			/* Validate target */
+			{
+				int dist_target_player = distance(py, px, p_ptr->py, p_ptr->px);
+				int dist_target_pet = distance(py, px, m_ptr->fy, m_ptr->fx);
+
+				/* If target is too far from player and not adjacent (self-defense), ignore it */
+				if (dist_target_player > MAX_GUARD_DIST && dist_target_pet > 1)
+				{
+					py = p_ptr->py;
+					px = p_ptr->px;
+				}
+			}
+		}
+	}
+	else
+	{
+		/* Standard targeting */
+		find_target_nearest(m_ptr, r_ptr, &py, &px);
+	}
 
 	y2 = py;
 	x2 = px;

@@ -547,6 +547,9 @@ bool make_attack_normal(int m_idx)
 		/* Monster hits player */
 		if (!effect || check_hit(power, rlev))
 		{
+			/* Track the attack */
+			p_ptr->last_attacked_turn = turn;
+
 			/* Corruptive Blink check */
 			if ((p_ptr->prace == RACE_MUTANT) &&
 				(p_ptr->pclass == CLASS_CORRUPTED) && (p_ptr->csp >= 3))

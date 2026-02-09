@@ -867,6 +867,14 @@ static errr rd_extra(void)
 			p_ptr->last_attacked_turn = 0;
 		}
 		for (i = 0; i < 15; i++) rd_byte(&unstable_scroll_map[i]);
+		if (sf_patch >= 8)
+		{
+			rd_s16b(&p_ptr->echo_timer);
+		}
+		else
+		{
+			p_ptr->echo_timer = 0;
+		}
 	}
 	else
 	{
@@ -875,6 +883,7 @@ static errr rd_extra(void)
 		p_ptr->anchored = FALSE;
 		p_ptr->last_attacked_turn = 0;
 		for (i = 0; i < 15; i++) unstable_scroll_map[i] = i;
+		p_ptr->echo_timer = 0;
 	}
 
 	/* Hack -- the two "special seeds" */

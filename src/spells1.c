@@ -5138,6 +5138,40 @@ static bool project_m(int who, int r, int y, int x, int dam, int typ)
 			break;
 		}
 
+		/* Psionic Spark */
+		case GF_PSIONIC_SPARK:
+		{
+			if (seen)
+				obvious = TRUE;
+
+			/* Oil Interaction */
+			if (m_ptr->mflag & MFLAG_OIL_SOAKED)
+			{
+				/* Output message: "The oil on the [monster] ignites!" */
+				if (seen)
+				{
+					msg_format("The oil on %s ignites!", m_name);
+				}
+
+				/* Add bonus fire damage (suggested: damroll(3, 6)) */
+				dam += damroll(3, 6);
+
+				/* Clear the MFLAG_OIL_SOAKED flag */
+				m_ptr->mflag &= ~(MFLAG_OIL_SOAKED);
+			}
+
+			/* Stun Chance: Implement a 30% chance to add to the monster's m_ptr->stunned value. */
+			if (rand_int(100) < 30)
+			{
+				do_stun = (randint(15) + 1) / (r + 1);
+			}
+
+			/* Feedback: Set the note string to " is shocked!" */
+			note = " is shocked!";
+
+			break;
+		}
+
 		case GF_ECHO_PULSE:
 		{
 			if ((r_ptr->flags2 & RF2_SMART) || (r_ptr->flags3 & RF3_ANIMAL))

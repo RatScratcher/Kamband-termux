@@ -1015,7 +1015,7 @@ bool cause_spell_effect(spell * s_ptr)
 	proj_node *pnode = s_ptr->proj_list;
 	int dir, who;
 	int ty = 0, tx = 0;
-	bool succ = FALSE;
+	bool cast = FALSE;
 
 	while (pnode)
 	{
@@ -1029,7 +1029,7 @@ bool cause_spell_effect(spell * s_ptr)
 			pnode->proj_flags & PROJECT_STOP)
 		{
 			if (!get_aim_dir(&dir))
-				return FALSE;
+				return cast;
 
 			/* Hack -- Use an actual "target" */
 			if ((dir == 5) && target_okay())
@@ -1060,15 +1060,15 @@ bool cause_spell_effect(spell * s_ptr)
 			who = -100;
 		}
 
-		if (project(who, pnode->radius, ty, tx, damroll(pnode->dam_dice,
+		project(who, pnode->radius, ty, tx, damroll(pnode->dam_dice,
 					pnode->dam_sides), pnode->attack_kind,
-				pnode->proj_flags))
-			succ = TRUE;
+				pnode->proj_flags);
+		cast = TRUE;
 
 		pnode = pnode->next;
 	}
 
-	return succ;
+	return cast;
 }
 
 
@@ -1084,6 +1084,7 @@ void do_cmd_cast_power(void)
 	int chance;
 
 	bool failed = FALSE;
+	bool cast = FALSE;
 
 	spell *s_ptr;
 
@@ -1127,8 +1128,6 @@ void do_cmd_cast_power(void)
 
 	chance = spell_chance(s_ptr);
 
-	p_ptr->energy_use = 100;
-
 	if (randint(100) < chance)
 	{
 		if (flush_failure)
@@ -1159,58 +1158,68 @@ void do_cmd_cast_power(void)
 		}
 	}
 
-	/* Use some mana */
-
-	if (s_ptr->mana <= p_ptr->csp)
+	if (!failed)
 	{
-		p_ptr->csp -= s_ptr->mana;
-	}
-	else
-	{
-		int oops = s_ptr->mana - p_ptr->csp;
-
-		/* No mana left */
-		p_ptr->csp = 0;
-		p_ptr->csp_frac = 0;
-
-		/* Message */
-		mprint(MSG_WARNING, "You faint from the effort!");
-
-		/* Hack -- Bypass free action */
-		(void) set_paralyzed(p_ptr->paralyzed + randint(5 * oops + 1));
-
-		/* Damage CON (possibly permanently) */
-		if (rand_int(100) < 50)
+		/* The spell is analyzed and an appropriate function is called. */
+		if (cause_spell_effect(s_ptr))
 		{
-			bool perm = (rand_int(100) < 25);
+			cast = TRUE;
 
-			/* Message */
-			mprint(MSG_URGENT, "You have damaged your health!");
-
-			/* Reduce constitution */
-			(void) dec_stat(A_CON, 15 + randint(10), perm);
+			/* Other stuff */
+			if (s_ptr->untried)
+			{
+				s_ptr->untried = FALSE;
+				gain_exp(s_ptr->level * s_ptr->level);
+			}
+		}
+		else
+		{
+			msg_print("Aborted.");
 		}
 	}
 
-	/* Redraw mana */
-	p_ptr->redraw |= (PR_MANA);
-
-	/* Window stuff */
-	p_ptr->window |= (PW_SPELL | PW_PLAYER);
-
-	if (failed)
-		return;
-
-	/* The spell is analyzed and an appropriate function is called. */
-	cause_spell_effect(s_ptr);
-
-	/* Other stuff */
-
-	if (s_ptr->untried)
+	if (failed || cast)
 	{
+		p_ptr->energy_use = 100;
 
-		s_ptr->untried = FALSE;
-		gain_exp(s_ptr->level * s_ptr->level);
+		/* Use some mana */
+
+		if (s_ptr->mana <= p_ptr->csp)
+		{
+			p_ptr->csp -= s_ptr->mana;
+		}
+		else
+		{
+			int oops = s_ptr->mana - p_ptr->csp;
+
+			/* No mana left */
+			p_ptr->csp = 0;
+			p_ptr->csp_frac = 0;
+
+			/* Message */
+			mprint(MSG_WARNING, "You faint from the effort!");
+
+			/* Hack -- Bypass free action */
+			(void) set_paralyzed(p_ptr->paralyzed + randint(5 * oops + 1));
+
+			/* Damage CON (possibly permanently) */
+			if (rand_int(100) < 50)
+			{
+				bool perm = (rand_int(100) < 25);
+
+				/* Message */
+				mprint(MSG_URGENT, "You have damaged your health!");
+
+				/* Reduce constitution */
+				(void) dec_stat(A_CON, 15 + randint(10), perm);
+			}
+		}
+
+		/* Redraw mana */
+		p_ptr->redraw |= (PR_MANA);
+
+		/* Window stuff */
+		p_ptr->window |= (PW_SPELL | PW_PLAYER);
 	}
 }
 

@@ -2960,6 +2960,12 @@ static bool project_f(int who, int r, int y, int x, int dam, int typ)
  *
  * We return "TRUE" if the effect of the projection is "obvious".
  */
+
+/*
+ * Hack -- track if telekinesis fetched an item
+ */
+static bool telekinesis_fetched = FALSE;
+
 static bool project_o(int who, int r, int y, int x, int dam, int typ)
 {
 	object_type *o_ptr;
@@ -3445,10 +3451,11 @@ static bool project_o(int who, int r, int y, int x, int dam, int typ)
 		/* Telekinetic Toss (Fetch Item) */
 		case GF_TELEKINESIS:
 		{
-			if (fetch_item(100, y, x)) /* High weight limit */
-			{
-				obvious = TRUE;
-			}
+			/* Move object to player */
+			remove_from_stack(o_ptr);
+			drop_near(o_ptr, FALSE, p_ptr->py, p_ptr->px);
+			obvious = TRUE;
+			telekinesis_fetched = TRUE;
 			break;
 		}
 
@@ -5037,6 +5044,8 @@ static bool project_m(int who, int r, int y, int x, int dam, int typ)
 		case GF_TELEKINESIS:
 		{
 			int ny, nx;
+
+			if (telekinesis_fetched) break;
 			bool success = FALSE;
 
 			/* Check: (Player INT + Player Level) vs (Monster Level + 1d20) */
@@ -7451,6 +7460,9 @@ static bool project_finalize(s16b start, int who, int dam, int typ_inp,
 		r = cave_proj_r[i];
 		if (cave_proj_dam[i] > -1) current_dam = cave_proj_dam[i];
 		else current_dam = dam;
+
+		/* Reset telekinesis flag */
+		telekinesis_fetched = FALSE;
 
 		/* Mega-hack: Handle the ``RANDOM'' attack type. */
 		if (typ_inp == GF_RANDOM)

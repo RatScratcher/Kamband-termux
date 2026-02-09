@@ -4246,3 +4246,38 @@ void do_cmd_time(void)
 		(hour % 12 == 0) ? 12 : (hour % 12), min,
 		(hour < 12) ? "AM" : "PM");
 }
+
+/*
+ * Echo Location
+ */
+void do_cmd_echo_location(void)
+{
+	/* Check for the mutation */
+	if (!(p_ptr->mutations3 & (1L << 2))) /* MUT_ECHO_PULSE is 66 -> index 2 in mutations3 */
+	{
+		msg_print("You do not have the Echo Location mutation.");
+		return;
+	}
+
+	/* Check for enough mana */
+	if (p_ptr->csp < 10)
+	{
+		msg_print("You do not have enough mana.");
+		return;
+	}
+
+	/* Check if already active */
+	if (p_ptr->echo_timer > 0)
+	{
+		msg_print("You are already waiting for echoes.");
+		return;
+	}
+
+	/* Activate */
+	p_ptr->echo_timer = 3;
+	p_ptr->csp -= 10;
+	p_ptr->redraw |= (PR_MANA);
+	p_ptr->energy_use = 100;
+
+	msg_print("You emit a powerful psionic ping.");
+}

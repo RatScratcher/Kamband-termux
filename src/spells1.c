@@ -8007,3 +8007,20 @@ bool project(int who, int rad, int y, int x, int dam, int typ, u32b flg)
 
 	return ret;
 }
+
+/*
+ * Ghost Data
+ */
+void ghost_data(void)
+{
+	/* Hallucinate */
+	if (p_ptr->image)
+	{
+		(void)set_image(p_ptr->image + 50);
+	}
+	else
+	{
+		(void)set_image(50);
+	}
+	msg_print("Ghost data floods your mind!");
+}

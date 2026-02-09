@@ -397,6 +397,7 @@ extern void do_cmd_load_screen(void);
 extern void do_cmd_save_screen(void);
 extern void do_cmd_knowledge(void);
 extern void do_cmd_time(void);
+extern void do_cmd_echo_location(void);
 
 /* cmd5.c */
 extern void brand_ammo(int brand_type, int bolts_only);	/* - KMW- */
@@ -696,6 +697,7 @@ extern bool res_stat(int stat);
 extern bool apply_disenchant(int mode);
 extern bool project(int who, int rad, int y, int x, int dam, int typ,
 	u32b flg);
+extern void ghost_data(void);
 
 /* spells2.c */
 extern bool hp_player(int num);

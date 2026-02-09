@@ -1146,6 +1146,7 @@ struct player_type
 
 	s16b word_recall; /* Word of recall counter */
 	s16b scroll_delay; /* Unstable scroll delay */
+	s16b echo_timer; /* Echo Location timer */
 	byte scroll_pending_effect; /* Pending effect ID */
 
 	s16b energy; /* Current energy */

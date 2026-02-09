@@ -940,6 +940,7 @@ static void wr_extra(void)
     wr_byte(p_ptr->anchored);
     wr_s32b(p_ptr->last_attacked_turn);
     for (i = 0; i < 15; i++) wr_byte(unstable_scroll_map[i]);
+    wr_s16b(p_ptr->echo_timer);
 
 	/* Write the "object seeds" */
 	wr_u32b(seed_flavor);

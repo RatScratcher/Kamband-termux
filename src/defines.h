@@ -47,7 +47,7 @@
 
 #define KAM_VERSION_MAJOR 2
 #define KAM_VERSION_MINOR 1
-#define KAM_VERSION_PATCH 7
+#define KAM_VERSION_PATCH 8
 
 /*
  * Sector Types

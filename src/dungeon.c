@@ -2611,6 +2611,36 @@ static void process_player(void)
 	if (p_ptr->energy < 100)
 		return;
 
+	/* Handle Echo Location */
+	if (p_ptr->echo_timer > 0)
+	{
+		/* Decrement */
+		p_ptr->echo_timer--;
+
+		/* Wait */
+		if (p_ptr->echo_timer > 0)
+		{
+			msg_print("The echoes are returning...");
+			/* Consume energy */
+			p_ptr->energy -= 100;
+			/* Redraw stuff */
+			p_ptr->redraw |= (PR_STATE);
+			/* Window stuff */
+			p_ptr->window |= (PW_PLAYER);
+			/* Return immediately to skip other processing */
+			return;
+		}
+		/* Trigger */
+		else
+		{
+			msg_print("The echoes return!");
+			detect_traps();
+			detect_stairs();
+			if (p_ptr->csane < 5) ghost_data();
+			p_ptr->echo_timer = 0;
+		}
+	}
+
 
 	/*** Check for interupts ***/
 

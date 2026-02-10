@@ -631,6 +631,7 @@ void add_psionic_spark_spell(void)
  */
 void add_telekinetic_toss_spell(void)
 {
+#if 0
 	spell *rspell;
 	proj_node *pnode;
 
@@ -659,6 +660,7 @@ void add_telekinetic_toss_spell(void)
 	pnode->dam_sides = 0;
 
 	spell_num++;
+#endif
 }
 
 /*

@@ -941,7 +941,14 @@ static void get_extra(void)
 		if (p_ptr->prace == RACE_MUTANT)
 		{
 			add_psionic_spark_spell();
-			add_telekinetic_toss_spell();
+			/* add_telekinetic_toss_spell(); */
+			/* Add Telekinetic Toss from powers array (index 100) */
+			if (spell_num < MAX_SPELLS && powers[100].name[0])
+			{
+				spell *new_spell = &spells[spell_num++];
+				COPY(new_spell, &powers[100], spell);
+				new_spell->unknown = FALSE;
+			}
 		}
 
 		for (i = 0; i < num; i++)

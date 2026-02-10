@@ -5058,78 +5058,74 @@ static bool project_m(int who, int r, int y, int x, int dam, int typ)
 
 			if (player_power > monster_resist)
 			{
-				/* Prompt for destination */
-				msg_print("DEBUG: Entering Telekinesis Targeting...");
-				msg_print("Choose a location to throw the monster.");
-				if (target_set(TARGET_GRID))
+				int dir;
+
+				/* Selection Phase: Store index and clear target */
+				/* m_idx is already cave_m_idx[y][x] */
+				p_ptr->target_who = 0;
+				p_ptr->target_row = 0;
+				p_ptr->target_col = 0;
+
+				/* Destination Phase: The Shove */
+				msg_print("Choose a direction to throw the monster.");
+
+				if (get_rep_dir(&dir))
 				{
-					ny = p_ptr->target_row;
-					nx = p_ptr->target_col;
+					ny = y + ddy[dir];
+					nx = x + ddx[dir];
 
-					/* Check distance (max 5) */
-					if (distance(y, x, ny, nx) <= 5)
+					/* Check if legal move (floor) */
+					if (cave_floor_bold(ny, nx))
 					{
-						/* Check if legal move (not into wall, unless passing wall) */
-						/* Allowing tossing into empty space */
-						if (cave_floor_bold(ny, nx) && cave_m_idx[ny][nx] == 0)
+						/* Move monster */
+						note = " is tossed!";
+
+						/* Swap monster to new location */
+						/* We need to use cave_m_idx[y][x] which is current monster index */
+						int m_idx = cave_m_idx[y][x];
+
+						/* Move */
+						monster_swap(y, x, ny, nx);
+
+						/* Update visual feedback */
+						update_mon(m_idx, TRUE);
+						lite_spot(y, x);
+						lite_spot(ny, nx);
+
+						/* Check environmental effects */
+						if (cave_feat[ny][nx] == FEAT_DEEP_LAVA || cave_feat[ny][nx] == FEAT_SHAL_LAVA)
 						{
-							/* Move monster */
-							note = " is tossed!";
-
-							/* Swap monster to new location */
-							/* monster_swap checks boundaries and legality mostly, but let's be safe */
-							/* Actually teleport_away_to might be better but it doesn't guarantee exact spot if blocked */
-							/* But we checked blocked above */
-
-							/* We need to use cave_m_idx[y][x] which is current monster index */
-							int m_idx = cave_m_idx[y][x];
-
-							/* Move */
-							cave_m_idx[y][x] = 0;
-							cave_m_idx[ny][nx] = m_idx;
-							m_ptr->fy = ny;
-							m_ptr->fx = nx;
-							update_mon(m_idx, TRUE);
-							lite_spot(y, x);
-							lite_spot(ny, nx);
-
-							/* Check environmental effects */
-							if (cave_feat[ny][nx] == FEAT_DEEP_LAVA || cave_feat[ny][nx] == FEAT_SHAL_LAVA)
-							{
-								msg_format("%^s burns in the lava!", m_name);
-								project(who, 0, ny, nx, damroll(5, 10), GF_FIRE, PROJECT_KILL);
-							}
-							else if (cave_feat[ny][nx] == FEAT_ACID)
-							{
-								msg_format("%^s dissolves in the acid!", m_name);
-								project(who, 0, ny, nx, damroll(5, 10), GF_ACID, PROJECT_KILL);
-							}
-							else if (cave_feat[ny][nx] == FEAT_OIL)
-							{
-								msg_format("%^s is covered in oil!", m_name);
-								m_ptr->mflag |= MFLAG_OIL_SOAKED;
-							}
-                            else if (cave_feat[ny][nx] == FEAT_DEEP_WATER || cave_feat[ny][nx] == FEAT_SHAL_WATER)
-                            {
-                                /* Remove oil if dipped in water */
-                                if (m_ptr->mflag & MFLAG_OIL_SOAKED) {
-                                    msg_format("The oil washes off %^s.", m_name);
-                                    m_ptr->mflag &= ~(MFLAG_OIL_SOAKED);
-                                }
-                            }
-
-							success = TRUE;
-							obvious = TRUE;
+							msg_format("%^s burns in the lava!", m_name);
+							project(who, 0, ny, nx, damroll(5, 10), GF_FIRE, PROJECT_KILL);
 						}
-						else
+						else if (cave_feat[ny][nx] == FEAT_ACID)
 						{
-							msg_print("The destination is blocked.");
-							skipped = TRUE;
+							msg_format("%^s dissolves in the acid!", m_name);
+							project(who, 0, ny, nx, damroll(5, 10), GF_ACID, PROJECT_KILL);
 						}
+						else if (cave_feat[ny][nx] == FEAT_OIL)
+						{
+							msg_format("%^s is covered in oil!", m_name);
+							m_ptr->mflag |= MFLAG_OIL_SOAKED;
+						}
+						else if (cave_feat[ny][nx] == FEAT_DEEP_WATER || cave_feat[ny][nx] == FEAT_SHAL_WATER)
+						{
+							/* Remove oil if dipped in water */
+							if (m_ptr->mflag & MFLAG_OIL_SOAKED)
+							{
+								msg_format("The oil washes off %^s.", m_name);
+								m_ptr->mflag &= ~(MFLAG_OIL_SOAKED);
+							}
+						}
+
+						success = TRUE;
+						obvious = TRUE;
 					}
 					else
 					{
-						msg_print("That is too far.");
+						/* Blocked silently or with message? User said "Bypassing the 'Blocked' Check" */
+						/* But also "ensure code returns TRUE only after monster is moved". */
+						/* If blocked, we probably shouldn't move it. */
 						skipped = TRUE;
 					}
 				}

@@ -5074,59 +5074,107 @@ static bool project_m(int who, int r, int y, int x, int dam, int typ)
 					ny = y + ddy[dir];
 					nx = x + ddx[dir];
 
-					/* Check if legal move (floor) */
-					if (cave_floor_bold(ny, nx))
+					/* Case: Wall */
+					if (!cave_floor_bold(ny, nx))
 					{
-						/* Move monster */
-						note = " is tossed!";
-
-						/* Swap monster to new location */
-						/* We need to use cave_m_idx[y][x] which is current monster index */
 						int m_idx = cave_m_idx[y][x];
+						bool fear = FALSE;
 
-						/* Move */
-						monster_swap(y, x, ny, nx);
-
-						/* Update visual feedback */
-						update_mon(m_idx, TRUE);
-						lite_spot(y, x);
-						lite_spot(ny, nx);
-
-						/* Check environmental effects */
-						if (cave_feat[ny][nx] == FEAT_DEEP_LAVA || cave_feat[ny][nx] == FEAT_SHAL_LAVA)
-						{
-							msg_format("%^s burns in the lava!", m_name);
-							project(who, 0, ny, nx, damroll(5, 10), GF_FIRE, PROJECT_KILL);
-						}
-						else if (cave_feat[ny][nx] == FEAT_ACID)
-						{
-							msg_format("%^s dissolves in the acid!", m_name);
-							project(who, 0, ny, nx, damroll(5, 10), GF_ACID, PROJECT_KILL);
-						}
-						else if (cave_feat[ny][nx] == FEAT_OIL)
-						{
-							msg_format("%^s is covered in oil!", m_name);
-							m_ptr->mflag |= MFLAG_OIL_SOAKED;
-						}
-						else if (cave_feat[ny][nx] == FEAT_DEEP_WATER || cave_feat[ny][nx] == FEAT_SHAL_WATER)
-						{
-							/* Remove oil if dipped in water */
-							if (m_ptr->mflag & MFLAG_OIL_SOAKED)
-							{
-								msg_format("The oil washes off %^s.", m_name);
-								m_ptr->mflag &= ~(MFLAG_OIL_SOAKED);
-							}
-						}
-
-						success = TRUE;
+						/* Apply slam damage */
+						dam = damroll(10, 6);
+						msg_format("%^s slams into the wall!", m_name);
+						mon_take_hit(m_idx, dam, &fear, " is crushed.", TRUE, FALSE);
 						obvious = TRUE;
 					}
+					/* Case: Floor */
 					else
 					{
-						/* Blocked silently or with message? User said "Bypassing the 'Blocked' Check" */
-						/* But also "ensure code returns TRUE only after monster is moved". */
-						/* If blocked, we probably shouldn't move it. */
-						skipped = TRUE;
+						int m_idx = cave_m_idx[y][x];
+						int target_m_idx = cave_m_idx[ny][nx];
+
+						/* Case: Occupied by Monster */
+						if (target_m_idx > 0)
+						{
+							monster_type *target_ptr = &m_list[target_m_idx];
+							char target_name[80];
+							bool fear = FALSE;
+							int dy, dx, i;
+							bool dead_slammer = FALSE;
+
+							monster_desc(target_name, target_ptr, 0);
+							msg_format("The %s crashes into the %s!", m_name, target_name);
+
+							/* Damage both */
+							dead_slammer = mon_take_hit(m_idx, damroll(5, 10), &fear, " is crushed.", TRUE, FALSE);
+							mon_take_hit(target_m_idx, damroll(5, 10), &fear, " is crushed.", TRUE, FALSE);
+
+							/* Displacement: Find adjacent empty square */
+							if (!dead_slammer)
+							{
+								for (i = 0; i < 8; i++)
+								{
+									dy = ny + ddy_ddd[i];
+									dx = nx + ddx_ddd[i];
+
+									if (cave_empty_bold(dy, dx))
+									{
+										monster_swap(y, x, dy, dx);
+										update_mon(m_idx, TRUE);
+										lite_spot(y, x);
+										lite_spot(dy, dx);
+										break;
+									}
+								}
+							}
+
+							/* Aggro Shift */
+							if (!dead_slammer)
+							{
+								target_ptr->ty = m_ptr->fy;
+								target_ptr->tx = m_ptr->fx;
+							}
+
+							obvious = TRUE;
+						}
+						/* Case: Empty (or Player, handled by swap) */
+						else
+						{
+							/* Move */
+							monster_swap(y, x, ny, nx);
+
+							/* Update visual feedback */
+							update_mon(m_idx, TRUE);
+							lite_spot(y, x);
+							lite_spot(ny, nx);
+
+							/* Check environmental effects */
+							if (cave_feat[ny][nx] == FEAT_DEEP_LAVA || cave_feat[ny][nx] == FEAT_SHAL_LAVA)
+							{
+								msg_format("%^s burns in the lava!", m_name);
+								project(who, 0, ny, nx, damroll(5, 10), GF_FIRE, PROJECT_KILL);
+							}
+							else if (cave_feat[ny][nx] == FEAT_ACID)
+							{
+								msg_format("%^s dissolves in the acid!", m_name);
+								project(who, 0, ny, nx, damroll(5, 10), GF_ACID, PROJECT_KILL);
+							}
+							else if (cave_feat[ny][nx] == FEAT_OIL)
+							{
+								msg_format("%^s is covered in oil!", m_name);
+								m_ptr->mflag |= MFLAG_OIL_SOAKED;
+							}
+							else if (cave_feat[ny][nx] == FEAT_DEEP_WATER || cave_feat[ny][nx] == FEAT_SHAL_WATER)
+							{
+								/* Remove oil if dipped in water */
+								if (m_ptr->mflag & MFLAG_OIL_SOAKED)
+								{
+									msg_format("The oil washes off %^s.", m_name);
+									m_ptr->mflag &= ~(MFLAG_OIL_SOAKED);
+								}
+							}
+
+							obvious = TRUE;
+						}
 					}
 				}
 				else

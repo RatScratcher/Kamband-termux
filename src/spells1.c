@@ -5059,6 +5059,7 @@ static bool project_m(int who, int r, int y, int x, int dam, int typ)
 			if (player_power > monster_resist)
 			{
 				/* Prompt for destination */
+				msg_print("DEBUG: Entering Telekinesis Targeting...");
 				msg_print("Choose a location to throw the monster.");
 				if (target_set(TARGET_GRID))
 				{

@@ -1060,10 +1060,22 @@ bool cause_spell_effect(spell * s_ptr)
 			who = -100;
 		}
 
-		project(who, pnode->radius, ty, tx, damroll(pnode->dam_dice,
-					pnode->dam_sides), pnode->attack_kind,
-				pnode->proj_flags);
-		cast = TRUE;
+		if (pnode->attack_kind == GF_TELEKINESIS)
+		{
+			if (project(who, pnode->radius, ty, tx, damroll(pnode->dam_dice,
+						pnode->dam_sides), pnode->attack_kind,
+					pnode->proj_flags))
+			{
+				cast = TRUE;
+			}
+		}
+		else
+		{
+			project(who, pnode->radius, ty, tx, damroll(pnode->dam_dice,
+						pnode->dam_sides), pnode->attack_kind,
+					pnode->proj_flags);
+			cast = TRUE;
+		}
 
 		pnode = pnode->next;
 	}

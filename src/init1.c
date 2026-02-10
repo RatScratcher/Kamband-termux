@@ -785,6 +785,8 @@ static cptr s_info_attack_types[] = {
 	"REPAIR",
 	"TRANSMUTE",
 	"HEAVY_TRANSMUTE",
+	"MAKE_PET_SCALING",
+	"TELEKINESIS",
 	NULL
 };
 

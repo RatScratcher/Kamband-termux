@@ -132,7 +132,7 @@
 #define MAX_GENERATORS 25
 #define MAX_RECIPES  150
 #define MAX_SPELLS      100
-#define MAX_POWERS      100
+#define MAX_POWERS      128
 #define MAX_ACTIVATIONS 300
 #define MAX_RANDARTS 64
 

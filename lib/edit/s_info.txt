@@ -2215,6 +2215,12 @@ T:SAFE:MAKE_PET:17d1:0
 P:1:3
 C:SHAPE_ZOMBIE
 
+N:POWER:100:Telekinetic Toss
+F:KILL | ITEM | GRID | STOP
+T:SAFE:TELEKINESIS:1d1:0
+P:1:10
+D:Throw a monster or fetch an item.
+
 
 ########## Mage spells. These are supposed to be 
 ########## damage/destruction oriented.

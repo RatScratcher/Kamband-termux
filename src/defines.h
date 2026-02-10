@@ -2297,8 +2297,8 @@
 #define PROJECT_PANEL	   0x00000400 /* Affect everything in the panel. */
 #define PROJECT_ALL	   0x00000800 /* Affect every single grid. */
 #define PROJECT_GENOCIDE   0x00001000 /* Hack -- Genocide. */
-#define PROJECT_XXX6	   0x00002000
-#define PROJECT_XXX7	   0x00004000
+#define PROJECT_AIM        0x00002000 /* Stop at target. */
+#define PROJECT_THRU       0x00004000 /* Pass through monsters. */
 #define PROJECT_XXX8	   0x00008000
 #define PROJECT_XXX9	   0x00010000
 #define PROJECT_XXX10	   0x00020000

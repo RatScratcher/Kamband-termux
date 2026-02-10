@@ -2094,6 +2094,47 @@ static void project_ice_clear(int y, int x) {
     project_ice_clear(y-1, x+1);
 }
 
+static void project_water_spread(int y, int x, int dam) {
+    if (dam <= 0) return;
+    if (!in_bounds(y, x)) return;
+    if (cave_feat[y][x] != FEAT_SHAL_WATER && cave_feat[y][x] != FEAT_DEEP_WATER) return;
+    /* Use CAVE_TEMP to avoid loops */
+    if (cave_info[y][x] & CAVE_TEMP) return;
+
+    cave_info[y][x] |= CAVE_TEMP;
+
+    /* Hit grid */
+    project(-1, 0, y, x, dam, GF_ELEC, PROJECT_KILL | PROJECT_ITEM | PROJECT_GRID);
+
+    /* Recurse */
+    project_water_spread(y+1, x, dam-1);
+    project_water_spread(y-1, x, dam-1);
+    project_water_spread(y, x+1, dam-1);
+    project_water_spread(y, x-1, dam-1);
+    project_water_spread(y+1, x+1, dam-1);
+    project_water_spread(y-1, x-1, dam-1);
+    project_water_spread(y+1, x-1, dam-1);
+    project_water_spread(y-1, x+1, dam-1);
+}
+
+static void project_water_clear(int y, int x) {
+    if (!in_bounds(y, x)) return;
+    if (cave_feat[y][x] != FEAT_SHAL_WATER && cave_feat[y][x] != FEAT_DEEP_WATER) return;
+    if (!(cave_info[y][x] & CAVE_TEMP)) return;
+
+    cave_info[y][x] &= ~(CAVE_TEMP);
+
+    /* Recurse */
+    project_water_clear(y+1, x);
+    project_water_clear(y-1, x);
+    project_water_clear(y, x+1);
+    project_water_clear(y, x-1);
+    project_water_clear(y+1, x+1);
+    project_water_clear(y-1, x-1);
+    project_water_clear(y+1, x-1);
+    project_water_clear(y-1, x+1);
+}
+
 static bool project_f(int who, int r, int y, int x, int dam, int typ)
 {
 	bool obvious = FALSE;
@@ -2167,10 +2208,21 @@ static bool project_f(int who, int r, int y, int x, int dam, int typ)
 
 		case GF_ELEC:
 		{
+			if (cave_feat[y][x] == FEAT_OIL)
+			{
+				cave_set_feat(y, x, FEAT_OIL_BURNING);
+				cave_fire_life[y][x] = 5;
+				obvious = TRUE;
+			}
 			if ((cave_feat[y][x] == FEAT_ICE || cave_feat[y][x] == FEAT_WALL_ICE) && !(cave_info[y][x] & CAVE_TEMP)) {
 				/* Start propagation */
 				project_ice_spread(y, x, dam);
 				project_ice_clear(y, x);
+			}
+			if ((cave_feat[y][x] == FEAT_SHAL_WATER || cave_feat[y][x] == FEAT_DEEP_WATER) && !(cave_info[y][x] & CAVE_TEMP)) {
+				/* Start propagation */
+				project_water_spread(y, x, dam);
+				project_water_clear(y, x);
 			}
 			break;
 		}
@@ -7628,7 +7680,7 @@ static void project_bolt_beam_ball_aux(int who, int rad, int y, int x,
 	while (1)
 	{
 		/* Reached the destination, useful only if there is no real source. */
-		if (who < -1 && x == x2 && y == y2)
+		if ((who < -1 || (flg & PROJECT_AIM)) && x == x2 && y == y2)
 			break;
 
 		/* Paranoia. */
@@ -7717,7 +7769,7 @@ static void project_bolt_beam_ball_aux(int who, int rad, int y, int x,
 			break;
 
 		/* If allowed, and we have moved at all, stop when we hit anybody */
-		if ((flg & PROJECT_STOP) && dist && (cave_m_idx[y][x] != 0))
+		if ((flg & PROJECT_STOP) && !(flg & PROJECT_THRU) && dist && (cave_m_idx[y][x] != 0))
 			break;
 
 		/* Calculate the new location */

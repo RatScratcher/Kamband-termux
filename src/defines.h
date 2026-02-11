@@ -2357,6 +2357,7 @@
 #define TARGET_LOOK		0x02
 #define TARGET_XTRA		0x04
 #define TARGET_GRID		0x08
+#define TARGET_FREE		0x10
 
 
 /*

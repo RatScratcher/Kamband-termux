@@ -3890,6 +3890,17 @@ bool target_set(int mode)
 
 	bool flag = TRUE;
 
+	/* Force "Free" mode */
+	if (mode & TARGET_FREE)
+		flag = FALSE;
+
+	/* Start at the current target */
+	if ((mode & TARGET_FREE) && p_ptr->target_row && p_ptr->target_col)
+	{
+		y = p_ptr->target_row;
+		x = p_ptr->target_col;
+	}
+
 	char query;
 
 	char info[80];

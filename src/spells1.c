@@ -5166,6 +5166,8 @@ static bool project_m(int who, int r, int y, int x, int dam, int typ)
 						/* Case: Occupied by Monster */
 						if (target_m_idx > 0)
 						{
+							if (m_idx == target_m_idx) return FALSE;
+
 							monster_type *target_ptr = &m_list[target_m_idx];
 							char target_name[80];
 							bool fear = FALSE;
@@ -5173,7 +5175,7 @@ static bool project_m(int who, int r, int y, int x, int dam, int typ)
 							bool dead_slammer = FALSE;
 
 							monster_desc(target_name, target_ptr, 0);
-							msg_format("The %s crashes into the %s!", m_name, target_name);
+							msg_format("%^s crashes into %s!", m_name, target_name);
 
 							/* Damage both */
 							dead_slammer = mon_take_hit(m_idx, damroll(5, 10), &fear, " is crushed.", TRUE, FALSE);
@@ -5226,7 +5228,10 @@ static bool project_m(int who, int r, int y, int x, int dam, int typ)
 							}
 							else if (cave_feat[ny][nx] == FEAT_ACID)
 							{
-								msg_format("%^s dissolves in the acid!", m_name);
+								if (!(r_ptr->flags3 & RF3_IM_ACID))
+								{
+									msg_format("%^s dissolves in the acid!", m_name);
+								}
 								project(who, 0, ny, nx, damroll(5, 10), GF_ACID, PROJECT_KILL);
 							}
 							else if (cave_feat[ny][nx] == FEAT_OIL)

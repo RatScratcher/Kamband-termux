@@ -3796,20 +3796,36 @@ static bool project_m(int who, int r, int y, int x, int dam, int typ)
 		{
 			if (seen)
 				obvious = TRUE;
-			if (r_ptr->flags3 & (RF3_IM_FIRE))
-			{
-				note = " resists a lot.";
-				dam /= 9;
-				if (seen)
-					r_ptr->r_flags3 |= (RF3_IM_FIRE);
-			}
 
-			if (r_ptr->flags3 & RF3_HURT_FIRE)
+			/* Immunity */
+			if ((r_ptr->flags4 & RF4_BR_FIRE) || (r_ptr->flags3 & RF3_IM_FIRE))
 			{
-				note = " is hit hard!";
-				dam *= 2;
+				note = " is unaffected.";
+				dam = 0;
 				if (seen)
+				{
+					if (r_ptr->flags3 & RF3_IM_FIRE) r_ptr->r_flags3 |= (RF3_IM_FIRE);
+					if (r_ptr->flags4 & RF4_BR_FIRE) r_ptr->r_flags4 |= (RF4_BR_FIRE);
+				}
+			}
+			/* Vulnerability */
+			else if ((r_ptr->flags3 & RF3_HURT_FIRE) ||
+					 (r_ptr->d_char == 'M' && (r_ptr->flags3 & RF3_UNDEAD)) ||
+					 (r_ptr->d_char == 'I') ||
+					 (strchr("j,m", r_ptr->d_char)))
+			{
+				note = " is consumed by the hungry flames!";
+				dam = dam * 3 / 2;
+				if (seen && (r_ptr->flags3 & RF3_HURT_FIRE))
 					r_ptr->r_flags3 |= RF3_HURT_FIRE;
+			}
+			/* Resistance/Inert */
+			else if ((r_ptr->flags2 & RF2_REGENERATE) || (r_ptr->d_char == 'g'))
+			{
+				note = NULL; /* Let message_pain handle it */
+				dam /= 4;
+				if (seen && (r_ptr->flags2 & RF2_REGENERATE))
+					r_ptr->r_flags2 |= RF2_REGENERATE;
 			}
 
 			if (m_ptr->mflag & MFLAG_OIL_SOAKED)

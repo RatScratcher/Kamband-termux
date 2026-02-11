@@ -2784,7 +2784,8 @@ bool mon_take_hit(int m_idx, int dam, bool * fear, cptr note,
 
 
 	/* Sometimes a monster gets scared by damage */
-	if (!m_ptr->monfear && !(r_ptr->flags3 & (RF3_NO_FEAR)))
+	if (!m_ptr->monfear && !(r_ptr->flags3 & (RF3_NO_FEAR)) &&
+		!(r_ptr->d_char == 'g' || r_ptr->d_char == 'G' || (r_ptr->flags2 & RF2_EMPTY_MIND)))
 	{
 		int percentage;
 

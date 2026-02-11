@@ -2721,6 +2721,16 @@ void message_pain(int m_idx, int dam)
 	tmp = (newhp * 100L) / oldhp;
 	percentage = (int) (tmp);
 
+	if (m_ptr->mflag & MFLAG_ON_FIRE)
+	{
+		m_ptr->mflag &= ~(MFLAG_ON_FIRE);
+		if (percentage > 95)
+		{
+			msg_format("%^s glows a dull red in the heat.", m_name);
+			return;
+		}
+	}
+
 
 	/* Jelly's, Mold's, Vortex's, Quthl's */
 	if (strchr("jmvQ", r_ptr->d_char))

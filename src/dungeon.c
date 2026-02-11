@@ -739,10 +739,35 @@ static void process_environment(void)
 							int dam = damroll(2, 2) + p_ptr->depth / 5;
 							mon_take_hit(m_idx, dam, &fear, " melts.", FALSE, FALSE);
 						}
-						else if (feat == FEAT_OIL_BURNING && !(r_ptr->flags3 & RF3_IM_FIRE)) {
+						else if (feat == FEAT_OIL_BURNING) {
 							bool fear = FALSE;
 							int dam = damroll(2, 2) + p_ptr->depth / 5;
-							mon_take_hit(m_idx, dam, &fear, " burns.", FALSE, FALSE);
+							cptr note = " burns.";
+
+							/* Immunity */
+							if ((r_ptr->flags4 & RF4_BR_FIRE) || (r_ptr->flags3 & RF3_IM_FIRE)) {
+								dam = 0;
+								note = " is unaffected.";
+							}
+							/* Vulnerability */
+							else if ((r_ptr->flags3 & RF3_HURT_FIRE) ||
+									 (r_ptr->d_char == 'M' && (r_ptr->flags3 & RF3_UNDEAD)) || /* Mummy */
+									 (r_ptr->d_char == 'I') || /* Insect */
+									 (strchr("j,m", r_ptr->d_char))) /* Plant/Jelly/Mold/Mushroom */
+							{
+								dam = dam * 3 / 2;
+								note = " is consumed by the hungry flames!";
+							}
+							/* Resistance/Inert */
+							else if ((r_ptr->flags2 & RF2_REGENERATE) || (r_ptr->d_char == 'g')) {
+								dam = dam / 4;
+								note = NULL; /* Let message_pain handle "glows dull red" if alive */
+							}
+
+							/* Mark as on fire */
+							m_ptr->mflag |= MFLAG_ON_FIRE;
+
+							mon_take_hit(m_idx, dam, &fear, note, FALSE, FALSE);
 						}
 					}
 				}

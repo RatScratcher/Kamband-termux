@@ -5161,16 +5161,17 @@ static bool project_m(int who, int r, int y, int x, int dam, int typ)
 				/* Selection Phase: Store index and clear target */
 				/* m_idx is already cave_m_idx[y][x] */
 				p_ptr->target_who = 0;
-				p_ptr->target_row = p_ptr->py;
-				p_ptr->target_col = p_ptr->px;
+				p_ptr->target_row = y;
+				p_ptr->target_col = x;
 
 				/* Destination Phase: The Shove */
 				msg_print("Throw where?");
 
-				if (target_set(TARGET_GRID))
+				if (target_set(TARGET_GRID | TARGET_FREE))
 				{
 					ny = p_ptr->target_row;
 					nx = p_ptr->target_col;
+					p_ptr->target_who = -1;
 
 					/* Case: Wall */
 					if (!cave_floor_bold(ny, nx))

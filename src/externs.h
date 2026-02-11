@@ -274,7 +274,7 @@ extern bool store_combine_flag;
 
 extern s16b cave_cost[DUNGEON_HGT][DUNGEON_WID];
 extern s16b cave_when[DUNGEON_HGT][DUNGEON_WID];
-extern u16b cave_fire_life[DUNGEON_HGT][DUNGEON_WID];
+extern cave_type cave[DUNGEON_HGT][DUNGEON_WID];
 extern byte cave_info[DUNGEON_HGT][DUNGEON_WID];
 extern byte cave_sector[DUNGEON_HGT][DUNGEON_WID];
 extern byte cave_feat[DUNGEON_HGT][DUNGEON_WID];

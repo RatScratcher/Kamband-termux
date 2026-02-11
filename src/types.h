@@ -435,6 +435,13 @@ struct dungeon_info
 };
 
 /*
+ * Information about "cave grids"
+ */
+typedef struct {
+	u16b fuel;
+} cave_type;
+
+/*
  * Information about "vault generation"
  */
 struct vault_type

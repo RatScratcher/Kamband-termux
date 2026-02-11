@@ -684,22 +684,22 @@ static void process_environment(void)
 			if (feat == FEAT_OIL_BURNING) {
 				if (!(cave_info[y][x] & CAVE_TEMP)) {
 					/* Decay */
-					if (cave_fire_life[y][x] > 0) cave_fire_life[y][x]--;
+					if (cave[y][x].fuel > 0) cave[y][x].fuel--;
 
 					/* Spread */
-					if (cave_fire_life[y][x] > 0) {
+					if (cave[y][x].fuel > 5) {
 						for (i = 0; i < 4; i++) {
 							int ny = y + ddy_burning[i];
 							int nx = x + ddx_burning[i];
 							if (in_bounds(ny, nx) && cave_feat[ny][nx] == FEAT_OIL) {
 								cave_set_feat(ny, nx, FEAT_OIL_BURNING);
-								cave_fire_life[ny][nx] = 5;
+								cave[ny][nx].fuel = cave[y][x].fuel - 1;
 								cave_info[ny][nx] |= CAVE_TEMP; /* Mark as new */
 								note_spot(ny, nx);
 								lite_spot(ny, nx);
 							}
 						}
-					} else {
+					} else if (cave[y][x].fuel == 0) {
 						/* Extinguish */
 						cave_set_feat(y, x, FEAT_FLOOR);
 						note_spot(y, x);

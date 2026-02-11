@@ -1061,7 +1061,7 @@ static void wr_dungeon(void)
 		for (x = 0; x < DUNGEON_WID; x++)
 		{
 			/* Extract a byte */
-			tmp8u = (byte)cave_fire_life[y][x];
+			tmp8u = (byte)cave[y][x].fuel;
 
 			/* If the run is broken, or too full, flush it */
 			if ((tmp8u != prev_char) || (count == MAX_UCHAR))

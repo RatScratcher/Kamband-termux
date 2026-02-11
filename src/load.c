@@ -1172,7 +1172,7 @@ static errr rd_dungeon(void)
 						int cur_y = cells_count / DUNGEON_WID;
 						int cur_x = cells_count % DUNGEON_WID;
 
-						cave_fire_life[cur_y][cur_x] = (u16b)tmp8u;
+						cave[cur_y][cur_x].fuel = (u16b)tmp8u;
 						cells_count++;
 					}
 				}
@@ -1185,7 +1185,7 @@ static errr rd_dungeon(void)
 			{
 				for (x = 0; x < DUNGEON_WID; x++)
 				{
-					cave_fire_life[y][x] = 0;
+					cave[y][x].fuel = 0;
 				}
 			}
 		}

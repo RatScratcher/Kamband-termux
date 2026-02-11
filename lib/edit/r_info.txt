@@ -8316,7 +8316,7 @@ N:548:Mutant canine
 G:C:b
 I:110:3d3:10:1:255
 W:0:1:0:0
-B:HIT:INSANITY:1d3
+B:HIT:HURT:1d3
 F:MALE | INNOCENT | FRIENDLY | SMART | RANDOM_NAME | HUMANOID 
 D:A disgusting dog-like mutant vaguely similar to a kobold.
 
@@ -8333,20 +8333,18 @@ N:550:Mutant clansman
 G:Q:R
 I:110:8d4:35:15:15
 W:3:1:0:8
-B:GAZE:INSANITY:2d4
+B:GAZE:CONFUSE:2d4
 F:MALE | OPEN_DOOR | BASH_DOOR | SMART | RANDOM_NAME | UNFAIR | HUMANOID
-S:1_IN_25 |
-S:BRAIN_SMASH | MIND_BLAST
 D:A wild mutant tribesman hoping to chance upon some loot.
 
 N:551:Mutant clanleader
 G:Q:r
 I:115:10d4:35:15:15
 W:6:1:0:25
-B:GAZE:INSANITY:4d4
+B:GAZE:CONFUSE:4d4
 F:MALE | OPEN_DOOR | BASH_DOOR | SMART | RANDOM_NAME | UNFAIR | HUMANOID
 S:1_IN_13 |
-S:BRAIN_SMASH | HEAL | MISSILE | BLIND | TRAPS
+S:HEAL | MISSILE | BLIND | TRAPS
 D:A strange, mutated humanoid with a strong aura of psychic powers.
 
 N:552:Mutant elder
@@ -8401,11 +8399,11 @@ N:556:Brain maggot
 G:w:v
 I:100:4d4:7:1:200
 W:5:1:0:7
-B:CRAWL:INSANITY:1d3
+B:CRAWL:POISON:1d3
 F:ATTR_MULTI | EVIL | NO_CONF | NO_SLEEP | STUPID | WEIRD_MIND | 
 F:MULTIPLY | HURT_LITE | NO_FEAR | RES_SLASH | UNFAIR | HEADLESS
 S:1_IN_5 | 
-S:BLIND | HOLD | SCARE | MIND_BLAST | BRAIN_SMASH | FORGET
+S:BLIND | HOLD | SCARE
 D:A digusting little piece of flesh, ready to feed off you mental energy.
 
 N:557:Ancestral spirit
@@ -8687,7 +8685,7 @@ N:581:Ugadush the Mutant Kobold
 G:k:v
 I:110:5d10:20:20:20
 W:7:3:0:200
-B:GAZE:INSANITY:1d5
+B:GAZE:CONFUSE:1d5
 F:UNIQUE | MALE | FORCE_MAXHP | ESCORT | ESCORTS | ONLY_ITEM | DROP_1D2 |
 F:DROP_GOOD | OPEN_DOOR | BASH_DOOR | EVIL | IM_POIS | SWIM | SMART |
 F:ATTR_MULTI | HUMANOID | KOBOLD
@@ -8818,7 +8816,7 @@ G:h:G
 I:110:5d8:50:30:0
 W:4:1:0:20
 B:TOUCH:LOSE_WIS
-B:TOUCH:INSANITY:2d3
+B:TOUCH:CONFUSE:2d3
 B:TOUCH:CONFUSE
 F:FEMALE | RAND_25 | DROP_60 | SMART | SILENT | AQUATIC | NO_CONF |
 F:HUMANOID
@@ -9434,7 +9432,7 @@ I:130:10d1:20:12:5
 W:7:3:0:50
 B:TOUCH:EAT_FOOD:2d4
 B:GAZE:UN_BONUS:2d4
-B:WAIL:INSANITY:10d5
+B:WAIL:TERRIFY:10d5
 F:UNIQUE | MALE | 
 F:FORCE_MAXHP | NO_CORPSE |
 F:DROP_GOOD | DROP_GREAT | DROP_60 | DROP_1D2 | 
@@ -9569,7 +9567,7 @@ N:652:Hobgoblin
 G:k:s
 I:120:1d10:90:10:0
 W:1:4:0:5
-B:GAZE:INSANITY:1d6
+B:GAZE:CONFUSE:1d6
 F:MALE | SMART | HUMANOID
 S:1_IN_5 | 
 S:SCARE | BLIND
@@ -9755,7 +9753,7 @@ W:5:1:0:30
 F:DROP_90 | HUMANOID | OPEN_DOOR | IM_POIS | EVIL | SWIM |
 F:SMART | MALE | KOBOLD
 S:1_IN_15 | 
-S:CONF | DARKNESS | HEAL | BRAIN_SMASH | MISSILE | 
+S:CONF | DARKNESS | HEAL | MISSILE |
 S:S_KOBOLD
 D:A strange creature draped with lots of small tinkling amulets and charms.
 
@@ -9965,7 +9963,7 @@ B:BITE:EXP_20:1d4
 F:COLD_BLOOD | DROP_1D2 | OPEN_DOOR | REGENERATE |
 F:EVIL | UNDEAD | KOBOLD | IM_POIS | HURT_LITE | NO_SLEEP | NO_CONF
 S:1_IN_12 | 
-S:FORGET | DARKNESS
+S:DARKNESS
 D:A twisted koboldish shape, it has a pair of gigantic batlike wings 
 D:on its back. It was once a koboldish necromancer before vesting its 
 D:life-force in black magic.

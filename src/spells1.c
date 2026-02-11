@@ -6416,6 +6416,20 @@ static bool project_p(int who, int r, int y, int x, int dam, int typ)
 			if (fuzzy)
 				mprint(MSG_WARNING, "You feel your brain melt!");
 
+			if (who > 0 && m_ptr)
+			{
+				monster_race *r_ptr = &r_info[m_ptr->r_idx];
+				int m_int = r_ptr->level;
+				if (r_ptr->flags2 & RF2_SMART) m_int += 10;
+				if (r_ptr->flags2 & RF2_STUPID) m_int -= 10;
+
+				if (m_int < p_ptr->stat_use[A_INT] - 5)
+				{
+					dam /= 4;
+					msg_format("The %s tries to be profound, but you are merely bored.", m_name);
+				}
+			}
+
 			if (rand_int(100) < p_ptr->skill_sav)
 			{
 				msg_print("You resist the effects!");
@@ -6447,6 +6461,20 @@ static bool project_p(int who, int r, int y, int x, int dam, int typ)
 		{
 			if (fuzzy)
 				mprint(MSG_WARNING, "You are blasted by psionic energy!");
+
+			if (who > 0 && m_ptr)
+			{
+				monster_race *r_ptr = &r_info[m_ptr->r_idx];
+				int m_int = r_ptr->level;
+				if (r_ptr->flags2 & RF2_SMART) m_int += 10;
+				if (r_ptr->flags2 & RF2_STUPID) m_int -= 10;
+
+				if (m_int < p_ptr->stat_use[A_INT] - 5)
+				{
+					dam /= 4;
+					msg_format("The %s tries to be profound, but you are merely bored.", m_name);
+				}
+			}
 
 			if (rand_int(100) < p_ptr->skill_sav)
 			{
@@ -6515,6 +6543,21 @@ static bool project_p(int who, int r, int y, int x, int dam, int typ)
 		case GF_CAUSE_INSANITY:
 		{
 			mprint(MSG_WARNING, "Your brain feels like it's rotting!");
+
+			if (who > 0 && m_ptr)
+			{
+				monster_race *r_ptr = &r_info[m_ptr->r_idx];
+				int m_int = r_ptr->level;
+				if (r_ptr->flags2 & RF2_SMART) m_int += 10;
+				if (r_ptr->flags2 & RF2_STUPID) m_int -= 10;
+
+				if (m_int < p_ptr->stat_use[A_INT] - 5)
+				{
+					dam /= 4;
+					msg_format("The %s tries to be profound, but you are merely bored.", m_name);
+				}
+			}
+
 			take_sanity_hit(dam, killer);
 			break;
 		}

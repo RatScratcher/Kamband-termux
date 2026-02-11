@@ -2147,8 +2147,35 @@ static bool project_f(int who, int r, int y, int x, int dam, int typ)
 	/* Analyze the type */
 	switch (typ)
 	{
-		case GF_FIRE:
 		case GF_PSIONIC_SPARK:
+		{
+			if ((cave_feat[y][x] == FEAT_ICE || cave_feat[y][x] == FEAT_WALL_ICE) && !(cave_info[y][x] & CAVE_TEMP)) {
+				/* Start propagation */
+				project_ice_spread(y, x, dam);
+				project_ice_clear(y, x);
+			}
+			if ((cave_feat[y][x] == FEAT_SHAL_WATER || cave_feat[y][x] == FEAT_DEEP_WATER) && !(cave_info[y][x] & CAVE_TEMP)) {
+				/* Start propagation */
+				project_water_spread(y, x, dam);
+				project_water_clear(y, x);
+			}
+
+			/* Melt ice, burn oil */
+			if (cave_feat[y][x] == FEAT_ICE)
+			{
+				cave_set_feat(y, x, FEAT_SHAL_WATER);
+				obvious = TRUE;
+			}
+			else if (cave_feat[y][x] == FEAT_OIL)
+			{
+				cave_set_feat(y, x, FEAT_OIL_BURNING);
+				cave[y][x].fuel = 10 + rand_int(11);
+				obvious = TRUE;
+			}
+			break;
+		}
+
+		case GF_FIRE:
 		{
 			/* Melt ice, burn oil */
 			if (cave_feat[y][x] == FEAT_ICE)

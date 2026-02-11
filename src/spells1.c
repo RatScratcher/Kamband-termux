@@ -5161,16 +5161,16 @@ static bool project_m(int who, int r, int y, int x, int dam, int typ)
 				/* Selection Phase: Store index and clear target */
 				/* m_idx is already cave_m_idx[y][x] */
 				p_ptr->target_who = 0;
-				p_ptr->target_row = 0;
-				p_ptr->target_col = 0;
+				p_ptr->target_row = p_ptr->py;
+				p_ptr->target_col = p_ptr->px;
 
 				/* Destination Phase: The Shove */
-				msg_print("Choose a direction to throw the monster.");
+				msg_print("Throw where?");
 
-				if (get_rep_dir(&dir))
+				if (target_set(TARGET_GRID))
 				{
-					ny = y + ddy[dir];
-					nx = x + ddx[dir];
+					ny = p_ptr->target_row;
+					nx = p_ptr->target_col;
 
 					/* Case: Wall */
 					if (!cave_floor_bold(ny, nx))

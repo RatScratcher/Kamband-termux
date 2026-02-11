@@ -3215,7 +3215,7 @@ void drop_near(object_type * j_ptr, bool do_dam, int y, int x)
 		if (j_ptr->tval == TV_LITE && j_ptr->sval == SV_LITE_TORCH && cave_feat[ty][tx] == FEAT_OIL)
 		{
 			cave_set_feat(ty, tx, FEAT_OIL_BURNING);
-			cave_fire_life[ty][tx] = 5;
+			cave[ty][tx].fuel = 10 + rand_int(11);
 			note_spot(ty, tx);
 			lite_spot(ty, tx);
 		}

@@ -909,6 +909,7 @@
 #define FEAT_ICE                204
 #define FEAT_ACID               205
 #define FEAT_OIL_BURNING        206
+#define FEAT_FIRE               FEAT_OIL_BURNING
 
 #define FEAT_DREAM_PORTAL       207
 #define FEAT_DREAM_EXIT         217
@@ -2748,6 +2749,7 @@
 #define MFLAG_ALPHA       0x0400 /* Monster is a powered-up breeder. */
 #define MFLAG_ANCIENT_ENRAGED 0x0800 /* Ancient is enraged */
 #define MFLAG_OIL_SOAKED  0x1000 /* Monster is soaked in oil */
+#define MFLAG_ON_FIRE     0x2000 /* Monster is on fire */
 
 
 /*

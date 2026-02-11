@@ -3900,6 +3900,14 @@ static void process_monster(int m_idx)
 			object_type *o_ptr;
 			object_type *o_nxt;
 
+			/* Panic Vector: Ignite Oil */
+			if ((m_ptr->mflag & MFLAG_ON_FIRE) && (cave_feat[ny][nx] == FEAT_OIL))
+			{
+				cave_set_feat(ny, nx, FEAT_OIL_BURNING);
+				cave[ny][nx].fuel = 15;
+				lite_spot(ny, nx);
+			}
+
 			/* Take a turn */
 			do_turn = TRUE;
 

@@ -351,9 +351,9 @@ s16b cave_when[DUNGEON_HGT][DUNGEON_WID];
 #endif /* MONSTER_FLOW */
 
 /*
- * The array of cave burning oil life
+ * The array of cave grids
  */
-u16b cave_fire_life[DUNGEON_HGT][DUNGEON_WID];
+cave_type cave[DUNGEON_HGT][DUNGEON_WID];
 
 /*
  * The array of cave grid info flags

@@ -2159,7 +2159,7 @@ static bool project_f(int who, int r, int y, int x, int dam, int typ)
 			else if (cave_feat[y][x] == FEAT_OIL)
 			{
 				cave_set_feat(y, x, FEAT_OIL_BURNING);
-				cave_fire_life[y][x] = 5;
+				cave[y][x].fuel = 10 + rand_int(11);
 				obvious = TRUE;
 			}
 			break;
@@ -2211,7 +2211,7 @@ static bool project_f(int who, int r, int y, int x, int dam, int typ)
 			if (cave_feat[y][x] == FEAT_OIL)
 			{
 				cave_set_feat(y, x, FEAT_OIL_BURNING);
-				cave_fire_life[y][x] = 5;
+				cave[y][x].fuel = 10 + rand_int(11);
 				obvious = TRUE;
 			}
 			if ((cave_feat[y][x] == FEAT_ICE || cave_feat[y][x] == FEAT_WALL_ICE) && !(cave_info[y][x] & CAVE_TEMP)) {
@@ -3109,7 +3109,7 @@ static bool project_o(int who, int r, int y, int x, int dam, int typ)
 				else if (cave_feat[y][x] == FEAT_OIL)
 				{
 					cave_set_feat(y, x, FEAT_OIL_BURNING);
-					cave_fire_life[y][x] = 5;
+					cave[y][x].fuel = 10 + rand_int(11);
 					obvious = TRUE;
 				}
 
@@ -3819,6 +3819,9 @@ static bool project_m(int who, int r, int y, int x, int dam, int typ)
 				project(who, 2, m_ptr->fy, m_ptr->fx, dam, GF_FIRE, PROJECT_GRID | PROJECT_ITEM | PROJECT_KILL);
 				m_ptr->mflag &= ~(MFLAG_OIL_SOAKED);
 			}
+
+			/* Ignite the monster */
+			m_ptr->mflag |= MFLAG_ON_FIRE;
 			break;
 		}
 

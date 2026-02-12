@@ -1021,6 +1021,12 @@ bool cause_spell_effect(spell * s_ptr)
 
 	while (pnode)
 	{
+		/* Hack -- Fix Telekinetic Toss type */
+		if (strcmp(s_ptr->name, "Telekinetic Toss") == 0)
+		{
+			pnode->attack_kind = GF_TELEKINESIS;
+		}
+
 		if (pnode->attack_kind == GF_ECHO_PULSE)
 		{
 			msg_print("You let out a low-frequency hum.");

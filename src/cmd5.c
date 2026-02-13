@@ -689,7 +689,7 @@ void add_echo_pulse_spell(void)
 
 	pnode->attack_kind = GF_ECHO_PULSE;
 	pnode->proj_flags = PROJECT_KILL | PROJECT_ITEM | PROJECT_GRID | PROJECT_STOP | PROJECT_VIEWABLE;
-	pnode->radius = 20;
+	pnode->radius = 15;
 	pnode->safe = TRUE;
 	pnode->dam_dice = 0;
 	pnode->dam_sides = 0;

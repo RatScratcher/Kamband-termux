@@ -5281,6 +5281,14 @@ static bool project_m(int who, int r, int y, int x, int dam, int typ)
 								}
 							}
 
+							/* Check for a trap: Override pet safety */
+							if (p_ptr->target_row == ny && p_ptr->target_col == nx &&
+								cave_feat[ny][nx] >= FEAT_TRAP_HEAD && cave_feat[ny][nx] <= FEAT_TRAP_TAIL)
+							{
+								msg_format("%^s is forced onto the glowing tile!", m_name);
+								mon_hit_trap(m_idx, ny, nx);
+							}
+
 							obvious = TRUE;
 						}
 					}

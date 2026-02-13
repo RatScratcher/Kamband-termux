@@ -4076,6 +4076,17 @@ bool target_set(int mode)
 				case '5':
 				case '0':
 				{
+					/* Do not allow targeting pets even by grid */
+					if (cave_m_idx[y][x] > 0)
+					{
+						monster_type *m_ptr = &m_list[cave_m_idx[y][x]];
+						if (m_ptr->ml && m_ptr->is_pet)
+						{
+							bell();
+							break;
+						}
+					}
+
 					p_ptr->target_who = -1;
 					p_ptr->target_row = y;
 					p_ptr->target_col = x;

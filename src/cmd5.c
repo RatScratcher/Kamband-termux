@@ -1022,7 +1022,7 @@ bool cause_spell_effect(spell * s_ptr)
 	while (pnode)
 	{
 		/* Hack -- Fix Telekinetic Toss type */
-		if (strcmp(s_ptr->name, "Telekinetic Toss") == 0)
+		if (s_ptr->name && strcmp(s_ptr->name, "Telekinetic Toss") == 0)
 		{
 			pnode->attack_kind = GF_TELEKINESIS;
 		}
@@ -1037,13 +1037,13 @@ bool cause_spell_effect(spell * s_ptr)
 			pnode->proj_flags & PROJECT_STOP)
 		{
 			if (!get_aim_dir(&dir))
-				return cast;
+				return (cast);
 
-			/* Hack -- Use an actual "target" */
+			/* Determine initial target coordinates */
 			if ((dir == 5) && target_okay())
 			{
-				tx = p_ptr->target_col;
 				ty = p_ptr->target_row;
+				tx = p_ptr->target_col;
 			}
 			else
 			{
@@ -1070,12 +1070,13 @@ bool cause_spell_effect(spell * s_ptr)
 
 		if (pnode->attack_kind == GF_TELEKINESIS)
 		{
-			if (project(who, pnode->radius, ty, tx, damroll(pnode->dam_dice,
-						pnode->dam_sides), pnode->attack_kind,
-					pnode->proj_flags))
-			{
-				cast = TRUE;
-			}
+			/* Always set cast to TRUE if we reach this point,
+			   because the 'Toss' UI handles its own success/fail */
+			project(who, pnode->radius, ty, tx,
+					damroll(pnode->dam_dice, pnode->dam_sides),
+					pnode->attack_kind, pnode->proj_flags);
+
+			cast = TRUE;
 		}
 		else
 		{

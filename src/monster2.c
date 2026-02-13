@@ -42,6 +42,10 @@ void delete_monster_idx(int i)
 	if (r_ptr->flags2 & (RF2_MULTIPLY))
 		num_repro--;
 
+	/* Hack -- maintain pet count */
+	if (m_ptr->is_pet && p_ptr->number_pets > 0)
+		p_ptr->number_pets--;
+
 
 	/* Hack -- remove target monster */
 	if (i == p_ptr->target_who)
@@ -1514,6 +1518,53 @@ s16b monster_place(int y, int x, monster_type * n_ptr)
 
 
 /*
+ * Enforce the pet limit.
+ * If there are too many pets, dismiss the one farthest from the player.
+ */
+void maintain_pet_limit(void)
+{
+	int i;
+	int pet_count = 0;
+	int farthest_idx = 0;
+	int max_dist = -1;
+
+	/* Count pets and find the farthest */
+	for (i = 1; i < m_max; i++)
+	{
+		monster_type *m_ptr = &m_list[i];
+
+		if (!m_ptr->r_idx) continue;
+
+		if (m_ptr->is_pet)
+		{
+			pet_count++;
+			if (m_ptr->cdis > max_dist)
+			{
+				max_dist = m_ptr->cdis;
+				farthest_idx = i;
+			}
+		}
+	}
+
+	/* Limit to 8 pets */
+	if (pet_count >= 8 && farthest_idx > 0)
+	{
+		monster_type *m_ptr = &m_list[farthest_idx];
+		char m_name[80];
+
+		/* Get the monster name */
+		monster_desc(m_name, m_ptr, 0);
+
+		/* Message */
+		msg_format("The %s leaves to aid other explorers.", m_name);
+
+		/* Remove the monster */
+		delete_monster_idx(farthest_idx);
+	}
+}
+
+
+/*
  * Attempt to place a monster of the given race at the given location.
  *
  * To give the player a sporting chance, any monster that appears in
@@ -1701,6 +1752,7 @@ static bool place_monster_one(int y, int x, int r_idx, int flags)
 	/* Set to be a pet, if applicable */
 	if (pet)
 	{
+		maintain_pet_limit();
 		n_ptr->is_pet = 1;
 	}
 

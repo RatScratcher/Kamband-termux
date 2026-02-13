@@ -5111,6 +5111,7 @@ static bool project_m(int who, int r, int y, int x, int dam, int typ)
 			}
 			else
 			{
+				maintain_pet_limit();
 				note = " bows down to your supreme evilness!";
 				m_ptr->is_pet = TRUE;
 				dam = 0;

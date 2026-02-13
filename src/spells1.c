@@ -2170,6 +2170,8 @@ static bool project_f(int who, int r, int y, int x, int dam, int typ)
 			{
 				cave_set_feat(y, x, FEAT_OIL_BURNING);
 				cave[y][x].fuel = 10 + rand_int(11);
+				msg_print("The oil erupts into flames!");
+				lite_spot(y, x);
 				obvious = TRUE;
 			}
 			break;
@@ -3857,7 +3859,8 @@ static bool project_m(int who, int r, int y, int x, int dam, int typ)
 
 			if (m_ptr->mflag & MFLAG_OIL_SOAKED)
 			{
-				note = " catches fire!";
+				if (seen) msg_format("%^s's oil-soaked fur ignites!", m_name);
+				note = NULL;
 				dam *= 2;
 				project(who, 2, m_ptr->fy, m_ptr->fx, dam, GF_FIRE, PROJECT_GRID | PROJECT_ITEM | PROJECT_KILL);
 				m_ptr->mflag &= ~(MFLAG_OIL_SOAKED);

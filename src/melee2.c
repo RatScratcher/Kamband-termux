@@ -3041,6 +3041,7 @@ static void punish_monster(monster_type * m_ptr)
 	}
 	else if (roll < 95)
 	{
+		maintain_pet_limit();
 		m_ptr->is_pet = TRUE;
 		mformat(MSG_BONUS, "%^s dooms %s to eternal slavery!", god_name,
 			m_name);

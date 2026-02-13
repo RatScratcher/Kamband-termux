@@ -2695,6 +2695,12 @@ static void process_mutation(int mut)
 			p_ptr->skill_thb -= 10;
 			p_ptr->skill_tht -= 10;
 			break;
+
+		case MUT_THICK_SKIN:
+			p_ptr->ac += 15;
+			p_ptr->dis_ac += 15;
+			p_ptr->stat_add[A_DEX] -= 1;
+			break;
 	}
 }
 

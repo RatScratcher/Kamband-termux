@@ -141,7 +141,7 @@
 
 #define MAX_GODS   32
 #define MAX_SHAPES 25
-#define MAX_MUTS   67
+#define MAX_MUTS   100
 #define MAX_T_ACT  51
 
 #define MAX_COMMANDS 100
@@ -2091,6 +2091,7 @@
 #define MUT_MINUS_STEALTH 64
 #define MUT_MINUS_FIGHT   65
 #define MUT_ECHO_PULSE    66
+#define MUT_THICK_SKIN    67
 
 
 /*

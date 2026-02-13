@@ -2196,9 +2196,10 @@ static bool project_f(int who, int r, int y, int x, int dam, int typ)
 
 		case GF_ECHO_PULSE:
 		{
-			if (cave_feat[y][x] == FEAT_RUIN_DOOR)
+			if (cave_feat[y][x] == FEAT_RUIN_DOOR ||
+			    (cave_feat[y][x] >= FEAT_DOOR_HEAD && cave_feat[y][x] <= FEAT_PERM_SOLID))
 			{
-				cave_info[y][x] |= (CAVE_GLOW | CAVE_MARK);
+				cave_info[y][x] |= CAVE_MARK;
 				lite_spot(y, x);
 				obvious = TRUE;
 			}

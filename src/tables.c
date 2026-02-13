@@ -2892,7 +2892,11 @@ cptr mutation_names[MAX_MUTS][3] = {
 
 	{"Echolocation Pulse",
 			"You feel a thrumming in your mind.",
-		"The thrumming in your mind stops."}
+		"The thrumming in your mind stops."},
+
+	{"Thick Skin",
+			"Your skin is exceptionally thick and leathery (+15 AC, -1 DEX).",
+		"Your skin returns to normal."}
 
 };
 

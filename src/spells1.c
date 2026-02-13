@@ -3532,12 +3532,41 @@ static bool project_o(int who, int r, int y, int x, int dam, int typ)
 		/* Telekinetic Toss (Fetch Item) */
 		case GF_TELEKINESIS:
 		{
-			/* Move object to player */
+			int ny, nx;
+
+			/* Prioritize monsters */
+			if (cave_m_idx[y][x] > 0) break;
+
+			/* Ask for target */
+			p_ptr->target_who = 0;
+			p_ptr->target_row = y;
+			p_ptr->target_col = x;
+			msg_print("Throw where?");
+			if (!target_set(TARGET_GRID | TARGET_FREE))
+			{
+				/* Cancelled */
+				return FALSE;
+			}
+
+			/* Get target */
+			ny = p_ptr->target_row;
+			nx = p_ptr->target_col;
+
+			/* Move object */
 			remove_from_stack(o_ptr);
-			drop_near(o_ptr, FALSE, p_ptr->py, p_ptr->px);
+			drop_near(o_ptr, FALSE, ny, nx);
+
+			/* Trigger trap at destination */
+			if (cave_feat[ny][nx] >= FEAT_TRAP_HEAD && cave_feat[ny][nx] <= FEAT_TRAP_TAIL)
+			{
+				obj_hit_trap(ny, nx, o_ptr);
+			}
+
 			obvious = TRUE;
 			telekinesis_fetched = TRUE;
-			break;
+
+			/* Stop processing this grid (one item thrown) */
+			return TRUE;
 		}
 
 		/* Psionic Spark (Ignite Oil) */

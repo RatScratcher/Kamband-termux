@@ -335,6 +335,7 @@ extern s16b tot_dam_aux(object_type * o_ptr, int tdam,
 extern void search(void);
 extern void py_pickup(int pickup);
 extern void mon_hit_trap(int m_idx, int y, int x);
+extern void obj_hit_trap(int y, int x, object_type *o_ptr);
 extern void hit_trap(int y, int x);
 extern void py_attack(int y, int x);
 extern void move_player(int dir, int do_pickup);

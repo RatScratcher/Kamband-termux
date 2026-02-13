@@ -1057,6 +1057,70 @@ void mon_hit_trap(int m_idx, int y, int x)
 }
 
 /*
+ * Handle object hitting a trap
+ */
+void obj_hit_trap(int y, int x, object_type *o_ptr)
+{
+	char o_name[80];
+
+	/* Paranoia */
+	if (!o_ptr) return;
+
+	object_desc(o_name, o_ptr, TRUE, 0);
+
+	switch (cave_feat[y][x])
+	{
+		/* Trap door. */
+		case FEAT_TRAP_HEAD + 0x00:
+		{
+			msg_format("The %s falls through a trap door!", o_name);
+			remove_object(o_ptr);
+			break;
+		}
+
+		/* Pit. */
+		case FEAT_TRAP_HEAD + 0x01:
+		{
+			msg_format("The %s falls into a pit!", o_name);
+			break;
+		}
+
+		/* Spiked pits. */
+		case FEAT_TRAP_HEAD + 0x02:
+		case FEAT_TRAP_HEAD + 0x03:
+		{
+			msg_format("The %s falls into a pit!", o_name);
+			break;
+		}
+
+		/* Teleport trap. */
+		case FEAT_TRAP_HEAD + 0x05:
+		{
+			msg_format("The %s hits a teleport trap!", o_name);
+			remove_from_stack(o_ptr);
+			drop_near(o_ptr, FALSE, rand_int(DUNGEON_HGT), rand_int(DUNGEON_WID));
+			break;
+		}
+
+		/* Fire trap. */
+		case FEAT_TRAP_HEAD + 0x06:
+		{
+			msg_format("The %s is enveloped in flames!", o_name);
+			object_take_hit(o_ptr, damroll(2, 2) + p_ptr->depth, "burned");
+			break;
+		}
+
+		/* Acid trap. */
+		case FEAT_TRAP_HEAD + 0x07:
+		{
+			msg_format("The %s is splashed with acid!", o_name);
+			object_take_hit(o_ptr, damroll(2, 2) + p_ptr->depth, "melted");
+			break;
+		}
+	}
+}
+
+/*
  * Handle player hitting a real trap
  */
 void hit_trap(int y, int x)

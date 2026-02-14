@@ -1146,6 +1146,7 @@ struct player_type
 	s16b shape_timed; /* Timed -- Shape change */
 	byte shape;	/* The current chape */
 	s16b immov_cntr; /* Timed -- Last ``immovable'' command. */
+	s16b time_on_land; /* Counter for Gills mutation on land. */
 
 	u32b mutations1; /* Mutation flags 1 */
 	u32b mutations2; /* Mutation flags 2 */

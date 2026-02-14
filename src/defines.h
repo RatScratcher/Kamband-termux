@@ -337,6 +337,9 @@
 
 
 
+/* Terrain Interaction Damage (5% of Max) */
+#define ENV_DAMAGE_PERCENT 5
+
 /*
  * There is a 1/160 chance per round of creating a new monster
  */
@@ -2092,6 +2095,7 @@
 #define MUT_MINUS_FIGHT   65
 #define MUT_ECHO_PULSE    66
 #define MUT_THICK_SKIN    67
+#define MUT_GILLS         68
 
 
 /*
@@ -2752,6 +2756,7 @@
 #define MFLAG_ANCIENT_ENRAGED 0x0800 /* Ancient is enraged */
 #define MFLAG_OIL_SOAKED  0x1000 /* Monster is soaked in oil */
 #define MFLAG_ON_FIRE     0x2000 /* Monster is on fire */
+#define MFLAG_STRUGGLING  0x4000 /* Monster is struggling in current environment */
 
 
 /*
@@ -2992,8 +2997,8 @@
 #define RF7_KAMIKAZE		0x00002000 /* Kamikaze monster. */
 #define RF7_KOBOLD		0x00004000 /* Oh my god, it's a kobold! */
 #define RF7_ANCIENT		0x00008000
-#define RF7_XXX17		0x00010000
-#define RF7_XXX18               0x00020000
+#define RF7_AMPHIBIOUS		0x00010000
+#define RF7_FIRE_EVENT          0x00020000
 #define RF7_XXX19		0x00040000
 #define RF7_XXX20		0x00080000
 #define RF7_XXX21		0x00100000

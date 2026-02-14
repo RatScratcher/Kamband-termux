@@ -805,6 +805,22 @@ static errr rd_extra(void)
 	rd_u32b(&p_ptr->mutations2);
 	rd_u32b(&p_ptr->mutations3);
 
+	/* Clear removed mutations */
+	for (i = 0; i < MAX_MUTS; i++)
+	{
+		if (i >= 96) break;
+
+		if (!mutation_names[i][0] || !mutation_names[i][0][0])
+		{
+			if (i < 32)
+				p_ptr->mutations1 &= ~(1L << i);
+			else if (i < 64)
+				p_ptr->mutations2 &= ~(1L << (i - 32));
+			else
+				p_ptr->mutations3 &= ~(1L << (i - 64));
+		}
+	}
+
 	rd_byte(&p_ptr->confusing);
 	rd_byte(&p_ptr->searching);
 	rd_byte(&p_ptr->maximize);

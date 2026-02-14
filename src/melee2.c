@@ -2696,8 +2696,38 @@ static void get_moves(int m_idx, int mm[5])
 	if (m_ptr->is_pet)
 	{
 		int dist_to_player = distance(m_ptr->fy, m_ptr->fx, p_ptr->py, p_ptr->px);
+		bool found_hostile = FALSE;
+		int i_adj;
 
-		if (dist_to_player > MAX_GUARD_DIST)
+		/* Check for adjacent enemies (Self Defense) */
+		for (i_adj = 0; i_adj < 8; i_adj++)
+		{
+			int y_adj = m_ptr->fy + ddy_ddd[i_adj];
+			int x_adj = m_ptr->fx + ddx_ddd[i_adj];
+
+			if (!in_bounds(y_adj, x_adj)) continue;
+
+			if (cave_m_idx[y_adj][x_adj] > 0)
+			{
+				monster_type *t_ptr = &m_list[cave_m_idx[y_adj][x_adj]];
+				monster_race *tr_ptr = &r_info[t_ptr->r_idx];
+
+				if (!t_ptr->is_pet && !(tr_ptr->flags3 & RF3_FRIENDLY))
+				{
+					/* Enemy found! */
+					found_hostile = TRUE;
+					py = y_adj;
+					px = x_adj;
+					break;
+				}
+			}
+		}
+
+		if (found_hostile)
+		{
+			/* Attack the adjacent enemy! */
+		}
+		else if (dist_to_player > MAX_GUARD_DIST)
 		{
 			/* Tether: Too far, return to player */
 			py = p_ptr->py;

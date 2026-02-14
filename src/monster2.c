@@ -1556,7 +1556,8 @@ void maintain_pet_limit(void)
 		monster_desc(m_name, m_ptr, 0);
 
 		/* Message */
-		msg_format("The %s leaves to aid other explorers.", m_name);
+		if (character_dungeon)
+			msg_format("The %s leaves to aid other explorers.", m_name);
 
 		/* Remove the monster */
 		delete_monster_idx(farthest_idx);

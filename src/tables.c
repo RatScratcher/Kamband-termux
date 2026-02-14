@@ -2841,8 +2841,7 @@ cptr mutation_names[MAX_MUTS][3] = {
 	{"Magnetic field", "Your skin attracts sharp metal objects!",
 		"Your magnetic field disappears."},
 
-	{"Withered Legs", "Your legs wither away!",
-		"Your legs return to normal."},
+	{NULL, NULL, NULL},
 
 	{"Blindness", "You are permanently blind!",
 		"You can see again!"},

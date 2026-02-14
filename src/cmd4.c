@@ -3276,21 +3276,23 @@ static void do_cmd_knowledge_mutations(void)
 
 	fff = my_fopen(file_name, "w");
 
-	for (i = 0; i < 32; i++)
+	for (i = 0; i < MAX_MUTS; i++)
 	{
-		if (p_ptr->mutations1 & (1L << i))
-		{
-			fprintf(fff, "%s\n", mutation_names[i][0]);
-		}
+		u32b flag = 0;
 
-		if (p_ptr->mutations2 & (1L << i))
-		{
-			fprintf(fff, "%s\n", mutation_names[i + 32][0]);
-		}
+		if (i < 32)
+			flag = (p_ptr->mutations1 & (1L << i));
+		else if (i < 64)
+			flag = (p_ptr->mutations2 & (1L << (i - 32)));
+		else if (i < 96)
+			flag = (p_ptr->mutations3 & (1L << (i - 64)));
+		else
+			break; /* No more storage */
 
-		if (p_ptr->mutations3 & (1L << i))
+		if (flag)
 		{
-			fprintf(fff, "%s\n", mutation_names[i + 64][0]);
+			if (mutation_names[i][0] && mutation_names[i][0][0])
+				fprintf(fff, "%s\n", mutation_names[i][0]);
 		}
 	}
 

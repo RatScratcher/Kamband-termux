@@ -2814,7 +2814,7 @@ cptr mutation_names[MAX_MUTS][3] = {
 
   /*-*-*/
 
-	{"Retardation", "Your brain shrivels!",
+	{"Feeble Mind", "Your brain shrivels!",
 		"You regain normal intelligence."},
 
 	{"Atrophied musculature", "Your muscles are atrophied!",
@@ -2832,17 +2832,17 @@ cptr mutation_names[MAX_MUTS][3] = {
 	{"Shrunken nervous system", "Your reactions are now much slower!",
 		"Your nervous system regains former size."},
 
-	{"Stubby legs", "Your legs become short and stubby!",
+	{"Short Legs", "Your legs become short and stubby!",
 		"Your legs return to former size."},
 
-	{"Flatulence", "You can't control your bodily fluids anymore!",
-		"You regain control of bodily fluids."},
+	{"Foul Stench", "You emit a foul stench!",
+		"The foul stench dissipates."},
 
 	{"Magnetic field", "Your skin attracts sharp metal objects!",
 		"Your magnetic field disappears."},
 
-	{"Legless", "Your legs fall off!",
-		"You regrow your legs."},
+	{"Withered Legs", "Your legs wither away!",
+		"Your legs return to normal."},
 
 	{"Blindness", "You are permanently blind!",
 		"You can see again!"},

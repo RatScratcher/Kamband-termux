@@ -1025,6 +1025,11 @@ bool cause_spell_effect(spell * s_ptr)
 		if (s_ptr->name && strcmp(s_ptr->name, "Telekinetic Toss") == 0)
 		{
 			pnode->attack_kind = GF_TELEKINESIS;
+
+			/* Clear 'Sticky' Targeting */
+			p_ptr->target_who = 0;
+			p_ptr->target_row = 0;
+			p_ptr->target_col = 0;
 		}
 
 		if (pnode->attack_kind == GF_ECHO_PULSE)

@@ -4322,7 +4322,16 @@ void process_monsters(void)
 		}
 
 		/* Obtain the energy boost */
-		e = extract_energy[m_ptr->mspeed];
+		if (m_ptr->mflag & MFLAG_STRUGGLING)
+		{
+			int speed = m_ptr->mspeed - 20;
+			if (speed < 0) speed = 0;
+			e = extract_energy[speed];
+		}
+		else
+		{
+			e = extract_energy[m_ptr->mspeed];
+		}
 
 		/* Magnetism Slow/Root */
 		if (m_ptr->magnetized) {

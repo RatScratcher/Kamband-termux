@@ -657,6 +657,125 @@ static void process_boulders(void)
 }
 
 /*
+ * Check environmental integrity for a monster.
+ */
+static void check_monster_environment(int m_idx, int y, int x)
+{
+	monster_type *m_ptr = &m_list[m_idx];
+	monster_race *r_ptr = &r_info[m_ptr->r_idx];
+	int feat = cave_feat[y][x];
+	bool struggling = FALSE;
+	int damage = 0;
+	cptr desc = "environmental stress";
+
+	/* 1. Aquatic Check */
+	if (r_ptr->flags2 & RF2_AQUATIC)
+	{
+		if (feat != FEAT_SHAL_WATER && feat != FEAT_DEEP_WATER)
+		{
+			/* Amphibious monsters are exempt */
+			if (!(r_ptr->flags7 & RF7_AMPHIBIOUS))
+			{
+				struggling = TRUE;
+				damage = m_ptr->maxhp * ENV_DAMAGE_PERCENT / 100;
+				desc = "suffocation";
+			}
+		}
+	}
+
+	/* 2. Fire Entities Check */
+	/* Uses RF7_FIRE_EVENT or RF4_BR_FIRE as a proxy for fire-based creatures */
+	if ((r_ptr->flags7 & RF7_FIRE_EVENT) || (r_ptr->flags4 & RF4_BR_FIRE))
+	{
+		if (feat == FEAT_SHAL_WATER || feat == FEAT_DEEP_WATER ||
+		    feat == FEAT_ICE || feat == FEAT_WALL_ICE)
+		{
+			struggling = TRUE;
+			damage = m_ptr->maxhp / 10; /* 10% Max HP */
+			desc = "being extinguished";
+		}
+	}
+
+	/* 3. Cold Entities Check */
+	if ((r_ptr->flags4 & RF4_BR_COLD) || (r_ptr->flags3 & RF3_IM_COLD))
+	{
+		if (feat == FEAT_SHAL_LAVA || feat == FEAT_DEEP_LAVA)
+		{
+			struggling = TRUE;
+			damage = m_ptr->maxhp / 10; /* Melt damage */
+			desc = "melting";
+		}
+	}
+
+	/* Apply State */
+	if (struggling)
+	{
+		m_ptr->mflag |= MFLAG_STRUGGLING;
+		if (damage > 0)
+		{
+			bool fear = FALSE;
+			mon_take_hit(m_idx, damage, &fear, desc, FALSE, FALSE);
+		}
+	}
+	else
+	{
+		m_ptr->mflag &= ~(MFLAG_STRUGGLING);
+	}
+}
+
+/*
+ * Check environmental integrity for the player.
+ */
+static void check_player_environment(void)
+{
+	int feat = cave_feat[p_ptr->py][p_ptr->px];
+	bool gills = (p_ptr->mutations3 & (1L << (MUT_GILLS - 64))) ? TRUE : FALSE;
+
+	/* Gills Logic */
+	if (gills)
+	{
+		if (feat != FEAT_SHAL_WATER && feat != FEAT_DEEP_WATER)
+		{
+			p_ptr->time_on_land++;
+			if (p_ptr->time_on_land == 50)
+			{
+				msg_print("Your skin feels parched...");
+			}
+			else if (p_ptr->time_on_land > 100)
+			{
+				take_hit(1, "dehydration");
+			}
+		}
+		else
+		{
+			p_ptr->time_on_land = 0;
+		}
+	}
+
+	/* Drowning Logic */
+	if (feat == FEAT_DEEP_WATER)
+	{
+		/* Can we drown? */
+		bool can_drown = TRUE;
+		int weight = p_ptr->total_weight;
+		int limit = (adj_str_wgt[p_ptr->stat_ind[A_STR]] * 100);
+
+		/* Gills protect from drowning */
+		if (gills) can_drown = FALSE;
+
+		/* Flying/Levitation protects */
+		if (p_ptr->flying) can_drown = FALSE;
+
+		/* If we are overloaded and in deep water, we drown */
+		if (can_drown && weight > limit)
+		{
+			msg_print("You are dragging yourself under!");
+			take_hit(p_ptr->mhp * ENV_DAMAGE_PERCENT / 100, "drowning");
+		}
+	}
+}
+
+/*
  * Process environment (Burning Oil, Acid, etc.)
  */
 static void process_environment(void)
@@ -733,6 +852,9 @@ static void process_environment(void)
 					monster_race *r_ptr = &r_info[m_ptr->r_idx];
 					bool fly = (r_ptr->flags2 & RF2_FLY) ? TRUE : FALSE;
 
+                    /* Check Environmental Integrity */
+                    check_monster_environment(m_idx, y, x);
+
 					if (!fly) {
 						if (feat == FEAT_ACID && !(r_ptr->flags3 & RF3_IM_ACID)) {
 							bool fear = FALSE;
@@ -774,6 +896,9 @@ static void process_environment(void)
 			}
 		}
 	}
+
+    /* Check Player Environment */
+    check_player_environment();
 }
 
 /*

@@ -2895,7 +2895,10 @@ cptr mutation_names[MAX_MUTS][3] = {
 
 	{"Thick Skin",
 			"Your skin is exceptionally thick and leathery (+15 AC, -1 DEX).",
-		"Your skin returns to normal."}
+		"Your skin returns to normal."},
+
+	{"Gills", "You grow a set of gills.",
+		"Your gills merge back into your neck."}
 
 };
 

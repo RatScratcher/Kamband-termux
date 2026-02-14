@@ -1797,7 +1797,9 @@ void py_attack(int y, int x)
 	while (num++ < p_ptr->num_blow)
 	{
 		/* Test for hit */
-		if (test_hit_norm(chance, r_ptr->ac, m_ptr->ml))
+		int ac = r_ptr->ac;
+		if (m_ptr->mflag & MFLAG_STRUGGLING) ac /= 2;
+		if (test_hit_norm(chance, ac, m_ptr->ml))
 		{
 			/* Sound */
 			sound(SOUND_HIT);

@@ -45,7 +45,7 @@
 
 SRCS = \
   z-util.c z-virt.c z-form.c z-rand.c z-term.c \
-  variable.c tables.c util.c cave.c \
+  variable.c tables.c util.c cave.c cover.c \
   object1.c object2.c monster1.c monster2.c \
   xtra1.c xtra2.c spells1.c spells2.c \
   melee1.c melee2.c save.c files.c \
@@ -58,7 +58,7 @@ SRCS = \
 
 OBJS = \
   z-util.o z-virt.o z-form.o z-rand.o z-term.o \
-  variable.o tables.o util.o cave.o \
+  variable.o tables.o util.o cave.o cover.o \
   object1.o object2.o monster1.o monster2.o \
   xtra1.o xtra2.o spells1.o spells2.o \
   melee1.o melee2.o save.o files.o \
@@ -267,6 +267,7 @@ INCS = \
 
 birth.o: birth.c $(INCS)
 cave.o: cave.c $(INCS)
+cover.o: cover.c $(INCS)
 cmd1.o: cmd1.c $(INCS)
 cmd2.o: cmd2.c $(INCS)
 cmd3.o: cmd3.c $(INCS)

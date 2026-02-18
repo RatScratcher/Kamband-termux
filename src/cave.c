@@ -720,6 +720,9 @@ void map_info(int y, int x, byte * ap, char *cp)
 			/* Elevation Color */
 			a = elev_color(y, x, a);
 
+            /* Cover Color */
+            a = get_cover_color(y, x, a);
+
 			/* Elevation Symbol */
 			(*cp) = elev_symbol(y, x, (*cp));
 
@@ -823,6 +826,9 @@ void map_info(int y, int x, byte * ap, char *cp)
 
 			/* Elevation Color */
 			a = elev_color(y, x, a);
+
+            /* Cover Color */
+            a = get_cover_color(y, x, a);
 
 			/* Elevation Symbol */
 			(*cp) = elev_symbol(y, x, (*cp));

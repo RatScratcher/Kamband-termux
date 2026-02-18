@@ -1823,6 +1823,19 @@ void py_attack(int y, int x)
 				/* Elevation Damage */
 				k = (k * calc_elev_damage_mod(y, x)) / 100;
 
+                /* Cover Check */
+                {
+                    int cover_dam = 0;
+                    if (!attack_through_cover(p_ptr->py, p_ptr->px, y, x, &k, &cover_dam)) {
+                        /* Attack blocked or reduced */
+                        if (k <= 0) {
+                            msg_print("Your attack is blocked by cover!");
+                        } else if (cover_dam > 0) {
+                            msg_print("The cover absorbs some of the damage.");
+                        }
+                    }
+                }
+
 				if (p_ptr->impact && (k > 50))
 					do_quake = TRUE;
 

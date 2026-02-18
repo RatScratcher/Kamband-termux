@@ -73,6 +73,7 @@ typedef struct player_race player_race;
 typedef struct player_class player_class;
 typedef struct player_other player_other;
 typedef struct player_type player_type;
+typedef struct cover_data cover_data;
 
 
 
@@ -432,6 +433,17 @@ struct monster_race
 struct dungeon_info
 {
 	u32b flags;
+};
+
+/*
+ * Cover durability tracking (for destructible cover)
+ */
+struct cover_data
+{
+    s16b durability;        /* Current HP of cover object */
+    s16b max_durability;    /* Maximum HP */
+    byte cover_type;        /* COVER_LIGHT/MEDIUM/HEAVY when intact */
+    byte terrain_feat;      /* Original feature type */
 };
 
 /*

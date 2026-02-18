@@ -279,6 +279,7 @@ extern s16b cave_elev[DUNGEON_HGT][DUNGEON_WID];
 extern byte cave_info[DUNGEON_HGT][DUNGEON_WID];
 extern byte cave_sector[DUNGEON_HGT][DUNGEON_WID];
 extern byte cave_feat[DUNGEON_HGT][DUNGEON_WID];
+extern cover_data *cave_cover[DUNGEON_HGT][DUNGEON_WID];
 extern object_type *cave_o_idx[DUNGEON_HGT][DUNGEON_WID];
 extern s16b cave_m_idx[DUNGEON_HGT][DUNGEON_WID];
 extern byte unstable_scroll_map[15];
@@ -291,6 +292,17 @@ extern cptr unstable_scroll_names[15];
 
 /* birth.c */
 extern void player_birth(void);
+
+/* cover.c */
+extern void init_cover_system(void);
+extern int get_cover_at(int y, int x);
+extern int get_cover_vs_direction(int ty, int tx, int ay, int ax);
+extern bool attack_through_cover(int ay, int ax, int ty, int tx, int *damage, int *cover_damage);
+extern void damage_cover(int y, int x, int damage);
+extern void destroy_cover(int y, int x);
+extern void create_cover_at(int y, int x, int cover_type, int durability, int feat);
+extern byte get_cover_color(int y, int x, byte base_color);
+extern void populate_cover_features(void);
 
 /* cave.c */
 extern int distance(int y1, int x1, int y2, int x2);

@@ -4782,6 +4782,54 @@ static void place_ancient_ruin(void)
 }
 
 /*
+ * Populate the level with cover features
+ */
+void populate_cover_features(void)
+{
+    int y, x, i;
+
+    /* Place some cover in rooms */
+    for (i = 0; i < dun->cent_n; i++) {
+        y = dun->cent[i].y;
+        x = dun->cent[i].x;
+
+        /* 50% chance for cover in a room */
+        if (rand_int(100) < 50) {
+            int num_cover = 2 + rand_int(4);
+            int j;
+            for (j = 0; j < num_cover; j++) {
+                int ty = rand_spread(y, 4);
+                int tx = rand_spread(x, 4);
+
+                if (!in_bounds(ty, tx)) continue;
+                if (cave_naked_bold(ty, tx)) {
+                    int roll = rand_int(100);
+                    int feat = FEAT_BOULDER;
+                    int dura = COVER_DURABILITY_BOULDER;
+                    int type = COVER_MEDIUM;
+
+                    if (roll < 30) {
+                        feat = FEAT_CRATE;
+                        dura = 20;
+                        type = COVER_LIGHT;
+                    } else if (roll < 50) {
+                        feat = FEAT_BARREL;
+                        dura = 20;
+                        type = COVER_LIGHT;
+                    } else if (roll < 70) {
+                        feat = FEAT_STONE_PILLAR;
+                        dura = COVER_DURABILITY_WALL;
+                        type = COVER_HEAVY;
+                    }
+
+                    create_cover_at(ty, tx, type, dura, feat);
+                }
+            }
+        }
+    }
+}
+
+/*
  * Populate the level with new features
  */
 static void populate_features(void)
@@ -5844,6 +5892,7 @@ static void cave_gen(void)
 
 	/* Populate with new features */
 	populate_features();
+    populate_cover_features();
 
 	/* Do not light floors inside rooms. */
 	/* Floors outside rooms or walls are lit. */
@@ -6168,6 +6217,7 @@ void generate_cave(void)
 	/* The dungeon is not ready */
 	character_dungeon = FALSE;
 	reset_dread();
+    init_cover_system();
 	/* Shuffle unstable scrolls */
 	shuffle_unstable_scrolls();
 

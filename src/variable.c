@@ -375,6 +375,11 @@ byte cave_sector[DUNGEON_HGT][DUNGEON_WID];
  */
 byte cave_feat[DUNGEON_HGT][DUNGEON_WID];
 
+/*
+ * The array of cave cover data
+ */
+cover_data *cave_cover[DUNGEON_HGT][DUNGEON_WID];
+
 
 /*
  * The array of cave grid object indexes

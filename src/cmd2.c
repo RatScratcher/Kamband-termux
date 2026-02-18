@@ -2144,6 +2144,9 @@ bool do_cmd_walk_test(int y, int x)
 		}
 	}
 
+	/* Check for elevation obstruction */
+	if (!elev_allows_move(p_ptr->py, p_ptr->px, y, x)) return (FALSE);
+
 
 	/* Hack -- walking obtains knowledge XXX XXX */
 	if (!(cave_info[y][x] & CAVE_MARK))
@@ -2300,12 +2303,12 @@ static void do_cmd_walk_or_jump(int pickup)
 	/* Confuse direction */
 	if (confuse_dir(&dir))
 	{
-		/* Take a turn */
-		p_ptr->energy_use = 100;
-
 		/* Get location */
 		y = py + ddy[dir];
 		x = px + ddx[dir];
+
+		/* Take a turn */
+		p_ptr->energy_use = get_movement_cost(y, x);
 
 		did_conf_move = TRUE;
 	}
@@ -2319,7 +2322,7 @@ static void do_cmd_walk_or_jump(int pickup)
 
 	/* Take a turn if it wasn't done already. */
 	if (!did_conf_move)
-		p_ptr->energy_use = 100;
+		p_ptr->energy_use = get_movement_cost(y, x);
 
 
 	/* Allow repeated command */
@@ -2760,6 +2763,9 @@ void do_cmd_fire(void)
 		ty = p_ptr->target_row;
 	}
 
+	/* Elevation Range Mod */
+	tdis += elev_range_mod(py, px, ty, tx);
+
 
 	/* Hack -- Handle stuff */
 	handle_stuff();
@@ -2822,7 +2828,8 @@ void do_cmd_fire(void)
 			hit_body = TRUE;
 
 			/* Did we hit it (penalize range) */
-			if (test_hit_fire(chance - cur_dis, r_ptr->ac, m_ptr->ml))
+			/* Elevation to hit */
+			if (test_hit_fire(chance - cur_dis + calc_elev_to_hit_bonus(y, x), r_ptr->ac, m_ptr->ml))
 			{
 				bool fear = FALSE;
 
@@ -3075,6 +3082,9 @@ void do_cmd_throw(void)
 		ty = p_ptr->target_row;
 	}
 
+	/* Elevation Range Mod */
+	tdis += elev_range_mod(py, px, ty, tx);
+
 
 	/* Hack -- Handle stuff */
 	handle_stuff();
@@ -3142,7 +3152,8 @@ void do_cmd_throw(void)
 			hit_body = TRUE;
 
 			/* Did we hit it (penalize range) */
-			if (test_hit_fire(chance - cur_dis, r_ptr->ac, m_ptr->ml))
+			/* Elevation to hit */
+			if (test_hit_fire(chance - cur_dis + calc_elev_to_hit_bonus(y, x), r_ptr->ac, m_ptr->ml))
 			{
 				bool fear = FALSE;
 

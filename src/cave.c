@@ -717,6 +717,12 @@ void map_info(int y, int x, byte * ap, char *cp)
 				}
 			}
 
+			/* Elevation Color */
+			a = elev_color(y, x, a);
+
+			/* Elevation Symbol */
+			(*cp) = elev_symbol(y, x, (*cp));
+
 			/* The attr */
 			(*ap) = a;
 		}
@@ -814,6 +820,12 @@ void map_info(int y, int x, byte * ap, char *cp)
 					}
 				}
 			}
+
+			/* Elevation Color */
+			a = elev_color(y, x, a);
+
+			/* Elevation Symbol */
+			(*cp) = elev_symbol(y, x, (*cp));
 
 			/* The attr */
 			(*ap) = a;
@@ -2351,6 +2363,12 @@ static bool update_view_aux(int y, int x, int y1, int x1, int y2, int x2)
 	if (!v1 && !v2)
 		return (TRUE);
 
+	/* Check for elevation obstruction */
+	{
+		int py = p_ptr->py;
+		int px = p_ptr->px;
+		if (elev_blocks_sight(py, px, y, x)) return TRUE;
+	}
 
 	/* Check for walls */
 	wall = (!cave_floor_bold_los(y, x));
@@ -3676,4 +3694,304 @@ void disturb(int stop_search, int unused_flag)
 	/* Flush the input if requested */
 	if (flush_disturb)
 		flush();
+}
+
+/*
+ * Elevation system for Kamband
+ * Provides tactical height advantages and disadvantages
+ */
+
+/*
+ * Get effective elevation at a grid
+ */
+int get_elevation(int y, int x)
+{
+    if (!in_bounds(y, x)) return ELEV_GROUND;
+    return cave_elev[y][x];
+}
+
+/*
+ * Set elevation at a grid
+ */
+void set_elevation(int y, int x, int elev)
+{
+    if (!in_bounds(y, x)) return;
+    if (elev > ELEV_MAX) elev = ELEV_MAX;
+    if (elev < ELEV_MIN) elev = ELEV_MIN;
+    cave_elev[y][x] = elev;
+}
+
+/*
+ * Initialize all elevation to ground level
+ */
+void init_elevation(void)
+{
+    int y, x;
+    for (y = 0; y < DUNGEON_HGT; y++) {
+        for (x = 0; x < DUNGEON_WID; x++) {
+            cave_elev[y][x] = ELEV_GROUND;
+        }
+    }
+}
+
+/*
+ * Calculate elevation difference between two points
+ */
+int elevation_diff(int y1, int x1, int y2, int x2)
+{
+    return get_elevation(y1, x1) - get_elevation(y2, x2);
+}
+
+/*
+ * Check if attacker has high ground advantage
+ */
+bool has_high_ground(int ay, int ax, int ty, int tx)
+{
+    return get_elevation(ay, ax) > get_elevation(ty, tx);
+}
+
+/*
+ * Get to-hit bonus/penalty based on elevation
+ * Returns modifier (positive = bonus, negative = penalty)
+ */
+int elev_to_hit_mod(int ay, int ax, int ty, int tx)
+{
+    int diff = elevation_diff(ay, ax, ty, tx);
+
+    if (diff > 0) {
+        /* Attacker higher: bonus */
+        return (diff * ELEV_HIT_BONUS_HIGH);
+    } else if (diff < 0) {
+        /* Attacker lower: penalty */
+        return (diff * ELEV_HIT_PENALTY_LOW); /* diff is negative */
+    }
+    return 0;
+}
+
+/*
+ * Get damage bonus/penalty multiplier (in percent)
+ */
+int elev_damage_mod(int ay, int ax, int ty, int tx)
+{
+    int diff = elevation_diff(ay, ax, ty, tx);
+
+    if (diff > 0) {
+        /* Higher ground = more damage (gravity assist) */
+        return 100 + (diff * ELEV_DAM_BONUS_HIGH);
+    }
+    /* No penalty to damage for being lower, just harder to hit */
+    return 100;
+}
+
+/*
+ * Get range modifier for missile attacks
+ */
+int elev_range_mod(int ay, int ax, int ty, int tx)
+{
+    int diff = elevation_diff(ay, ax, ty, tx);
+
+    if (diff > 0) {
+        return diff * ELEV_RANGE_BONUS_HIGH;
+    } else if (diff < 0) {
+        return diff * ELEV_RANGE_PENALTY_LOW; /* negative */
+    }
+    return 0;
+}
+
+/*
+ * Get sight range bonus from elevation
+ */
+int elev_sight_bonus(int y, int x)
+{
+    int elev = get_elevation(y, x);
+    if (elev > ELEV_GROUND) {
+        return elev * ELEV_SIGHT_BONUS;
+    }
+    return 0;
+}
+
+/*
+ * Check if grid can be seen from another (elevation check)
+ * Blocks line of sight if looking up at steep cliff
+ */
+bool elev_blocks_sight(int y1, int x1, int y2, int x2)
+{
+    int diff = elevation_diff(y2, x2, y1, x1); /* target - source */
+
+    /* Looking up at cliff blocks sight */
+    if (diff >= 2) {
+        /* Check if there's a cliff face blocking */
+        if (cave_feat[y2][x2] == FEAT_CLIFF_UP ||
+            cave_feat[y2][x2] == FEAT_WALL_SOLID) {
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+/*
+ * Get movement cost modifier for elevation change
+ * Returns energy cost (100 = normal)
+ */
+int elev_movement_cost(int sy, int sx, int dy, int dx)
+{
+    int src_elev = get_elevation(sy, sx);
+    int dst_elev = get_elevation(dy, dx);
+    int diff = dst_elev - src_elev;
+
+    /* Going up costs more */
+    if (diff > 0) {
+        return 100 + (diff * ELEV_ASCEND_COST * 50);
+    }
+
+    /* Going down is normal or slightly faster */
+    if (diff < 0) {
+        return 100 - (abs(diff) * 10); /* Slight speed boost downhill */
+    }
+
+    return 100;
+}
+
+/*
+ * Check if movement is allowed (cliffs block from below)
+ */
+bool elev_allows_move(int sy, int sx, int dy, int dx)
+{
+    int src_elev = get_elevation(sy, sx);
+    int dst_elev = get_elevation(dy, dx);
+
+    /* Can't climb cliffs from below without flying/levitation */
+    if (dst_elev - src_elev >= 2) {
+        /* Check for cliff feature */
+        if (cave_feat[dy][dx] == FEAT_CLIFF_UP ||
+            cave_feat[dy][dx] == FEAT_WALL_SOLID) {
+
+            /* Allow if player has levitation or climbing ability */
+            if (p_ptr->flying) return TRUE;
+
+            /* Message if player attempted */
+            if (sy == p_ptr->py && sx == p_ptr->px) {
+                msg_print("The cliff face is too steep to climb!");
+            }
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+/*
+ * Calculate fall damage from elevation
+ */
+int elev_fall_damage(int from_elev, int to_elev)
+{
+    int diff = from_elev - to_elev;
+
+    if (diff <= 0) return 0;
+
+    /* Base damage: d6 per elevation level */
+    int damage = damroll(diff, 6) * ELEV_FALL_DAMAGE_MULT;
+
+    /* Cap at reasonable max */
+    if (damage > 100) damage = 100;
+
+    return damage;
+}
+
+/*
+ * Handle falling/jumping down
+ * Returns TRUE if fall occurred
+ */
+bool do_fall(int y, int x)
+{
+    /* Not fully implemented yet, placeholder */
+    if (cave_feat[y][x] == FEAT_CLIFF_DOWN) {
+        /* msg_print("You stand at the edge of a cliff!"); */
+    }
+    return FALSE;
+}
+
+/*
+ * Calculate to-hit bonus including elevation
+ */
+int calc_elev_to_hit_bonus(int ty, int tx)
+{
+    return elev_to_hit_mod(p_ptr->py, p_ptr->px, ty, tx);
+}
+
+/*
+ * Calculate damage multiplier including elevation
+ */
+int calc_elev_damage_mod(int ty, int tx)
+{
+    return elev_damage_mod(p_ptr->py, p_ptr->px, ty, tx);
+}
+
+/*
+ * Get color modifier for elevation display
+ */
+byte elev_color(int y, int x, byte base_color)
+{
+    int elev = get_elevation(y, x);
+
+    switch (elev) {
+        case ELEV_HIGH:
+            return TERM_L_GREEN; /* Bright green for high ground */
+        case ELEV_HILL:
+            return TERM_GREEN;   /* Green for hills */
+        case ELEV_LOW:
+            return TERM_L_BLUE;  /* Blue for pits */
+        case ELEV_GROUND:
+        default:
+            return base_color;
+    }
+}
+
+/*
+ * Get symbol for elevation features
+ */
+char elev_symbol(int y, int x, char base_sym)
+{
+    int feat = cave_feat[y][x];
+
+    switch (feat) {
+        case FEAT_SLOPE_UP:     return '/';
+        case FEAT_SLOPE_DOWN:   return '\\';
+        case FEAT_CLIFF_UP:     return '|';
+        case FEAT_CLIFF_DOWN:   return '^';
+        case FEAT_HILL_TOP:     return '*';
+        case FEAT_PIT:          return '~';
+        case FEAT_LEDGE:        return '=';
+        default:
+           return base_sym;
+    }
+}
+
+/*
+ * Check if player can move to location considering elevation
+ */
+bool can_move_to_elev(int y, int x)
+{
+    /* Standard checks first */
+    if (!cave_floor_bold(y, x)) return FALSE;
+
+    /* Elevation check */
+    if (!elev_allows_move(p_ptr->py, p_ptr->px, y, x)) {
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+/*
+ * Get movement energy cost including elevation
+ */
+int get_movement_cost(int y, int x)
+{
+    int base_cost = 100; /* Normal */
+
+    /* Elevation modifier */
+    int elev_cost = elev_movement_cost(p_ptr->py, p_ptr->px, y, x);
+
+    return (base_cost * elev_cost) / 100;
 }

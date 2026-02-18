@@ -4859,6 +4859,321 @@ static void populate_features(void)
 }
 
 /*
+ * Build a Hill Sector (elevated 2x2 block)
+ */
+static void build_sector_hill(int y0, int x0)
+{
+    int y1 = y0 * BLOCK_HGT;
+    int x1 = x0 * BLOCK_WID;
+    int y2 = (y0 + 2) * BLOCK_HGT;
+    int x2 = (x0 + 2) * BLOCK_WID;
+    int x, y;
+
+    /* Safety */
+    if (y2 >= DUNGEON_HGT) y2 = DUNGEON_HGT - 1;
+    if (x2 >= DUNGEON_WID) x2 = DUNGEON_WID - 1;
+
+    /* Create hill with gradient */
+    int cy = (y1 + y2) / 2;
+    int cx = (x1 + x2) / 2;
+    int max_dist = MAX(y2 - y1, x2 - x1) / 2;
+
+    for (y = y1; y <= y2; y++) {
+        for (x = x1; x <= x2; x++) {
+            int dist = distance(cy, cx, y, x);
+            int elev = ELEV_GROUND;
+
+            /* Elevation based on distance from center */
+            if (dist < max_dist / 3) {
+                elev = ELEV_HIGH;      /* Summit */
+                cave_feat[y][x] = FEAT_HILL_TOP;
+            } else if (dist < 2 * max_dist / 3) {
+                elev = ELEV_HILL;      /* Hillside */
+                cave_feat[y][x] = FEAT_SLOPE_UP;
+            } else {
+                elev = ELEV_GROUND;    /* Base */
+                cave_feat[y][x] = FEAT_FLOOR;
+            }
+
+            set_elevation(y, x, elev);
+            cave_info[y][x] |= CAVE_ROOM;
+
+            /* Light summit */
+            if (elev == ELEV_HIGH) {
+                cave_info[y][x] |= CAVE_GLOW;
+            }
+        }
+    }
+
+    /* Add slope indicators around edges */
+    for (y = y1 - 1; y <= y2 + 1; y++) {
+        for (x = x1 - 1; x <= x2 + 1; x++) {
+            if (!in_bounds(y, x)) continue;
+            if (get_elevation(y, x) == ELEV_GROUND) {
+                /* Check if adjacent to hill */
+                int dy, dx;
+                for (dy = -1; dy <= 1; dy++) {
+                    for (dx = -1; dx <= 1; dx++) {
+                        if (in_bounds(y+dy, x+dx) &&
+                            get_elevation(y+dy, x+dx) > ELEV_GROUND) {
+                            /* Mark as slope down from hill */
+                            if (cave_feat[y][x] == FEAT_FLOOR) {
+                                cave_feat[y][x] = FEAT_SLOPE_DOWN;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /* Outer walls */
+    for (y = y1 - 1; y <= y2 + 1; y++) {
+        for (x = x1 - 1; x <= x2 + 1; x++) {
+            if (!in_bounds(y, x)) continue;
+            if (cave_feat[y][x] != FEAT_FLOOR &&
+                cave_feat[y][x] != FEAT_SLOPE_UP &&
+                cave_feat[y][x] != FEAT_SLOPE_DOWN &&
+                cave_feat[y][x] != FEAT_HILL_TOP) {
+                bool next_to_floor = FALSE;
+                int dy, dx;
+                for (dy = -1; dy <= 1; dy++) {
+                    for (dx = -1; dx <= 1; dx++) {
+                        if (in_bounds(y+dy, x+dx) &&
+                            (cave_feat[y+dy][x+dx] == FEAT_FLOOR ||
+                             cave_feat[y+dy][x+dx] == FEAT_SLOPE_UP ||
+                             cave_feat[y+dy][x+dx] == FEAT_HILL_TOP)) {
+                            next_to_floor = TRUE;
+                        }
+                    }
+                }
+                if (next_to_floor) {
+                    cave_feat[y][x] = FEAT_WALL_OUTER;
+                }
+            }
+        }
+    }
+
+    /* Place defenders on high ground */
+    if (rand_int(100) < 60) {
+        int my = cy + rand_int(3) - 1;
+        int mx = cx + rand_int(3) - 1;
+        if (in_bounds(my, mx) && get_elevation(my, mx) == ELEV_HIGH) {
+            vault_monsters(my, mx, MON_ALLOC_SLEEP | MON_ALLOC_GROUP);
+        }
+    }
+}
+
+/*
+ * Build a Pit/Depression Sector (low ground 2x2 block)
+ */
+static void build_sector_pit(int y0, int x0)
+{
+    int y1 = y0 * BLOCK_HGT;
+    int x1 = x0 * BLOCK_WID;
+    int y2 = (y0 + 2) * BLOCK_HGT;
+    int x2 = (x0 + 2) * BLOCK_WID;
+    int x, y;
+
+    /* Safety */
+    if (y2 >= DUNGEON_HGT) y2 = DUNGEON_HGT - 1;
+    if (x2 >= DUNGEON_WID) x2 = DUNGEON_WID - 1;
+
+    /* Create depression */
+    int cy = (y1 + y2) / 2;
+    int cx = (x1 + x2) / 2;
+
+    for (y = y1; y <= y2; y++) {
+        for (x = x1; x <= x2; x++) {
+            int dist = distance(cy, cx, y, x);
+
+            /* Center is lowest */
+            if (dist < 3) {
+                set_elevation(y, x, ELEV_LOW);
+                cave_feat[y][x] = FEAT_PIT;
+            } else {
+                set_elevation(y, x, ELEV_GROUND);
+                cave_feat[y][x] = FEAT_SLOPE_DOWN; /* Sloping into pit */
+            }
+
+            cave_info[y][x] |= CAVE_ROOM;
+        }
+    }
+
+    /* Add hazards in pit */
+    int hazard = rand_int(3);
+    for (y = y1 + 2; y <= y2 - 2; y++) {
+        for (x = x1 + 2; x <= x2 - 2; x++) {
+            if (get_elevation(y, x) == ELEV_LOW) {
+                switch (hazard) {
+                    case 0: /* Water/mud */
+                        if (rand_int(100) < 30)
+                            cave_feat[y][x] = FEAT_SHAL_WATER;
+                        break;
+                    case 1: /* Traps */
+                        if (rand_int(100) < 15)
+                            place_trap(y, x);
+                        break;
+                    case 2: /* Monsters */
+                        if (rand_int(100) < 20)
+                            place_monster(y, x, MON_ALLOC_SLEEP);
+                        break;
+                }
+            }
+        }
+    }
+
+    /* Outer walls */
+    for (y = y1 - 1; y <= y2 + 1; y++) {
+        for (x = x1 - 1; x <= x2 + 1; x++) {
+            if (!in_bounds(y, x)) continue;
+            if (cave_feat[y][x] != FEAT_FLOOR &&
+                cave_feat[y][x] != FEAT_SLOPE_DOWN &&
+                cave_feat[y][x] != FEAT_PIT &&
+                cave_feat[y][x] != FEAT_SHAL_WATER) {
+                bool next_to_floor = FALSE;
+                int dy, dx;
+                for (dy = -1; dy <= 1; dy++) {
+                    for (dx = -1; dx <= 1; dx++) {
+                        if (in_bounds(y+dy, x+dx) &&
+                            get_elevation(y+dy, x+dx) <= ELEV_GROUND) {
+                            next_to_floor = TRUE;
+                        }
+                    }
+                }
+                if (next_to_floor) {
+                    cave_feat[y][x] = FEAT_WALL_OUTER;
+                }
+            }
+        }
+    }
+}
+
+/*
+ * Build a Cliff Face (impassable barrier with elevation change)
+ */
+static void build_sector_cliff(int y0, int x0)
+{
+    int y1 = y0 * BLOCK_HGT;
+    int x1 = x0 * BLOCK_WID;
+    int y2 = (y0 + 2) * BLOCK_HGT;
+    int x2 = (x0 + 2) * BLOCK_WID;
+    int x, y;
+
+    /* Safety */
+    if (y2 >= DUNGEON_HGT) y2 = DUNGEON_HGT - 1;
+    if (x2 >= DUNGEON_WID) x2 = DUNGEON_WID - 1;
+
+    /* Orientation */
+    bool vertical = (rand_int(100) < 50);
+
+    if (vertical) {
+        int cliff_x = (x1 + x2) / 2;
+
+        /* High ground on left, low on right (or vice versa) */
+        bool high_left = (rand_int(100) < 50);
+
+        for (y = y1; y <= y2; y++) {
+            for (x = x1; x <= x2; x++) {
+                if (high_left) {
+                    if (x < cliff_x - 1) {
+                        set_elevation(y, x, ELEV_HIGH);
+                        cave_feat[y][x] = FEAT_FLOOR;
+                    } else if (x == cliff_x - 1 || x == cliff_x) {
+                        set_elevation(y, x, ELEV_HIGH);
+                        cave_feat[y][x] = FEAT_CLIFF_DOWN; /* Edge */
+                    } else {
+                        set_elevation(y, x, ELEV_GROUND);
+                        cave_feat[y][x] = FEAT_CLIFF_UP; /* Face */
+                    }
+                } else {
+                    if (x > cliff_x + 1) {
+                        set_elevation(y, x, ELEV_HIGH);
+                        cave_feat[y][x] = FEAT_FLOOR;
+                    } else if (x == cliff_x + 1 || x == cliff_x) {
+                        set_elevation(y, x, ELEV_HIGH);
+                        cave_feat[y][x] = FEAT_CLIFF_DOWN;
+                    } else {
+                        set_elevation(y, x, ELEV_GROUND);
+                        cave_feat[y][x] = FEAT_CLIFF_UP;
+                    }
+                }
+                cave_info[y][x] |= CAVE_ROOM;
+            }
+        }
+
+        /* Add ledges for climbing spots */
+        int num_ledges = 1 + rand_int(2);
+        for (int i = 0; i < num_ledges; i++) {
+            int ly = y1 + 2 + rand_int(y2 - y1 - 3);
+            int lx = cliff_x + (high_left ? 1 : -1);
+            if (in_bounds(ly, lx)) {
+                cave_feat[ly][lx] = FEAT_LEDGE;
+                set_elevation(ly, lx, ELEV_HILL); /* Mid elevation */
+            }
+        }
+
+    } else {
+        /* Horizontal cliff */
+        int cliff_y = (y1 + y2) / 2;
+        bool high_top = (rand_int(100) < 50);
+
+        for (y = y1; y <= y2; y++) {
+            for (x = x1; x <= x2; x++) {
+                if (high_top) {
+                    if (y < cliff_y - 1) {
+                        set_elevation(y, x, ELEV_HIGH);
+                        cave_feat[y][x] = FEAT_FLOOR;
+                    } else if (y == cliff_y - 1 || y == cliff_y) {
+                        set_elevation(y, x, ELEV_HIGH);
+                        cave_feat[y][x] = FEAT_CLIFF_DOWN;
+                    } else {
+                        set_elevation(y, x, ELEV_GROUND);
+                        cave_feat[y][x] = FEAT_CLIFF_UP;
+                    }
+                } else {
+                    if (y > cliff_y + 1) {
+                        set_elevation(y, x, ELEV_HIGH);
+                        cave_feat[y][x] = FEAT_FLOOR;
+                    } else if (y == cliff_y + 1 || y == cliff_y) {
+                        set_elevation(y, x, ELEV_HIGH);
+                        cave_feat[y][x] = FEAT_CLIFF_DOWN;
+                    } else {
+                        set_elevation(y, x, ELEV_GROUND);
+                        cave_feat[y][x] = FEAT_CLIFF_UP;
+                    }
+                }
+                cave_info[y][x] |= CAVE_ROOM;
+            }
+        }
+
+        /* Add ledges */
+        int num_ledges = 1 + rand_int(2);
+        for (int i = 0; i < num_ledges; i++) {
+            int lx = x1 + 3 + rand_int(x2 - x1 - 5);
+            int ly = cliff_y + (high_top ? 1 : -1);
+            if (in_bounds(ly, lx)) {
+                cave_feat[ly][lx] = FEAT_LEDGE;
+                set_elevation(ly, lx, ELEV_HILL);
+            }
+        }
+    }
+
+    /* Archers on high ground */
+    if (rand_int(100) < 50) {
+        /* Find high ground spot */
+        for (int i = 0; i < 10; i++) {
+            int hy = y1 + rand_int(y2 - y1);
+            int hx = x1 + rand_int(x2 - x1);
+            if (in_bounds(hy, hx) && get_elevation(hy, hx) == ELEV_HIGH) {
+                vault_monsters(hy, hx, MON_ALLOC_SLEEP);
+                break;
+            }
+        }
+    }
+}
+
+/*
  * Generate a new dungeon level
  *
  * Note that "dun_body" adds about 4000 bytes of memory to the stack.
@@ -4980,15 +5295,23 @@ static void cave_gen(void)
 		}
 	}
 
+	/* Initialize Elevation */
+	init_elevation();
+
 	/* Initialize Sector Map */
 	for (y = 0; y < dun->row_rooms; y += 2)
 	{
 		for (x = 0; x < dun->col_rooms; x += 2)
 		{
 			int sect_type = SECTOR_RUINS;
-			if (rand_int(100) < (p_ptr->depth / 2)) sect_type = SECTOR_CAVERN;
-			else if (rand_int(100) < 10) sect_type = SECTOR_PLAZA;
-			else if (rand_int(100) < 10) sect_type = SECTOR_DARK;
+			int roll = rand_int(100);
+
+			if (roll < (p_ptr->depth / 2)) sect_type = SECTOR_CAVERN;
+			else if (roll < 10) sect_type = SECTOR_PLAZA;
+			else if (roll < 20) sect_type = SECTOR_DARK;
+			else if (roll < 40 + (p_ptr->depth / 4)) sect_type = SECTOR_HILL;
+			else if (roll < 45 + (p_ptr->depth / 5)) sect_type = SECTOR_PIT;
+			else if (roll < 50 + (p_ptr->depth / 6)) sect_type = SECTOR_CLIFF;
 
 			/* Assign to 2x2 block */
 			cave_sector[y][x] = sect_type;
@@ -5014,6 +5337,54 @@ static void cave_gen(void)
 			if (sect == SECTOR_CAVERN)
 			{
 				build_sector_cavern(y, x);
+				/* Mark blocks as used */
+				dun->room_map[y][x] = TRUE;
+				if (y + 1 < dun->row_rooms) dun->room_map[y + 1][x] = TRUE;
+				if (x + 1 < dun->col_rooms) dun->room_map[y][x + 1] = TRUE;
+				if (y + 1 < dun->row_rooms && x + 1 < dun->col_rooms) dun->room_map[y + 1][x + 1] = TRUE;
+
+				/* Add center for tunnels */
+				if (dun->cent_n < CENT_MAX) {
+					dun->cent[dun->cent_n].y = (y * BLOCK_HGT) + BLOCK_HGT;
+					dun->cent[dun->cent_n].x = (x * BLOCK_WID) + BLOCK_WID;
+					dun->cent_n++;
+				}
+			}
+			else if (sect == SECTOR_HILL)
+			{
+				build_sector_hill(y, x);
+				/* Mark blocks as used */
+				dun->room_map[y][x] = TRUE;
+				if (y + 1 < dun->row_rooms) dun->room_map[y + 1][x] = TRUE;
+				if (x + 1 < dun->col_rooms) dun->room_map[y][x + 1] = TRUE;
+				if (y + 1 < dun->row_rooms && x + 1 < dun->col_rooms) dun->room_map[y + 1][x + 1] = TRUE;
+
+				/* Add center for tunnels */
+				if (dun->cent_n < CENT_MAX) {
+					dun->cent[dun->cent_n].y = (y * BLOCK_HGT) + BLOCK_HGT;
+					dun->cent[dun->cent_n].x = (x * BLOCK_WID) + BLOCK_WID;
+					dun->cent_n++;
+				}
+			}
+			else if (sect == SECTOR_PIT)
+			{
+				build_sector_pit(y, x);
+				/* Mark blocks as used */
+				dun->room_map[y][x] = TRUE;
+				if (y + 1 < dun->row_rooms) dun->room_map[y + 1][x] = TRUE;
+				if (x + 1 < dun->col_rooms) dun->room_map[y][x + 1] = TRUE;
+				if (y + 1 < dun->row_rooms && x + 1 < dun->col_rooms) dun->room_map[y + 1][x + 1] = TRUE;
+
+				/* Add center for tunnels */
+				if (dun->cent_n < CENT_MAX) {
+					dun->cent[dun->cent_n].y = (y * BLOCK_HGT) + BLOCK_HGT;
+					dun->cent[dun->cent_n].x = (x * BLOCK_WID) + BLOCK_WID;
+					dun->cent_n++;
+				}
+			}
+			else if (sect == SECTOR_CLIFF)
+			{
+				build_sector_cliff(y, x);
 				/* Mark blocks as used */
 				dun->room_map[y][x] = TRUE;
 				if (y + 1 < dun->row_rooms) dun->room_map[y + 1][x] = TRUE;

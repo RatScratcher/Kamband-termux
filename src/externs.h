@@ -275,6 +275,7 @@ extern bool store_combine_flag;
 extern s16b cave_cost[DUNGEON_HGT][DUNGEON_WID];
 extern s16b cave_when[DUNGEON_HGT][DUNGEON_WID];
 extern cave_type cave[DUNGEON_HGT][DUNGEON_WID];
+extern s16b cave_elev[DUNGEON_HGT][DUNGEON_WID];
 extern byte cave_info[DUNGEON_HGT][DUNGEON_WID];
 extern byte cave_sector[DUNGEON_HGT][DUNGEON_WID];
 extern byte cave_feat[DUNGEON_HGT][DUNGEON_WID];
@@ -323,6 +324,28 @@ extern void health_track(int m_idx);
 extern void monster_race_track(int r_idx);
 extern void object_kind_track(int k_idx);
 extern void disturb(int stop_search, int unused_flag);
+
+/* Elevation functions */
+extern int get_elevation(int y, int x);
+extern void set_elevation(int y, int x, int elev);
+extern void init_elevation(void);
+extern int elevation_diff(int y1, int x1, int y2, int x2);
+extern bool has_high_ground(int ay, int ax, int ty, int tx);
+extern int elev_to_hit_mod(int ay, int ax, int ty, int tx);
+extern int elev_damage_mod(int ay, int ax, int ty, int tx);
+extern int elev_range_mod(int ay, int ax, int ty, int tx);
+extern int elev_sight_bonus(int y, int x);
+extern bool elev_blocks_sight(int y1, int x1, int y2, int x2);
+extern int elev_movement_cost(int sy, int sx, int dy, int dx);
+extern bool elev_allows_move(int sy, int sx, int dy, int dx);
+extern int elev_fall_damage(int from_elev, int to_elev);
+extern bool do_fall(int y, int x);
+extern int calc_elev_to_hit_bonus(int ty, int tx);
+extern int calc_elev_damage_mod(int ty, int tx);
+extern byte elev_color(int y, int x, byte base_color);
+extern char elev_symbol(int y, int x, char base_sym);
+extern bool can_move_to_elev(int y, int x);
+extern int get_movement_cost(int y, int x);
 
 /* cmd1.c */
 extern bool test_hit_fire(int chance, int ac, int vis);

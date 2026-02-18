@@ -79,6 +79,9 @@ void delete_monster_idx(int i)
 	}
 
 
+	/* Free guard data if present */
+	free_guard_data(i);
+
 	/* Wipe the Monster */
 	WIPE(m_ptr, monster_type);
 

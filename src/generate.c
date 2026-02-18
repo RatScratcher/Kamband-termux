@@ -182,7 +182,7 @@
 /*
  * Maximal number of room types
  */
-#define ROOM_MAX	16
+#define ROOM_MAX	20
 
 
 /*
@@ -280,6 +280,10 @@ static room_data room[ROOM_MAX] = {
     {-2, 2, -2, 2, 1}, /* 13 = Composite (55x55) */
     {-2, 2, -2, 2, 1}, /* 14 = Cavern (55x55) */
     {0, 0, 0, 0, 0},   /* 15 = Unused */
+    {0, 0, 0, 0, 0},   /* 16 = Unused */
+    {0, 0, -1, 1, 10}, /* 17 = Guard Post Room (33x11) */
+    {0, 0, -1, 1, 10}, /* 18 = Ambush Corridor (33x11) */
+    {0, 0, 0, 0, 0},   /* 19 = Unused */
 };
 
 
@@ -1178,6 +1182,76 @@ static void vault_monsters(int y1, int x1, int flags)
 
 
 /*
+ * Place a patrolling monster or guard
+ */
+static void place_guard(int y, int x, int r_idx, int guard_type)
+{
+    int m_idx = place_monster_aux(y, x, r_idx, MON_ALLOC_SLEEP);
+
+    if (m_idx > 0) {
+        setup_guard_post(m_idx, guard_type, y, x);
+    }
+}
+
+/*
+ * Place a patrol
+ */
+static void place_patrol(int y, int x, int r_idx, int patrol_type)
+{
+    int m_idx = place_monster_aux(y, x, r_idx, MON_ALLOC_SLEEP);
+
+    if (m_idx > 0) {
+        setup_monster_patrol(m_idx, patrol_type);
+    }
+}
+
+/*
+ * Generate guard posts in a room
+ */
+static void populate_guard_posts(int y1, int x1, int y2, int x2)
+{
+    int num_guards = 1 + rand_int(3);
+    int i;
+
+    for (i = 0; i < num_guards; i++) {
+        int y, x;
+        int tries = 0;
+
+        while (tries++ < 100) {
+            y = y1 + rand_int(y2 - y1);
+            x = x1 + rand_int(x2 - x1);
+
+            if (!cave_floor_bold(y, x)) continue;
+
+            /* Prefer high value locations */
+            if (rand_int(100) < 50) {
+                /* Guard doorways */
+                int dy, dx;
+                for (dy = -1; dy <= 1; dy++) {
+                    for (dx = -1; dx <= 1; dx++) {
+                        if (cave_feat[y+dy][x+dx] >= FEAT_DOOR_HEAD &&
+                            cave_feat[y+dy][x+dx] <= FEAT_DOOR_TAIL + 7) {
+                            place_guard(y, x, 0, GUARD_POST_DOOR);
+                            return;
+                        }
+                    }
+                }
+            }
+
+            /* Guard high ground */
+            if (get_elevation(y, x) > ELEV_GROUND && rand_int(100) < 60) {
+                place_guard(y, x, 0, GUARD_POST_HIGHGROUND);
+                return;
+            }
+
+            /* Regular guard post */
+            place_guard(y, x, 0, GUARD_POST_ROOM);
+            return;
+        }
+    }
+}
+
+/*
  * Type 1 -- normal rectangular rooms
  */
 static void build_type1(int yval, int xval)
@@ -1250,6 +1324,11 @@ static void build_type1(int yval, int xval)
 			cave_feat[y2][x] = FEAT_WALL_INNER;
 		}
 	}
+
+    /* Add guards to some rooms */
+    if (rand_int(100) < 30 && p_ptr->depth > 5) {
+        populate_guard_posts(y1, x1, y2, x2);
+    }
 }
 
 
@@ -3498,6 +3577,103 @@ static void build_type14(int yval, int xval)
 
 
 /*
+ * Type 17 -- Guard Post Room
+ * Room with fortified positions and alert guards
+ */
+static void build_type17(int yval, int xval)
+{
+    int y, x;
+    int y1, x1, y2, x2;
+    bool light = (p_ptr->depth <= randint(25));
+
+    /* Build standard room */
+    y1 = yval - 3;
+    y2 = yval + 3;
+    x1 = xval - 9;
+    x2 = xval + 9;
+
+    /* Floor and walls */
+    for (y = y1 - 1; y <= y2 + 1; y++) {
+        for (x = x1 - 1; x <= x2 + 1; x++) {
+            cave_feat[y][x] = FEAT_FLOOR;
+            cave_info[y][x] |= CAVE_ROOM;
+            if (light) cave_info[y][x] |= CAVE_GLOW;
+        }
+    }
+
+    /* Outer walls */
+    for (y = y1 - 1; y <= y2 + 1; y++) {
+        cave_feat[y][x1 - 1] = FEAT_WALL_OUTER;
+        cave_feat[y][x2 + 1] = FEAT_WALL_OUTER;
+    }
+    for (x = x1 - 1; x <= x2 + 1; x++) {
+        cave_feat[y1 - 1][x] = FEAT_WALL_OUTER;
+        cave_feat[y2 + 1][x] = FEAT_WALL_OUTER;
+    }
+
+    /* Place guard posts at corners */
+    place_guard(y1 + 1, x1 + 1, 0, GUARD_POST_HIGHGROUND);
+    place_guard(y2 - 1, x2 - 1, 0, GUARD_POST_HIGHGROUND);
+
+    /* Central patrol */
+    place_patrol(yval, xval, 0, PATROL_TYPE_CIRCUIT);
+
+    /* Cover features */
+    cave_feat[y1 + 2][x1 + 2] = FEAT_BOULDER;
+    cave_feat[y2 - 2][x2 - 2] = FEAT_BOULDER;
+    cave_feat[y1 + 2][x2 - 2] = FEAT_STONE_PILLAR;
+    cave_feat[y2 - 2][x1 + 2] = FEAT_STONE_PILLAR;
+}
+
+/*
+ * Type 18 -- Ambush Corridor
+ * Narrow passage with hidden monsters
+ */
+static void build_type18(int yval, int xval)
+{
+    int y, x;
+    int y1 = yval - 2;
+    int y2 = yval + 2;
+    int x1 = xval - 11;
+    int x2 = xval + 11;
+
+    /* Long corridor */
+    for (y = y1; y <= y2; y++) {
+        for (x = x1; x <= x2; x++) {
+            if (y == yval) {
+                cave_feat[y][x] = FEAT_FLOOR;
+            } else {
+                cave_feat[y][x] = FEAT_TALL_GRASS; /* Concealment */
+            }
+            cave_info[y][x] |= CAVE_ROOM;
+        }
+    }
+
+    /* Walls */
+    for (x = x1 - 1; x <= x2 + 1; x++) {
+        cave_feat[y1 - 1][x] = FEAT_WALL_OUTER;
+        cave_feat[y2 + 1][x] = FEAT_WALL_OUTER;
+    }
+
+    /* Ambushers in tall grass */
+    int num_ambushers = 2 + rand_int(3);
+    for (int i = 0; i < num_ambushers; i++) {
+        int my = (rand_int(2) == 0) ? y1 : y2;
+        int mx = x1 + 2 + rand_int(x2 - x1 - 3);
+
+        int m_idx = place_monster_aux(my, mx, 0, MON_ALLOC_SLEEP | MON_ALLOC_HIDE);
+        if (m_idx > 0) {
+            monster_guard_data *guard = alloc_guard_data(m_idx);
+            guard->guard_state = GUARD_STATE_SLEEP;
+            guard->patrol_type = PATROL_TYPE_STATIONARY;
+            guard->home_y = my;
+            guard->home_x = mx;
+        }
+    }
+}
+
+
+/*
  * Attempt to build a room of the given type at the given block
  *
  * Note that we restrict the number of "crowded" rooms to reduce
@@ -3549,6 +3725,12 @@ static bool room_build(int y0, int x0, int typ)
 	switch (typ)
 	{
 			/* Build an appropriate room */
+        case 18:
+            build_type18(y, x);
+            break;
+        case 17:
+            build_type17(y, x);
+            break;
         case 14:
             build_type14(y, x);
             break;
@@ -5539,16 +5721,24 @@ static void cave_gen(void)
 			/* Attempt a very unusual room */
 			if (rand_int(DUN_UNUSUAL) < p_ptr->depth)
 			{
+                /* Type 17 -- Guard Post Room (5% if depth > 10) */
+                if ((k < 5) && (p_ptr->depth >= 10) && room_build(y, x, 17))
+                    continue;
+
+                /* Type 18 -- Ambush Corridor (5% if depth > 15) */
+                if ((k < 10) && (p_ptr->depth >= 15) && room_build(y, x, 18))
+                    continue;
+
                 /* Type 11 -- Folly Vault (10% if depth > 30) */
-                if ((k < 10) && (p_ptr->depth >= 30) && room_build(y, x, 11))
+                if ((k < 20) && (p_ptr->depth >= 30) && room_build(y, x, 11))
                     continue;
 
                 /* Type 10 -- Sanctum (10% if depth > 40) */
-                if ((k < 10) && (p_ptr->depth >= 40) && room_build(y, x, 10))
+                if ((k < 20) && (p_ptr->depth >= 40) && room_build(y, x, 10))
                     continue;
 
 				/* Type 8 -- Greater vault (10%) */
-				if ((k < 10) && room_build(y, x, 8))
+				if ((k < 20) && room_build(y, x, 8))
 					continue;
 
 				/* Type 7 -- Lesser vault (15%) */

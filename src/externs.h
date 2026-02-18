@@ -186,6 +186,7 @@ extern byte angband_color_table[256][4];
 extern char angband_sound_name[SOUND_MAX][16];
 extern object_type *o_list;
 extern monster_type m_list[MAX_M_IDX];
+extern monster_guard_data *m_guard[MAX_M_IDX];
 extern generator gen_list[MAX_GENERATORS];
 extern byte recipe_recall[MAX_RECIPES];
 extern byte quest_status[MAX_QUESTS];
@@ -985,6 +986,18 @@ extern void strike_it_lucky(void);
 
 extern errr init_lua(void);
 
+/* patrol.c */
+extern void init_patrol_system(void);
+extern monster_guard_data *alloc_guard_data(int m_idx);
+extern void free_guard_data(int m_idx);
+extern void setup_monster_patrol(int m_idx, int type);
+extern void setup_guard_post(int m_idx, int post_type, int y, int x);
+extern void setup_squad_patrol(int *m_idx_list, int num_monsters, int center_y, int center_x);
+extern bool execute_patrol_behavior(int m_idx);
+extern void alert_nearby_guards(int y, int x, int radius);
+extern bool monster_is_guarding(int m_idx);
+extern void monster_spotted_target(int m_idx, int ty, int tx);
+
 
 
 /*
@@ -1021,3 +1034,4 @@ extern void user_name(char *buf, int id);
 
 /* main.c */
 /* extern int main(int argc, char *argv[]); */
+extern void get_moves(int m_idx, int mm[5]);

@@ -1862,6 +1862,9 @@ static errr init_other(void)
 	/* Initialize tval priority table */
 	init_tval_order();
 
+    /* Initialize patrol system */
+    init_patrol_system();
+
 
 	/*** Prepare quest tables ***/
 

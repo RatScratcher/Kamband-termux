@@ -412,6 +412,11 @@ object_type *o_list = NULL;
 monster_type m_list[MAX_M_IDX];
 
 /*
+ * The array of guard data
+ */
+monster_guard_data *m_guard[MAX_M_IDX];
+
+/*
  * The array of monster generators
  */
 

@@ -335,6 +335,40 @@
  * Misc constants
  */
 #define MAX_GUARD_DIST      5   /* Pet guard distance */
+
+/*
+ * Monster patrol and guard system
+ */
+#define PATROL_MAX_WAYPOINTS    8       /* Max points in patrol route */
+#define PATROL_RADIUS           6       /* Default patrol radius */
+#define GUARD_ALERT_RADIUS      12      /* Distance to alert other guards */
+#define GUARD_CHASE_TIMEOUT     100     /* Turns before returning to post */
+#define PATROL_REST_TURNS       20      /* Rest at waypoint before moving */
+
+/* Guard states */
+#define GUARD_STATE_PATROL      0       /* Normal patrol */
+#define GUARD_STATE_ALERT       1       /* Heard something, investigating */
+#define GUARD_STATE_CHASE       2       /* Spotted target, pursuing */
+#define GUARD_STATE_RETURN      3       /* Returning to post/patrol */
+#define GUARD_STATE_GUARD       4       /* Stationary at guard post */
+#define GUARD_STATE_SLEEP       5       /* Sleeping at post */
+
+/* Patrol types */
+#define PATROL_TYPE_CIRCUIT     0       /* A-B-C-D-A */
+#define PATROL_TYPE_BACKFORTH   1       /* A-B-C-D-C-B-A */
+#define PATROL_TYPE_RANDOM      2       /* Random movement within radius */
+#define PATROL_TYPE_STATIONARY  3       /* Guard post, no movement */
+
+/*
+ * Guard post types
+ */
+#define GUARD_POST_NONE         0
+#define GUARD_POST_DOOR         1       /* Guarding a doorway */
+#define GUARD_POST_ROOM         2       /* Patrolling a room */
+#define GUARD_POST_CORRIDOR     3       /* Patrolling corridor junction */
+#define GUARD_POST_TREASURE     4       /* Guarding valuable item */
+#define GUARD_POST_HIGHGROUND   5       /* Occupying elevation/cover advantage */
+
 #define TOWN_DAWN			10000 /* Number of turns from dawn to dawn XXX */
 #define BREAK_GLYPH		550	/* Rune of protection resistance */
 #define BTH_PLUS_ADJ		3 /* Adjust BTH per plus-to-hit */
@@ -3651,3 +3685,4 @@ extern int PlayerUID;
 # define MESSAGE_BUF	4096
 #endif
 /* Force rebuild for dungeon size */
+#define MON_ALLOC_HIDE    0x1000

@@ -3259,7 +3259,44 @@ static void do_cmd_knowledge_lore(void)
 	fd_kill(file_name);
 }
 
+/*
+ * Display elevation info
+ */
+static void do_cmd_knowledge_elevation(void)
+{
+    int py = p_ptr->py;
+    int px = p_ptr->px;
+    int elev = get_elevation(py, px);
 
+    screen_save();
+    Term_clear();
+
+    Term_putstr(0, 0, -1, TERM_WHITE, "Elevation Info");
+
+    switch (elev) {
+        case ELEV_HIGH:
+            Term_putstr(0, 1, -1, TERM_L_GREEN, "You stand on high ground!");
+            Term_putstr(0, 2, -1, TERM_WHITE, "Combat: +15% to hit, +20% damage");
+            Term_putstr(0, 3, -1, TERM_WHITE, "Vision: +3 tiles range");
+            break;
+        case ELEV_HILL:
+            Term_putstr(0, 1, -1, TERM_GREEN, "You stand on a hillside.");
+            Term_putstr(0, 2, -1, TERM_WHITE, "Combat: +7% to hit, +10% damage");
+            break;
+        case ELEV_LOW:
+            Term_putstr(0, 1, -1, TERM_L_BLUE, "You are in a depression.");
+            Term_putstr(0, 2, -1, TERM_WHITE, "Combat: -15% to hit upward");
+            Term_putstr(0, 3, -1, TERM_WHITE, "Vision: -2 tiles range");
+            break;
+        default:
+            Term_putstr(0, 1, -1, TERM_WHITE, "You stand on level ground.");
+            break;
+    }
+
+    prt("[Press any key to continue]", screen_y - 1, 0);
+    inkey();
+    screen_load();
+}
 
 
 /*
@@ -4135,6 +4172,7 @@ void do_cmd_knowledge(void)
 		prt("(8) Display learned spells", 11, 5);
 		prt("(9) Display character dump", 12, 5);
 		prt("(0) Display known lore", 13, 5);
+        prt("(E) Display elevation info", 14, 5);
 
 		/* Prompt */
 		prt("Command: ", 15, 0);
@@ -4215,6 +4253,12 @@ void do_cmd_knowledge(void)
 			/* Spawn */
 			do_cmd_knowledge_lore();
 		}
+
+        /* Elevation */
+        else if (i == 'E' || i == 'e')
+        {
+            do_cmd_knowledge_elevation();
+        }
 
 		/* Unknown option */
 		else

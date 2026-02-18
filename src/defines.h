@@ -57,11 +57,48 @@
 #define SECTOR_PLAZA  2
 #define SECTOR_DARK   3
 #define SECTOR_VOID   4
+#define SECTOR_HILL     6
+#define SECTOR_PIT      7
+#define SECTOR_CLIFF    8
 
 /*
  * Dungeon Flags
  */
 #define DF_DARK_PULSE 0x01
+
+/*
+ * Elevation levels
+ */
+#define ELEV_LOW       -1   /* Pits, depressions */
+#define ELEV_GROUND     0   /* Normal floor */
+#define ELEV_HILL       1   /* Slight elevation */
+#define ELEV_HIGH       2   /* Significant high ground */
+#define ELEV_CLIFF      3   /* Extreme elevation (impassable from low side) */
+
+#define ELEV_MAX        3
+#define ELEV_MIN       -1
+
+/*
+ * Elevation combat modifiers (percentage-based)
+ */
+#define ELEV_HIT_BONUS_HIGH     15      /* +15% hit chance from high ground */
+#define ELEV_HIT_PENALTY_LOW    15      /* -15% hit chance to high target */
+#define ELEV_DAM_BONUS_HIGH     20      /* +20% damage from high ground */
+#define ELEV_RANGE_BONUS_HIGH   2       /* +2 range for missiles from high */
+#define ELEV_RANGE_PENALTY_LOW  1       /* -1 range for missiles to high */
+
+/*
+ * Elevation visibility
+ */
+#define ELEV_SIGHT_BONUS        3       /* +3 tiles sight from high ground */
+#define ELEV_SIGHT_PENALTY      2       /* -2 tiles sight to high areas */
+
+/*
+ * Elevation movement costs
+ */
+#define ELEV_ASCEND_COST        2       /* Extra energy to go uphill */
+#define ELEV_DESCEND_COST       0       /* Free to go downhill (or 1 if cautious) */
+#define ELEV_FALL_DAMAGE_MULT   3       /* Damage multiplier for falling */
 
 /*
  * This value is not currently used
@@ -962,6 +999,15 @@
 /* Altars. */
 #define FEAT_ALTAR_HEAD         128
 #define FEAT_ALTAR_TAIL         159
+
+/* Elevation features */
+#define FEAT_SLOPE_UP       160  /* Gradual slope upward */
+#define FEAT_SLOPE_DOWN     161  /* Gradual slope downward */
+#define FEAT_CLIFF_UP       162  /* Cliff face (impassable from below) */
+#define FEAT_CLIFF_DOWN     163  /* Cliff edge (can jump/fall) */
+#define FEAT_HILL_TOP       164 /* Hill summit */
+#define FEAT_PIT            165 /* Depression/pit */
+#define FEAT_LEDGE          166 /* Narrow ledge on cliff */
 
 /*** Artifact indexes (see "lib/edit/a_info.txt") ***/
 

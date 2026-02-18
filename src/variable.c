@@ -356,6 +356,11 @@ s16b cave_when[DUNGEON_HGT][DUNGEON_WID];
 cave_type cave[DUNGEON_HGT][DUNGEON_WID];
 
 /*
+ * The array of cave grid elevation levels
+ */
+s16b cave_elev[DUNGEON_HGT][DUNGEON_WID];
+
+/*
  * The array of cave grid info flags
  */
 byte cave_info[DUNGEON_HGT][DUNGEON_WID];

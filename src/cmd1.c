@@ -1791,6 +1791,9 @@ void py_attack(int y, int x)
 		bonus -= 20;
 	}
 
+	/* Elevation Modifier */
+	bonus += calc_elev_to_hit_bonus(y, x);
+
 	chance = (p_ptr->skill_thn + (bonus * BTH_PLUS_ADJ));
 
 	/* Attack once for each legal blow */
@@ -1816,6 +1819,9 @@ void py_attack(int y, int x)
 				base_dam = k;
 
 				k = tot_dam_aux(o_ptr, k, m_ptr);
+
+				/* Elevation Damage */
+				k = (k * calc_elev_damage_mod(y, x)) / 100;
 
 				if (p_ptr->impact && (k > 50))
 					do_quake = TRUE;
@@ -3220,7 +3226,11 @@ void run_step(int dir)
 	p_ptr->running--;
 
 	/* Take time */
-	p_ptr->energy_use = 100;
+	{
+		int y = p_ptr->py + ddy[p_ptr->run_cur_dir];
+		int x = p_ptr->px + ddx[p_ptr->run_cur_dir];
+		p_ptr->energy_use = get_movement_cost(y, x);
+	}
 
 	/* Move the player, using the "pickup" flag */
 	move_player(p_ptr->run_cur_dir, FALSE);

@@ -1043,6 +1043,19 @@
 #define FEAT_PIT            165 /* Depression/pit */
 #define FEAT_LEDGE          166 /* Narrow ledge on cliff */
 
+/* Elevation access features */
+#define FEAT_RAMP_UP            170 /* Gradual slope, accessible */
+#define FEAT_RAMP_DOWN          171
+#define FEAT_STAIRS_UP          172 /* Stone stairs */
+#define FEAT_STAIRS_DOWN        173
+#define FEAT_LADDER_UP          174 /* Wooden/metal ladder */
+#define FEAT_LADDER_DOWN        175
+#define FEAT_CLIMBABLE          176 /* Rough cliff face that can be climbed */
+#define FEAT_JUMP_POINT         177 /* Marked spot for jumping down */
+#define FEAT_ROPE_UP            178 /* Rope hanging down */
+#define FEAT_ROPE_DOWN          179
+#define FEAT_ESCAPE_PIT         180 /* Ladder out of pit */
+
 /* Cover features */
 #define FEAT_BOULDER            230 /* Large rock for cover */
 #define FEAT_FALLEN_TREE        231 /* Can be destroyed for light cover */
@@ -3512,7 +3525,7 @@
  *
  */
 #define cave_floor_bold(Y,X) \
-     (!(cave_feat[Y][X] & 0x20))
+     (!(cave_feat[Y][X] & 0x20) || (cave_feat[Y][X] >= FEAT_SLOPE_UP && cave_feat[Y][X] <= FEAT_ESCAPE_PIT))
 
 
 /*

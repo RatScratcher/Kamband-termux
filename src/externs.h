@@ -351,6 +351,7 @@ extern int elev_sight_bonus(int y, int x);
 extern bool elev_blocks_sight(int y1, int x1, int y2, int x2);
 extern int elev_movement_cost(int sy, int sx, int dy, int dx);
 extern bool elev_allows_move(int sy, int sx, int dy, int dx);
+extern bool can_ascend(int y, int x);
 extern int elev_fall_damage(int from_elev, int to_elev);
 extern bool do_fall(int y, int x);
 extern int calc_elev_to_hit_bonus(int ty, int tx);
@@ -399,6 +400,10 @@ extern void do_cmd_stay(void);
 extern void do_cmd_rest(void);
 extern void do_cmd_fire(void);
 extern void do_cmd_throw(void);
+extern void do_cmd_climb(void);
+extern void do_cmd_jump_down(void);
+extern void do_cmd_elevation(void);
+extern bool do_elevated_move(int dir, int pickup);
 
 /* cmd3.c */
 extern void do_cmd_inven(void);

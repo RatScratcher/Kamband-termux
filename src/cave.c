@@ -3894,25 +3894,69 @@ bool elev_allows_move(int sy, int sx, int dy, int dx)
 {
     int src_elev = get_elevation(sy, sx);
     int dst_elev = get_elevation(dy, dx);
+    int feat = cave_feat[dy][dx];
 
-    /* Can't climb cliffs from below without flying/levitation */
-    if (dst_elev - src_elev >= 2) {
-        /* Check for cliff feature */
-        if (cave_feat[dy][dx] == FEAT_CLIFF_UP ||
-            cave_feat[dy][dx] == FEAT_WALL_SOLID) {
+    /* Already there */
+    if (src_elev == dst_elev) return TRUE;
 
-            /* Allow if player has levitation or climbing ability */
-            if (p_ptr->flying) return TRUE;
-
-            /* Message if player attempted */
-            if (sy == p_ptr->py && sx == p_ptr->px) {
-                msg_print("The cliff face is too steep to climb!");
+    /* Going down is usually fine (unless too steep) */
+    if (dst_elev < src_elev) {
+        /* Check for dangerous drop */
+        if (src_elev - dst_elev >= 2) {
+            /* Need stairs, ramp, or ladder */
+            if (feat == FEAT_RAMP_DOWN ||
+                feat == FEAT_STAIRS_DOWN ||
+                feat == FEAT_LADDER_DOWN ||
+                feat == FEAT_ROPE_DOWN ||
+                feat == FEAT_JUMP_POINT) {
+                return TRUE;
+            }
+            /* Can jump if not too far and destination is safe */
+            if (feat == FEAT_FLOOR || feat == FEAT_GRASS ||
+                feat == FEAT_SHAL_WATER || feat == FEAT_MUD ||
+                feat == FEAT_SWAMP) {
+                return TRUE; /* Will take damage but allowed */
             }
             return FALSE;
         }
+        return TRUE; /* Small step down */
     }
 
+    /* Going up - need assistance or climbable surface */
+    int diff = dst_elev - src_elev;
+
+    if (diff >= 2) {
+        int src_feat = cave_feat[sy][sx];
+
+        /* Steep climb - need stairs/ramp/ladder */
+        if (feat == FEAT_RAMP_UP ||
+            feat == FEAT_STAIRS_UP ||
+            feat == FEAT_LADDER_UP ||
+            feat == FEAT_ROPE_UP ||
+            feat == FEAT_CLIMBABLE ||
+            feat == FEAT_ESCAPE_PIT ||
+            src_feat == FEAT_LADDER_UP ||
+            src_feat == FEAT_ROPE_UP ||
+            src_feat == FEAT_ESCAPE_PIT) {
+            return TRUE;
+        }
+
+        /* Levitation allows ignoring cliffs */
+        if (p_ptr->flying) return TRUE;
+
+        return FALSE;
+    }
+
+    /* Small elevation change - can usually manage */
     return TRUE;
+}
+
+/*
+ * Check if player can ascend to target elevation
+ */
+bool can_ascend(int y, int x)
+{
+    return elev_allows_move(p_ptr->py, p_ptr->px, y, x);
 }
 
 /*
@@ -3968,6 +4012,19 @@ int calc_elev_damage_mod(int ty, int tx)
 byte elev_color(int y, int x, byte base_color)
 {
     int elev = get_elevation(y, x);
+    int feat = cave_feat[y][x];
+
+    switch (feat) {
+        case FEAT_RAMP_UP:
+        case FEAT_RAMP_DOWN:    return TERM_YELLOW;
+        case FEAT_LADDER_UP:
+        case FEAT_LADDER_DOWN:  return TERM_UMBER;
+        case FEAT_CLIMBABLE:    return TERM_L_UMBER;
+        case FEAT_JUMP_POINT:   return TERM_ORANGE;
+        case FEAT_ROPE_UP:
+        case FEAT_ROPE_DOWN:    return TERM_L_UMBER;
+        case FEAT_ESCAPE_PIT:   return TERM_GREEN;
+    }
 
     switch (elev) {
         case ELEV_HIGH:
@@ -3997,6 +4054,15 @@ char elev_symbol(int y, int x, char base_sym)
         case FEAT_HILL_TOP:     return '*';
         case FEAT_PIT:          return '~';
         case FEAT_LEDGE:        return '=';
+        case FEAT_RAMP_UP:      return '/';
+        case FEAT_RAMP_DOWN:    return '\\';
+        case FEAT_LADDER_UP:    return '=';
+        case FEAT_LADDER_DOWN:  return '=';
+        case FEAT_CLIMBABLE:    return ':';
+        case FEAT_JUMP_POINT:   return 'v';
+        case FEAT_ROPE_UP:      return '|';
+        case FEAT_ROPE_DOWN:    return '|';
+        case FEAT_ESCAPE_PIT:   return '+';
         default:
            return base_sym;
     }

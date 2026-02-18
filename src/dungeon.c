@@ -2535,6 +2535,13 @@ static void process_command(void)
 			break;
 		}
 
+			/* Elevation info */
+		case KTRL('E'):
+		{
+			do_cmd_elevation();
+			break;
+		}
+
 			/* Repeat level feeling */
 		case KTRL('F'):
 		{

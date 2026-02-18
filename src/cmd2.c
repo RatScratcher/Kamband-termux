@@ -2313,6 +2313,13 @@ static void do_cmd_walk_or_jump(int pickup)
 		did_conf_move = TRUE;
 	}
 
+	/* Check for elevation change */
+	if (in_bounds(y, x) && get_elevation(y, x) != get_elevation(py, px)) {
+		if (do_elevated_move(dir, pickup)) return;
+		/* Fall through if failed? No, return */
+		return;
+	}
+
 	/* Verify legality */
 	if (!do_cmd_walk_test(y, x))
 	{
@@ -3437,4 +3444,241 @@ void do_cmd_unwalk(void)
 	/* Cancel repetition unless we can continue */
 	if (!more)
 		disturb(0, 0);
+}
+
+/*
+ * Attempt to move with elevation change
+ * Returns TRUE if move succeeded
+ */
+bool do_elevated_move(int dir, int pickup)
+{
+    int py = p_ptr->py;
+    int px = p_ptr->px;
+    int y = py + ddy[dir];
+    int x = px + ddx[dir];
+
+    if (!in_bounds(y, x)) return FALSE;
+
+    int src_elev = get_elevation(py, px);
+    int dst_elev = get_elevation(y, x);
+    int feat = cave_feat[y][x];
+
+    /* Check if movement is allowed */
+    if (!can_ascend(y, x)) {
+        if (dst_elev > src_elev) {
+            msg_print("The slope is too steep to climb!");
+            /* Suggest what might help */
+            if (dst_elev - src_elev >= 2) {
+                msg_print("You need stairs, a ramp, or climbing gear.");
+            }
+        } else {
+            msg_print("It's too dangerous to jump down!");
+            msg_print("Look for stairs or a gentler slope.");
+        }
+        return FALSE;
+    }
+
+    /* Handle the elevation change */
+    if (dst_elev < src_elev && src_elev - dst_elev >= 2) {
+        /* Descending significant height */
+        if (feat == FEAT_JUMP_POINT ||
+            (feat != FEAT_RAMP_DOWN &&
+             feat != FEAT_STAIRS_DOWN &&
+             feat != FEAT_LADDER_DOWN)) {
+            /* Taking a fall */
+            int damage = elev_fall_damage(src_elev, dst_elev);
+            if (damage > 0) {
+                msg_print("You jump down!");
+                msg_format("You take %d damage from the fall.", damage);
+                take_hit(damage, "a fall");
+
+                /* Check for items breaking */
+                if (rand_int(100) < damage) {
+                    msg_print("Some of your items were damaged!");
+                    /* Damage random inventory item */
+                }
+            }
+        } else {
+            /* Using safe descent */
+            msg_print("You carefully descend.");
+        }
+    } else if (dst_elev > src_elev && dst_elev - src_elev >= 2) {
+        /* Ascending */
+        if (feat == FEAT_CLIMBABLE || feat == FEAT_CLIFF_UP) {
+            msg_print("You climb up the rough surface.");
+            /* Takes more time */
+            p_ptr->energy_use = 150;
+        } else if (feat == FEAT_LADDER_UP || feat == FEAT_ROPE_UP) {
+            msg_print("You climb up.");
+            p_ptr->energy_use = 120;
+        } else if (feat == FEAT_RAMP_UP || feat == FEAT_STAIRS_UP) {
+            msg_print("You make your way up.");
+        }
+    }
+
+    /* Execute the move */
+    move_player(dir, pickup);
+    return TRUE;
+}
+
+/*
+ * Command to deliberately jump down from elevation
+ */
+void do_cmd_jump_down(void)
+{
+    int py = p_ptr->py;
+    int px = p_ptr->px;
+    int elev = get_elevation(py, px);
+
+    if (elev <= ELEV_GROUND) {
+        msg_print("There's nowhere to jump down to.");
+        return;
+    }
+
+    /* Look for adjacent lower ground */
+    int dir = 0;
+    bool found = FALSE;
+    int d;
+
+    for (d = 0; d < 8; d++) {
+        int y = py + ddy_ddd[d];
+        int x = px + ddx_ddd[d];
+
+        if (!in_bounds(y, x)) continue;
+
+        if (get_elevation(y, x) < elev) {
+            found = TRUE;
+            dir = d; /* Save last found */
+            /* Prioritize? */
+        }
+    }
+
+    if (!found) {
+        msg_print("There's no safe place to jump nearby.");
+        return;
+    }
+
+    /* Get direction from player */
+    if (!get_rep_dir(&dir)) return;
+
+    int y = py + ddy[dir];
+    int x = px + ddx[dir];
+
+    if (get_elevation(y, x) >= elev) {
+        msg_print("You can't jump up!");
+        return;
+    }
+
+    /* Execute jump */
+    do_elevated_move(dir, FALSE);
+}
+
+/*
+ * Command to climb up
+ */
+void do_cmd_climb(void)
+{
+    int py = p_ptr->py;
+    int px = p_ptr->px;
+    int elev = get_elevation(py, px);
+
+    if (elev >= ELEV_HIGH) {
+        msg_print("You can't climb any higher here.");
+        return;
+    }
+
+    /* Look for adjacent higher ground or climbable surface */
+    int dir = 0;
+    bool found = FALSE;
+    int d;
+
+    for (d = 0; d < 8; d++) {
+        int y = py + ddy_ddd[d];
+        int x = px + ddx_ddd[d];
+
+        if (!in_bounds(y, x)) continue;
+
+        int dst_elev = get_elevation(y, x);
+        int feat = cave_feat[y][x];
+
+        if (dst_elev > elev ||
+            feat == FEAT_CLIMBABLE ||
+            feat == FEAT_LADDER_UP ||
+            feat == FEAT_ROPE_UP) {
+            found = TRUE;
+            dir = d;
+        }
+    }
+
+    if (!found) {
+        msg_print("There's nothing to climb here.");
+        return;
+    }
+
+    if (!get_rep_dir(&dir)) return;
+
+    /* Execute climb */
+    do_elevated_move(dir, FALSE);
+}
+
+/*
+ * Handle elevation movement commands
+ */
+void do_cmd_elevation(void)
+{
+    int ch;
+
+    /* Show elevation info */
+    int elev = get_elevation(p_ptr->py, p_ptr->px);
+    msg_format("Current elevation: %s",
+        elev == ELEV_LOW ? "low ground" :
+        elev == ELEV_GROUND ? "level ground" :
+        elev == ELEV_HILL ? "hillside" :
+        elev == ELEV_HIGH ? "high ground" : "unknown");
+
+    /* Check adjacent elevation changes */
+    bool can_go_up = FALSE, can_go_down = FALSE;
+    int dir;
+
+    for (dir = 0; dir < 8; dir++) {
+        int y = p_ptr->py + ddy_ddd[dir];
+        int x = p_ptr->px + ddx_ddd[dir];
+
+        if (!in_bounds(y, x)) continue;
+
+        int dst_elev = get_elevation(y, x);
+        if (dst_elev > elev) can_go_up = TRUE;
+        if (dst_elev < elev) can_go_down = TRUE;
+    }
+
+    if (can_go_up) msg_print("You can climb up nearby.");
+    if (can_go_down) msg_print("You can descend nearby.");
+
+    /* Prompt for action */
+    msg_print("(U)p, (D)own, (J)ump, or ESC?");
+
+    ch = inkey();
+
+    switch (ch) {
+        case 'u':
+        case 'U':
+            do_cmd_climb();
+            break;
+        case 'd':
+        case 'D':
+            /* Auto-find descent */
+            for (dir = 0; dir < 8; dir++) {
+                int y = p_ptr->py + ddy_ddd[dir];
+                int x = p_ptr->px + ddx_ddd[dir];
+                if (get_elevation(y, x) < elev) {
+                    do_elevated_move(dir, FALSE);
+                    break;
+                }
+            }
+            break;
+        case 'j':
+        case 'J':
+            do_cmd_jump_down();
+            break;
+    }
 }

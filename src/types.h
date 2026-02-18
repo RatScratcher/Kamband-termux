@@ -576,6 +576,40 @@ struct object_type
 
 
 /*
+ * Patrol waypoint
+ */
+typedef struct patrol_waypoint patrol_waypoint;
+
+struct patrol_waypoint
+{
+    s16b y;
+    s16b x;
+    byte wait_turns;        /* How long to wait here */
+};
+
+/*
+ * Extended monster data for patrols/guards
+ * This extends monster_type without changing its size (using existing padding or flags)
+ * Alternative: use parallel arrays or a separate allocation
+ */
+typedef struct monster_guard_data monster_guard_data;
+
+struct monster_guard_data
+{
+    s16b home_y;            /* Guard post / patrol start Y */
+    s16b home_x;            /* Guard post / patrol start X */
+    s16b alert_y;           /* Last known target Y */
+    s16b alert_x;           /* Last known target X */
+    s16b chase_timer;       /* Countdown to return */
+    byte guard_state;       /* Current state */
+    byte patrol_type;       /* Circuit, back-forth, random */
+    byte current_waypoint;  /* Index in waypoints */
+    byte num_waypoints;     /* Total waypoints */
+    byte guard_post_type;   /* Type of post being guarded */
+    patrol_waypoint waypoints[PATROL_MAX_WAYPOINTS];
+};
+
+/*
  * Monster information, for a specific monster.
  *
  * Note: fy, fx constrain dungeon size to 256x256

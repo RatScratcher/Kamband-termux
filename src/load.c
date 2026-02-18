@@ -362,9 +362,12 @@ static object_type *rd_item_store(void)
 /*
  * Read a monster
  */
-static void rd_monster(monster_type * m_ptr)
+static void rd_monster(monster_type * m_ptr, monster_guard_data **guard_out)
 {
 	object_type *o_ptr;
+    byte has_guard;
+
+    *guard_out = NULL;
 
 	/* Read the monster race */
 	rd_s16b(&m_ptr->r_idx);
@@ -391,6 +394,31 @@ static void rd_monster(monster_type * m_ptr)
 	rd_byte(&m_ptr->fate);
 	rd_s16b(&m_ptr->random_name_idx);
 	rd_s16b(&m_ptr->mflag);
+
+    /* Read guard data */
+    rd_byte(&has_guard);
+    if (has_guard) {
+        int i;
+        monster_guard_data *guard = ZNEW(monster_guard_data);
+
+        rd_s16b(&guard->home_y);
+        rd_s16b(&guard->home_x);
+        rd_s16b(&guard->alert_y);
+        rd_s16b(&guard->alert_x);
+        rd_s16b(&guard->chase_timer);
+        rd_byte(&guard->guard_state);
+        rd_byte(&guard->patrol_type);
+        rd_byte(&guard->current_waypoint);
+        rd_byte(&guard->num_waypoints);
+        rd_byte(&guard->guard_post_type);
+
+        for (i = 0; i < PATROL_MAX_WAYPOINTS; i++) {
+            rd_s16b(&guard->waypoints[i].y);
+            rd_s16b(&guard->waypoints[i].x);
+            rd_byte(&guard->waypoints[i].wait_turns);
+        }
+        *guard_out = guard;
+    }
 
 	/* Read the monster's inventory. */
 	while (1)
@@ -1409,14 +1437,21 @@ static errr rd_dungeon(void)
 		WIPE(n_ptr, monster_type);
 
 		/* Read the monster */
-		rd_monster(n_ptr);
+        monster_guard_data *guard = NULL;
+		rd_monster(n_ptr, &guard);
 
 		/* Place monster in dungeon */
-		if (!monster_place(n_ptr->fy, n_ptr->fx, n_ptr))
+        s16b m_idx = monster_place(n_ptr->fy, n_ptr->fx, n_ptr);
+		if (!m_idx)
 		{
 			note(format("Cannot place monster %d", i));
+            if (guard) KILL(guard, monster_guard_data);
 			/* return (162); */
 		}
+        else if (guard)
+        {
+            m_guard[m_idx] = guard;
+        }
 	}
 
 	/*** Success ***/

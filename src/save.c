@@ -512,9 +512,11 @@ static void wr_item(object_type * o_ptr)
 /*
  * Write a "monster" record
  */
-static void wr_monster(monster_type * m_ptr)
+static void wr_monster(int m_idx)
 {
+	monster_type *m_ptr = &m_list[m_idx];
 	object_type *o_ptr;
+    int i;
 
 	wr_s16b(m_ptr->r_idx);
 	wr_s16b(m_ptr->fy);
@@ -544,6 +546,28 @@ static void wr_monster(monster_type * m_ptr)
 	/* End-of-list marker. */
 	wr_s16b(0);
 
+    /* Write guard data */
+    if (m_guard[m_idx]) {
+        wr_byte(1);
+        wr_s16b(m_guard[m_idx]->home_y);
+        wr_s16b(m_guard[m_idx]->home_x);
+        wr_s16b(m_guard[m_idx]->alert_y);
+        wr_s16b(m_guard[m_idx]->alert_x);
+        wr_s16b(m_guard[m_idx]->chase_timer);
+        wr_byte(m_guard[m_idx]->guard_state);
+        wr_byte(m_guard[m_idx]->patrol_type);
+        wr_byte(m_guard[m_idx]->current_waypoint);
+        wr_byte(m_guard[m_idx]->num_waypoints);
+        wr_byte(m_guard[m_idx]->guard_post_type);
+
+        for (i = 0; i < PATROL_MAX_WAYPOINTS; i++) {
+            wr_s16b(m_guard[m_idx]->waypoints[i].y);
+            wr_s16b(m_guard[m_idx]->waypoints[i].x);
+            wr_byte(m_guard[m_idx]->waypoints[i].wait_turns);
+        }
+    } else {
+        wr_byte(0);
+    }
 }
 
 
@@ -1220,7 +1244,7 @@ static void wr_dungeon(void)
 		if (m_ptr->r_idx < 0 || m_ptr->r_idx >= MAX_R_IDX) continue;
 
 		/* Dump it */
-		wr_monster(m_ptr);
+		wr_monster(i);
 	}
 }
 

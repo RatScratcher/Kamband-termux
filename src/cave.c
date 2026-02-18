@@ -525,6 +525,30 @@ static void image_random(byte * ap, char *cp)
 
 
 /*
+ * Get symbol/color for guard state
+ */
+void get_guard_display(int m_idx, byte *ap, char *cp)
+{
+    monster_guard_data *guard = m_guard[m_idx];
+
+    if (guard == NULL) return;
+
+    /* Alerted guards show differently */
+    if (guard->guard_state == GUARD_STATE_ALERT) {
+        *ap = TERM_YELLOW; /* Yellow for alert */
+    } else if (guard->guard_state == GUARD_STATE_CHASE) {
+        *ap = TERM_L_RED; /* Bright red for chasing */
+    } else if (guard->guard_state == GUARD_STATE_GUARD) {
+        *ap = TERM_BLUE; /* Blue for stationary guard */
+    }
+
+    /* Sleeping guards could use different symbol */
+    if (guard->guard_state == GUARD_STATE_SLEEP) {
+        *cp = tolower(*cp); /* Lowercase for sleeping */
+    }
+}
+
+/*
  * Extract the attr/char to display at the given (legal) map location
  *
  * Basically, we "paint" the chosen attr/char in several passes, starting
@@ -978,6 +1002,11 @@ void map_info(int y, int x, byte * ap, char *cp)
 				/* Hallucinatory monster */
 				image_monster(ap, cp);
 			}
+            else
+            {
+                /* Apply guard display override */
+                get_guard_display(cave_m_idx[y][x], ap, cp);
+            }
 		}
 	}
 

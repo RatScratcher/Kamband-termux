@@ -2677,7 +2677,7 @@ static bool get_moves_aux(int m_idx, int *yp, int *xp)
  *
  * We store the directions in a special "mm" array
  */
-static void get_moves(int m_idx, int mm[5])
+void get_moves(int m_idx, int mm[5])
 {
 	int py;
 	int px;
@@ -3394,6 +3394,12 @@ static void process_monster(int m_idx)
 	{
 		if (make_attack_spell(m_idx))
 			return;
+	}
+
+	/* Patrol AI Hook */
+	if (execute_patrol_behavior(m_idx))
+	{
+		return;
 	}
 
 	/* Reset */

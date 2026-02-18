@@ -53,7 +53,7 @@ SRCS = \
   store.c bldg.c birth.c load.c pursuit.c \
   wizard1.c wizard2.c \
   generate.c dungeon.c init1.c init2.c \
-  lua.c \
+  lua.c cover.c \
   main-cap.c main-gcu.c main-x11.c main-xaw.c main.c
 
 OBJS = \
@@ -66,7 +66,7 @@ OBJS = \
   store.o bldg.o birth.o load.o pursuit.o \
   wizard1.o wizard2.o \
   generate.o sanctum.o dungeon.o init1.o init2.o \
-  lua.o lua/lib/liblua.a lua/lib/liblualib.a \
+  lua.o cover.o lua/lib/liblua.a lua/lib/liblualib.a \
   main-cap.o main-gcu.o main-x11.o main-xaw.o main.o
 
 
@@ -274,6 +274,7 @@ cmd3.o: cmd3.c $(INCS)
 cmd4.o: cmd4.c $(INCS)
 cmd5.o: cmd5.c $(INCS)
 cmd6.o: cmd6.c $(INCS)
+cover.o: cover.c $(INCS)
 dungeon.o: dungeon.c $(INCS)
 files.o: files.c $(INCS)
 generate.o: generate.c $(INCS)

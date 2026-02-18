@@ -2787,6 +2787,25 @@ void do_cmd_fire(void)
 		if (!cave_floor_bold(ny, nx))
 			break;
 
+        /* Check for cover collision */
+        {
+            int cover = get_cover_at(ny, nx);
+            if (cover != COVER_NONE) {
+                int chance = 0;
+                switch(cover) {
+                    case COVER_LIGHT: chance = 25; break;
+                    case COVER_MEDIUM: chance = 40; break;
+                    case COVER_HEAVY: chance = 60; break;
+                    case COVER_TOTAL: chance = 90; break;
+                }
+                if (rand_int(100) < chance) {
+                    msg_print("Your shot hits the cover!");
+                    damage_cover(ny, nx, tdam);
+                    break;
+                }
+            }
+        }
+
 		/* Advance the distance */
 		cur_dis++;
 
@@ -2877,6 +2896,26 @@ void do_cmd_fire(void)
 				/* Apply special damage XXX XXX XXX */
 				tdam = tot_dam_aux(o_ptr, tdam, m_ptr);
 				tdam = critical_shot(o_ptr->weight, o_ptr->to_h, tdam);
+
+                /* Cover Absorption (Target in cover) */
+                {
+                    int cover = get_cover_at(y, x);
+                    if (cover != COVER_NONE) {
+                        int absorb_percent = 0;
+                        switch(cover) {
+                            case COVER_LIGHT: absorb_percent = COVER_ABSORB_LIGHT; break;
+                            case COVER_MEDIUM: absorb_percent = COVER_ABSORB_MEDIUM; break;
+                            case COVER_HEAVY: absorb_percent = COVER_ABSORB_HEAVY; break;
+                            case COVER_TOTAL: absorb_percent = COVER_ABSORB_TOTAL; break;
+                        }
+                        int absorb = (tdam * absorb_percent) / 100;
+                        if (absorb > 0) {
+                            damage_cover(y, x, absorb);
+                            tdam -= absorb;
+                            msg_print("The cover absorbs some damage.");
+                        }
+                    }
+                }
 
 				/* No negative damage */
 				if (tdam < 0)
@@ -3106,6 +3145,25 @@ void do_cmd_throw(void)
 		if (!cave_floor_bold(ny, nx))
 			break;
 
+        /* Check for cover collision */
+        {
+            int cover = get_cover_at(ny, nx);
+            if (cover != COVER_NONE) {
+                int chance = 0;
+                switch(cover) {
+                    case COVER_LIGHT: chance = 25; break;
+                    case COVER_MEDIUM: chance = 40; break;
+                    case COVER_HEAVY: chance = 60; break;
+                    case COVER_TOTAL: chance = 90; break;
+                }
+                if (rand_int(100) < chance) {
+                    msg_print("Your throw hits the cover!");
+                    damage_cover(ny, nx, tdam);
+                    break;
+                }
+            }
+        }
+
 		/* Advance the distance */
 		cur_dis++;
 
@@ -3201,6 +3259,26 @@ void do_cmd_throw(void)
 				/* Apply special damage XXX XXX XXX */
 				tdam = tot_dam_aux(o_ptr, tdam, m_ptr);
 				tdam = critical_shot(o_ptr->weight, o_ptr->to_h, tdam);
+
+                /* Cover Absorption */
+                {
+                    int cover = get_cover_at(y, x);
+                    if (cover != COVER_NONE) {
+                        int absorb_percent = 0;
+                        switch(cover) {
+                            case COVER_LIGHT: absorb_percent = COVER_ABSORB_LIGHT; break;
+                            case COVER_MEDIUM: absorb_percent = COVER_ABSORB_MEDIUM; break;
+                            case COVER_HEAVY: absorb_percent = COVER_ABSORB_HEAVY; break;
+                            case COVER_TOTAL: absorb_percent = COVER_ABSORB_TOTAL; break;
+                        }
+                        int absorb = (tdam * absorb_percent) / 100;
+                        if (absorb > 0) {
+                            damage_cover(y, x, absorb);
+                            tdam -= absorb;
+                            msg_print("The cover absorbs some damage.");
+                        }
+                    }
+                }
 
 				/* No negative damage */
 				if (tdam < 0)

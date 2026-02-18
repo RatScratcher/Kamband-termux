@@ -1009,6 +1009,63 @@
 #define FEAT_PIT            165 /* Depression/pit */
 #define FEAT_LEDGE          166 /* Narrow ledge on cliff */
 
+/* Cover features */
+#define FEAT_BOULDER            230 /* Large rock for cover */
+#define FEAT_FALLEN_TREE        231 /* Can be destroyed for light cover */
+#define FEAT_STONE_PILLAR       232 /* Indestructible medium cover */
+#define FEAT_CRATE              233 /* Breakable light cover */
+#define FEAT_BARREL             234 /* Explosive cover! */
+#define FEAT_FOG_DENSE          235 /* Heavier fog with better concealment */
+#define FEAT_SMOKE              236 /* Created by fire/magic, provides concealment */
+#define FEAT_TALL_GRASS         237 /* Light cover, stealth bonus */
+#define FEAT_REEDS              238 /* Water cover, light */
+
+/*
+ * Cover system constants
+ */
+#define COVER_NONE      0   /* No cover */
+#define COVER_LIGHT     1   /* 25% damage reduction, 25% miss chance */
+#define COVER_MEDIUM    2   /* 50% damage reduction, 40% miss chance */
+#define COVER_HEAVY     3   /* 75% damage reduction, 60% miss chance */
+#define COVER_TOTAL     4   /* 100% damage reduction (invulnerable from that side) */
+
+#define COVER_MAX       4
+
+/*
+ * Cover direction flags (for directional cover)
+ */
+#define COVER_N         0x01
+#define COVER_NE        0x02
+#define COVER_E         0x04
+#define COVER_SE        0x08
+#define COVER_S         0x10
+#define COVER_SW        0x20
+#define COVER_W         0x40
+#define COVER_NW        0x80
+
+/*
+ * Cover damage absorption (percentage of damage that hits cover instead of target)
+ */
+#define COVER_ABSORB_LIGHT      25
+#define COVER_ABSORB_MEDIUM     50
+#define COVER_ABSORB_HEAVY      75
+#define COVER_ABSORB_TOTAL      100
+
+/*
+ * Cover durability - how much damage cover can take before breaking
+ */
+#define COVER_DURABILITY_TREE       50
+#define COVER_DURABILITY_BOULDER    100
+#define COVER_DURABILITY_WALL       200
+#define COVER_DURABILITY_FOG        20  /* Fog disperses quickly when hit */
+
+/*
+ * Cover stealth bonuses
+ */
+#define COVER_STEALTH_LIGHT     2
+#define COVER_STEALTH_MEDIUM    5
+#define COVER_STEALTH_HEAVY     10
+
 /*** Artifact indexes (see "lib/edit/a_info.txt") ***/
 
 

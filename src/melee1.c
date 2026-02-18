@@ -778,6 +778,20 @@ bool make_attack_normal(int m_idx)
 			/* Roll out the damage */
 			damage = damroll(d_dice, d_side);
 
+            /* Cover Check */
+            {
+                int cover_dam = 0;
+                if (!attack_through_cover(m_ptr->fy, m_ptr->fx, p_ptr->py, p_ptr->px, &damage, &cover_dam)) {
+                    if (damage <= 0) {
+                        if (m_ptr->ml) msg_format("%^s's attack is blocked by cover!", m_name);
+                        continue; /* Skip this blow */
+                    }
+                    if (cover_dam > 0 && m_ptr->ml) {
+                        msg_format("The cover absorbs some of %^s's attack.", m_name);
+                    }
+                }
+            }
+
 			/* Alpha breeders do extra damage */
 			if (m_ptr->mflag & MFLAG_ALPHA)
 			{

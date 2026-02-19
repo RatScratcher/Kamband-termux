@@ -118,7 +118,7 @@ CC = gcc
 #
 
 CFLAGS = -Wall -g -D"USE_X11"
-LIBS = -L/usr/X11R6/lib -lX11
+LIBS = -L/usr/X11R6/lib -lX11 -lm
 
 ##
 ## Variation -- Only support "main-x11.c" (not "main-gcu.c")

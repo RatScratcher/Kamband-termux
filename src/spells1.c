@@ -3534,40 +3534,109 @@ static bool project_o(int who, int r, int y, int x, int dam, int typ)
 		case GF_TELEKINESIS:
 		{
 			int ny, nx;
+			bool item_was_moved = FALSE;
 
-			/* Prioritize monsters */
-			if (cave_m_idx[y][x] > 0) break;
-
-			/* Ask for target */
-			p_ptr->target_who = 0;
-			p_ptr->target_row = y;
-			p_ptr->target_col = x;
-			msg_print("Throw where?");
-			if (!target_set(TARGET_GRID | TARGET_FREE))
+			/* Prioritize monsters - if there's a monster, let the monster code handle it */
+			if (cave_m_idx[y][x] > 0)
 			{
-				/* Cancelled */
-				return FALSE;
+				/* Don't process item if monster is present - fall through to monster code below */
+				break;
 			}
 
-			/* Get target */
-			ny = p_ptr->target_row;
-			nx = p_ptr->target_col;
-
-			/* Move object */
-			remove_from_stack(o_ptr);
-			drop_near(o_ptr, FALSE, ny, nx);
-
-			/* Trigger trap at destination */
-			if (cave_feat[ny][nx] >= FEAT_TRAP_HEAD && cave_feat[ny][nx] <= FEAT_TRAP_TAIL)
+			/* Only process items if no monster and we haven't already moved something */
+			if (!telekinesis_fetched)
 			{
-				obj_hit_trap(ny, nx, o_ptr);
+				/* Check weight limit */
+				if (o_ptr->weight > p_ptr->lev * 15)
+				{
+					msg_print("That object is too heavy to lift.");
+					break; /* Skip this item, don't end spell */
+				}
+
+				/* Ask for destination */
+				p_ptr->target_who = 0;
+				p_ptr->target_row = y;
+				p_ptr->target_col = x;
+				msg_print("Throw where?");
+
+				if (!target_set(TARGET_GRID | TARGET_FREE))
+				{
+					/* Cancelled by player - mark as fetched to prevent infinite loop */
+					telekinesis_fetched = TRUE;
+					break;
+				}
+
+				/* Get destination */
+				ny = p_ptr->target_row;
+				nx = p_ptr->target_col;
+
+				/* Validate destination is in line of sight */
+				if (!los(y, x, ny, nx))
+				{
+					msg_print("You must have line of sight to the destination.");
+					telekinesis_fetched = TRUE; /* Prevent retry */
+					break;
+				}
+
+				/* Check path for obstacles */
+				if (!projectable(y, x, ny, nx))
+				{
+					msg_print("Something blocks the path.");
+					telekinesis_fetched = TRUE;
+					break;
+				}
+
+				/* Move object */
+				remove_from_stack(o_ptr);
+
+				/* Place at destination */
+				drop_near(o_ptr, FALSE, ny, nx);
+
+				/* Trigger trap at destination */
+				if (cave_feat[ny][nx] >= FEAT_TRAP_HEAD && cave_feat[ny][nx] <= FEAT_TRAP_TAIL)
+				{
+					msg_print("The item lands on a trap!");
+					if (cave_o_idx[ny][nx])
+						obj_hit_trap(ny, nx, cave_o_idx[ny][nx]);
+				}
+
+				/* Check for environmental effects on item */
+				if (cave_feat[ny][nx] == FEAT_DEEP_LAVA || cave_feat[ny][nx] == FEAT_SHAL_LAVA)
+				{
+					msg_print("The item is consumed by lava!");
+					/* Delete the dropped object */
+					if (cave_o_idx[ny][nx])
+					{
+						remove_object(cave_o_idx[ny][nx]);
+					}
+				}
+				else if (cave_feat[ny][nx] == FEAT_ACID)
+				{
+					msg_print("The item is dissolved by acid!");
+					if (cave_o_idx[ny][nx])
+					{
+						remove_object(cave_o_idx[ny][nx]);
+					}
+				}
+
+				obvious = TRUE;
+				telekinesis_fetched = TRUE;
+				item_was_moved = TRUE;
+
+				/* Visual feedback */
+				lite_spot(y, x);
+				lite_spot(ny, nx);
 			}
 
-			obvious = TRUE;
-			telekinesis_fetched = TRUE;
+			/* Skip monster processing since we handled an item */
+			if (item_was_moved)
+			{
+				/* Set dam to 0 since this isn't an attack */
+				dam = 0;
+				/* Skip rest of this case but don't exit function */
+			}
 
-			/* Stop processing this grid (one item thrown) */
-			return TRUE;
+			break;
 		}
 
 		/* Psionic Spark (Ignite Oil) */
@@ -7687,6 +7756,12 @@ static bool project_finalize(s16b start, int who, int dam, int typ_inp,
 	if (start == max_project_grid)
 		return FALSE;
 
+	/* Reset telekinesis flag */
+	if (typ_inp == GF_TELEKINESIS)
+	{
+		telekinesis_fetched = FALSE;
+	}
+
 	for (i = start; i < max_project_grid; i++)
 	{
 		y = cave_proj_y[i];
@@ -7694,9 +7769,6 @@ static bool project_finalize(s16b start, int who, int dam, int typ_inp,
 		r = cave_proj_r[i];
 		if (cave_proj_dam[i] > -1) current_dam = cave_proj_dam[i];
 		else current_dam = dam;
-
-		/* Reset telekinesis flag */
-		telekinesis_fetched = FALSE;
 
 		/* Mega-hack: Handle the ``RANDOM'' attack type. */
 		if (typ_inp == GF_RANDOM)

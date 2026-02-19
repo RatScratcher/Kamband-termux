@@ -1009,6 +1009,17 @@ spell *select_spell(bool quick)
 }
 
 
+/* Find a spell by name */
+static spell *find_spell_by_name(cptr name)
+{
+	int i;
+	for (i = 0; i < spell_num; i++)
+	{
+		if (strcmp(spells[i].name, name) == 0) return &spells[i];
+	}
+	return NULL;
+}
+
 /*
  * Actually cause the spell effect.
  */
@@ -1027,9 +1038,12 @@ bool cause_spell_effect(spell * s_ptr)
 			pnode->attack_kind = GF_TELEKINESIS;
 
 			/* Clear 'Sticky' Targeting */
-			p_ptr->target_who = 0;
-			p_ptr->target_row = 0;
-			p_ptr->target_col = 0;
+			if (p_ptr->telekinesis_phase == 0)
+			{
+				p_ptr->target_who = 0;
+				p_ptr->target_row = 0;
+				p_ptr->target_col = 0;
+			}
 		}
 
 		if (pnode->attack_kind == GF_ECHO_PULSE)
@@ -1114,6 +1128,114 @@ void do_cmd_cast_power(void)
 
 	spell *s_ptr;
 
+	/* Check for ongoing telekinesis */
+	if (p_ptr->telekinesis_phase == 2)
+	{
+		s_ptr = find_spell_by_name("Telekinetic Toss");
+		if (!s_ptr)
+		{
+			p_ptr->telekinesis_phase = 0;
+			return;
+		}
+
+		/* Check anti-magic */
+		if (p_ptr->anti_magic)
+		{
+			msg_print("An anti-magic field prevents you from casting!");
+			p_ptr->telekinesis_phase = 0;
+			return;
+		}
+
+		msg_print("Select destination for telekinetic toss.");
+
+		if (!target_set(TARGET_KILL))
+		{
+			/* Cancelled */
+			p_ptr->telekinesis_phase = 0;
+			return;
+		}
+
+		/* Proceed to execution */
+
+		if (s_ptr->mana > p_ptr->csp)
+		{
+			mprint(MSG_WARNING,
+				"You do not have enough mana to use this power.");
+			if (!get_check("Attempt it anyway? "))
+			{
+				p_ptr->telekinesis_phase = 0;
+				return;
+			}
+		}
+
+		chance = spell_chance(s_ptr);
+
+		if (randint(100) < chance)
+		{
+			if (flush_failure)
+				flush();
+
+			if (cp_ptr->magic_innate)
+			{
+				if (randint(100) < p_ptr->skill_sav)
+				{
+					mprint(MSG_BONUS,
+						"You feel out of control for a moment, but the "
+						"feeling passes.");
+				}
+				else
+				{
+					mprint(MSG_URGENT, "The magic escapes from your control!");
+					nasty_side_effect();
+				}
+			}
+			else
+			{
+				msg_format("A cloud of %s appears above you.",
+					get_random_line("sfail.txt"));
+			}
+
+			p_ptr->telekinesis_phase = 0;
+			failed = TRUE;
+		}
+		else
+		{
+			/* Bypass cause_spell_effect to target SOURCE while keeping DEST in p_ptr->target */
+			project(-1, 0, p_ptr->telekinesis_src_y, p_ptr->telekinesis_src_x, 0, GF_TELEKINESIS, PROJECT_KILL | PROJECT_ITEM | PROJECT_GRID);
+
+			p_ptr->telekinesis_phase = 0;
+			cast = TRUE;
+		}
+
+		if (failed || cast)
+		{
+			/* Handle costs */
+			p_ptr->energy_use = 100;
+			if (s_ptr->mana <= p_ptr->csp)
+			{
+				p_ptr->csp -= s_ptr->mana;
+			}
+			else
+			{
+				int oops = s_ptr->mana - p_ptr->csp;
+				p_ptr->csp = 0;
+				p_ptr->csp_frac = 0;
+				mprint(MSG_WARNING, "You faint from the effort!");
+				(void) set_paralyzed(p_ptr->paralyzed + randint(5 * oops + 1));
+				if (rand_int(100) < 50)
+				{
+					bool perm = (rand_int(100) < 25);
+					mprint(MSG_URGENT, "You have damaged your health!");
+					(void) dec_stat(A_CON, 15 + randint(10), perm);
+				}
+			}
+			p_ptr->redraw |= (PR_MANA);
+			p_ptr->window |= (PW_SPELL | PW_PLAYER);
+		}
+
+		return;
+	}
+
 	if (p_ptr->anti_magic)
 	{
 		msg_print("An anti-magic field prevents you from casting!");
@@ -1144,6 +1266,34 @@ void do_cmd_cast_power(void)
 		}
 	}
 
+	/* Telekinesis Phase 1 Logic */
+	if (strcmp(s_ptr->name, "Telekinetic Toss") == 0)
+	{
+		/* First phase - get source */
+		if (!target_set(TARGET_KILL))
+			return;
+
+		/* Check what's at target */
+		int y = p_ptr->target_row;
+		int x = p_ptr->target_col;
+
+		if (cave_o_idx[y][x])
+		{
+			/* Object - enter two-phase mode */
+			p_ptr->telekinesis_phase = 2;
+			p_ptr->telekinesis_o_idx = (s16b)(cave_o_idx[y][x] - o_list);
+			p_ptr->telekinesis_src_y = y;
+			p_ptr->telekinesis_src_x = x;
+
+			msg_print("Now select destination.");
+			/* Loop back for second target */
+			do_cmd_cast_power();
+			return;
+		}
+		/* If monster or empty, fall through to normal execution */
+	}
+
+check_spell:
 	if (s_ptr->mana > p_ptr->csp)
 	{
 		mprint(MSG_WARNING,

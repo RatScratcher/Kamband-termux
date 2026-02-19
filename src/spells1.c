@@ -3534,51 +3534,90 @@ static bool project_o(int who, int r, int y, int x, int dam, int typ)
 		case GF_TELEKINESIS:
 		{
 			int ny, nx;
-			bool item_was_moved = FALSE;
+			char o_name[80];
 
-			/* Prioritize monsters - if there's a monster, let the monster code handle it */
-			if (cave_m_idx[y][x] > 0)
+			/* Check if we are executing a move */
+			if (p_ptr->telekinesis_o_idx > 0)
 			{
-				/* Don't process item if monster is present - fall through to monster code below */
-				break;
+				s16b target_o_idx = p_ptr->telekinesis_o_idx;
+
+				/* Check if current object is the target */
+				if ((s16b)(o_ptr - o_list) == target_o_idx)
+				{
+					ny = p_ptr->target_row;
+					nx = p_ptr->target_col;
+
+					/* Validations */
+					if (!in_bounds(ny, nx)) break;
+					if (!projectable(y, x, ny, nx))
+					{
+						msg_print("Something blocks the path.");
+						p_ptr->telekinesis_o_idx = 0;
+						break;
+					}
+
+					object_desc(o_name, o_ptr, TRUE, 3);
+					msg_format("You lift the %s and move it.", o_name);
+
+					/* Remove from source */
+					remove_from_stack(o_ptr);
+
+					/* Place at destination */
+					drop_near(o_ptr, FALSE, ny, nx);
+
+					/* Traps/Environment */
+					if (cave_feat[ny][nx] >= FEAT_TRAP_HEAD &&
+						cave_feat[ny][nx] <= FEAT_TRAP_TAIL)
+					{
+						msg_print("The item lands on a trap!");
+						if (cave_o_idx[ny][nx])
+							obj_hit_trap(ny, nx, cave_o_idx[ny][nx]);
+					}
+
+					if (cave_feat[ny][nx] == FEAT_DEEP_LAVA ||
+						cave_feat[ny][nx] == FEAT_SHAL_LAVA)
+					{
+						msg_print("The item is consumed by lava!");
+						if (cave_o_idx[ny][nx])
+							remove_object(cave_o_idx[ny][nx]);
+					}
+					else if (cave_feat[ny][nx] == FEAT_ACID)
+					{
+						msg_print("The item dissolves in acid!");
+						if (cave_o_idx[ny][nx])
+							remove_object(cave_o_idx[ny][nx]);
+					}
+
+					lite_spot(y, x);
+					lite_spot(ny, nx);
+
+					obvious = TRUE;
+
+					/* Clear state */
+					p_ptr->telekinesis_o_idx = 0;
+					dam = 0;
+				}
 			}
-
-			/* Only process items if no monster and we haven't already moved something */
-			if (!telekinesis_fetched)
+			/* Fallback for Wands/Scrolls */
+			else if (cave_m_idx[y][x] <= 0 && !telekinesis_fetched)
 			{
-				/* Check weight limit */
 				if (o_ptr->weight > p_ptr->lev * 15)
 				{
 					msg_print("That object is too heavy to lift.");
-					break; /* Skip this item, don't end spell */
+					break;
 				}
 
-				/* Ask for destination */
-				p_ptr->target_who = 0;
-				p_ptr->target_row = y;
-				p_ptr->target_col = x;
 				msg_print("Throw where?");
-
 				if (!target_set(TARGET_GRID | TARGET_FREE))
 				{
-					/* Cancelled by player - mark as fetched to prevent infinite loop */
 					telekinesis_fetched = TRUE;
 					break;
 				}
 
-				/* Get destination */
 				ny = p_ptr->target_row;
 				nx = p_ptr->target_col;
 
-				/* Validate destination is in line of sight */
-				if (!los(y, x, ny, nx))
-				{
-					msg_print("You must have line of sight to the destination.");
-					telekinesis_fetched = TRUE; /* Prevent retry */
-					break;
-				}
-
-				/* Check path for obstacles */
+				if (!in_bounds(ny, nx)) break;
 				if (!projectable(y, x, ny, nx))
 				{
 					msg_print("Something blocks the path.");
@@ -3586,56 +3625,41 @@ static bool project_o(int who, int r, int y, int x, int dam, int typ)
 					break;
 				}
 
-				/* Move object */
-				remove_from_stack(o_ptr);
+				object_desc(o_name, o_ptr, TRUE, 3);
+				msg_format("You lift the %s and move it.", o_name);
 
-				/* Place at destination */
+				remove_from_stack(o_ptr);
 				drop_near(o_ptr, FALSE, ny, nx);
 
-				/* Trigger trap at destination */
-				if (cave_feat[ny][nx] >= FEAT_TRAP_HEAD && cave_feat[ny][nx] <= FEAT_TRAP_TAIL)
+				if (cave_feat[ny][nx] >= FEAT_TRAP_HEAD &&
+					cave_feat[ny][nx] <= FEAT_TRAP_TAIL)
 				{
 					msg_print("The item lands on a trap!");
 					if (cave_o_idx[ny][nx])
 						obj_hit_trap(ny, nx, cave_o_idx[ny][nx]);
 				}
 
-				/* Check for environmental effects on item */
-				if (cave_feat[ny][nx] == FEAT_DEEP_LAVA || cave_feat[ny][nx] == FEAT_SHAL_LAVA)
+				if (cave_feat[ny][nx] == FEAT_DEEP_LAVA ||
+					cave_feat[ny][nx] == FEAT_SHAL_LAVA)
 				{
 					msg_print("The item is consumed by lava!");
-					/* Delete the dropped object */
 					if (cave_o_idx[ny][nx])
-					{
 						remove_object(cave_o_idx[ny][nx]);
-					}
 				}
 				else if (cave_feat[ny][nx] == FEAT_ACID)
 				{
-					msg_print("The item is dissolved by acid!");
+					msg_print("The item dissolves in acid!");
 					if (cave_o_idx[ny][nx])
-					{
 						remove_object(cave_o_idx[ny][nx]);
-					}
 				}
+
+				lite_spot(y, x);
+				lite_spot(ny, nx);
 
 				obvious = TRUE;
 				telekinesis_fetched = TRUE;
-				item_was_moved = TRUE;
-
-				/* Visual feedback */
-				lite_spot(y, x);
-				lite_spot(ny, nx);
-			}
-
-			/* Skip monster processing since we handled an item */
-			if (item_was_moved)
-			{
-				/* Set dam to 0 since this isn't an attack */
 				dam = 0;
-				/* Skip rest of this case but don't exit function */
 			}
-
 			break;
 		}
 

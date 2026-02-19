@@ -1281,6 +1281,11 @@ struct player_type
 
 	s16b command_new; /* Hack -- command chaining XXX XXX */
 
+	s16b telekinesis_phase;    /* 0=inactive, 1=selecting source, 2=selecting dest */
+	s16b telekinesis_o_idx;    /* Object being moved */
+	s16b telekinesis_src_y;
+	s16b telekinesis_src_x;
+
 	s16b new_spells; /* Number of spells available */
 
 	s16b old_spells;

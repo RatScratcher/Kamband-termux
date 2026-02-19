@@ -1,0 +1,103 @@
+================================================================================
+KAMBAND TERRAIN FEATURES QUICK REFERENCE
+================================================================================
+
+ELEVATION & TERRAIN
+-------------------
+.   Floor            Normal walkable ground
+^   Hill/High ground Elevated terrain (combat advantage)
+~   Water/Shallow    Shallow water, wadeable
+=   Deep water       Swimming required
+"   Mud/Swamp        Slow movement
+:   Lava             Deadly without protection
+
+ELEVATION ACCESS
+----------------
+/   Ramp up          Gradual slope to higher elevation
+\   Ramp down        Gradual slope to lower elevation
+<   Stairs up        Stone stairs ascending
+>   Stairs down      Stone stairs descending
+|   Ladder           Vertical climb (up or down)
++   Escape ladder    Way out of pits/depressions
+:   Climbable wall   Rough surface that can be scaled
+v   Jump point       Marked spot for safe descent
+
+COVER & CONCEALMENT
+-------------------
+#   Wall             Solid barrier, blocks LOS and movement
+%   Trees            Heavy cover, blocks LOS, climbable
+"   Shrub/Bushes     Light cover, translucent
+;   Tall grass       Concealment, stealth bonus
+,   Rubble           Light cover, rough terrain
+*   Boulder          Heavy cover, indestructible
+0   Pillar           Cover, blocks line of effect
+=   Fallen log       Light cover (destroyed trees)
+
+SPECIAL TERRAIN
+---------------
+!   Altar            Religious site, prayer effects
+?   Trap             Hidden danger (appears as floor until found)
+^   Trap (known)     Revealed trap
+$   Treasure         Gold/items
+&   Stairs/Rubble    Dungeon exit/entrance
+~   Fog/Mist         Concealment, reduced visibility
+`   Ice              Slippery, chance to fall
+^   Chasm/Cliff      Dangerous drop
+~   Acid             Corrosive liquid
+
+DUNGEON FEATURES
+----------------
+'   Door (closed)    Open to pass
+'   Door (open)      Walkable
++   Locked door      Requires key/lockpick
+!   Secret door      Appears as wall until found
+|   Gate             Heavy door, may be barred
+^   Stairs up        To previous level
+>   Stairs down      To next level
+<   Shaft/Trapdoor   One-way descent
+"   Fountain         Water source, may be magical
+_   Statue           Decoration, may be important
+
+ELEVATION INDICATORS (Background/Color)
+---------------------------------------
+Green tint      High ground      +hit, +damage, +sight
+Normal          Level ground     No bonus
+Blue tint       Low/Pit          -hit upward, reduced sight
+Yellow/Orange   Hazardous        Warning color
+
+MONSTER STATES (Color coding)
+-----------------------------
+White           Normal           Standard behavior
+Yellow          Alert            Investigating noise
+Red             Hostile          Active combat
+Blue            Guarding         Stationary patrol
+Green           Sleeping         Unaware, vulnerable
+
+================================================================================
+COMBAT MODIFIERS
+================================================================================
+
+High Ground (+1 elevation):
+  +15% to hit, +20% damage, +2 missile range, +3 sight
+
+Low Ground (-1 elevation):
+  -15% to hit upward, -2 sight, but harder to hit from above
+
+Cover Bonuses:
+  Light cover   : 25% damage reduction, 25% miss chance
+  Medium cover  : 50% damage reduction, 40% miss chance
+  Heavy cover   : 75% damage reduction, 60% miss chance
+
+================================================================================
+TIPS
+================================================================================
+- Use ramps < > and stairs / \ to change elevation safely
+- Jumping down (v) causes fall damage but may surprise enemies
+- Trees % provide heavy cover but can be burned/destroyed
+- Tall grass ; hides you but doesn't stop arrows
+- Guards on high ground ^ are dangerous - flank them or use cover
+- Circular dots often indicate pits or depressions (check elevation)
+- Fog ~ hides you from enemies but also limits your sight
+
+Press ? for full help, or ~ for terrain inspection mode.
+================================================================================

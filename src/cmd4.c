@@ -3298,6 +3298,20 @@ static void do_cmd_knowledge_elevation(void)
     screen_load();
 }
 
+/*
+ * Display terrain features help
+ */
+static void do_cmd_knowledge_terrain(void)
+{
+	char file_name[1024];
+
+	/* Build the filename */
+	path_build(file_name, 1024, ANGBAND_DIR_HELP, "terrain.txt");
+
+	/* Display the file contents */
+	show_file(file_name, "Terrain Features", 0, 0);
+}
+
 
 /*
  * Display your mutations.
@@ -4173,9 +4187,10 @@ void do_cmd_knowledge(void)
 		prt("(9) Display character dump", 12, 5);
 		prt("(0) Display known lore", 13, 5);
         prt("(E) Display elevation info", 14, 5);
+        prt("(T) Display terrain features", 15, 5);
 
 		/* Prompt */
-		prt("Command: ", 15, 0);
+		prt("Command: ", 16, 0);
 
 		/* Prompt */
 		i = inkey();
@@ -4258,6 +4273,12 @@ void do_cmd_knowledge(void)
         else if (i == 'E' || i == 'e')
         {
             do_cmd_knowledge_elevation();
+        }
+
+        /* Terrain */
+        else if (i == 'T' || i == 't')
+        {
+            do_cmd_knowledge_terrain();
         }
 
 		/* Unknown option */

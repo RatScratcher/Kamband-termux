@@ -3531,30 +3531,30 @@ static bool project_o(int who, int r, int y, int x, int dam, int typ)
 			}
 
 		/* Telekinetic Toss (Fetch Item) */
-		case GF_TELEKINESIS:
-		{
-			int ny, nx;
-			char o_name[80];
-
-			/* Check if we are executing a move */
-			if (p_ptr->telekinesis_o_idx > 0)
+			case GF_TELEKINESIS:
 			{
-				s16b target_o_idx = p_ptr->telekinesis_o_idx;
+				int ny, nx;
+				char o_name[80];
 
-				/* Check if current object is the target */
-				if ((s16b)(o_ptr - o_list) == target_o_idx)
+				/* Check if we are executing a move */
+				if (p_ptr->telekinesis_o_idx > 0)
 				{
-					ny = p_ptr->target_row;
-					nx = p_ptr->target_col;
+					s16b target_o_idx = p_ptr->telekinesis_o_idx;
 
-					/* Validations */
-					if (!in_bounds(ny, nx)) break;
-					if (!projectable(y, x, ny, nx))
+					/* Check if current object is the target */
+					if ((s16b)(o_ptr - o_list) == target_o_idx)
 					{
-						msg_print("Something blocks the path.");
-						p_ptr->telekinesis_o_idx = 0;
-						break;
-					}
+						ny = p_ptr->target_row;
+						nx = p_ptr->target_col;
+
+						/* Validations */
+						if (!in_bounds(ny, nx)) break;
+						if (!projectable(y, x, ny, nx))
+						{
+							msg_print("Something blocks the path.");
+							p_ptr->telekinesis_o_idx = 0;
+							break;
+						}
 
 					object_desc(o_name, o_ptr, TRUE, 3);
 					msg_format("You lift the %s and move it.", o_name);
@@ -3660,8 +3660,8 @@ static bool project_o(int who, int r, int y, int x, int dam, int typ)
 				telekinesis_fetched = TRUE;
 				dam = 0;
 			}
-			break;
-		}
+				break;
+			}
 
 		/* Psionic Spark (Ignite Oil) */
 		case GF_PSIONIC_SPARK:

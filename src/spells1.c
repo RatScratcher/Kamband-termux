@@ -3048,6 +3048,217 @@ static bool project_f(int who, int r, int y, int x, int dam, int typ)
  */
 static bool telekinesis_fetched = FALSE;
 
+static bool telekinetic_toss_aux(int y, int x, int ny, int nx, s16b target_o_idx, bool is_monster)
+{
+	if (is_monster)
+	{
+		int m_idx = cave_m_idx[y][x];
+		monster_type *m_ptr;
+		monster_race *r_ptr;
+		char m_name[80];
+		int player_power, monster_resist;
+
+		if (m_idx <= 0) return FALSE;
+
+		m_ptr = &m_list[m_idx];
+		r_ptr = &r_info[m_ptr->r_idx];
+		monster_desc(m_name, m_ptr, 0);
+
+		/* Check: (Player INT + Player Level) vs (Monster Level + 1d20) */
+		/* INT is 3-18/100. 18/100 is treated as 118. */
+		player_power = p_ptr->stat_use[A_INT] + p_ptr->lev;
+		monster_resist = r_ptr->level + randint(20);
+
+		/* Unique monsters are harder */
+		if (r_ptr->flags1 & RF1_UNIQUE) monster_resist += 50;
+
+		if (player_power <= monster_resist)
+		{
+			msg_format("%^s resists your mental grip!", m_name);
+			return FALSE;
+		}
+
+		/* Case: Wall */
+		if (!cave_floor_bold(ny, nx))
+		{
+			bool fear = FALSE;
+			int dam = damroll(10, 6);
+			msg_format("%^s slams into the wall!", m_name);
+			mon_take_hit(m_idx, dam, &fear, " is crushed.", TRUE, FALSE);
+			return TRUE;
+		}
+		/* Case: Occupied by Monster */
+		else if (cave_m_idx[ny][nx] > 0)
+		{
+			int target_m_idx = cave_m_idx[ny][nx];
+			monster_type *target_ptr;
+			char target_name[80];
+			bool fear = FALSE;
+			bool dead_slammer = FALSE;
+			int i, dy, dx;
+
+			if (m_idx == target_m_idx) return FALSE;
+
+			target_ptr = &m_list[target_m_idx];
+			monster_desc(target_name, target_ptr, 0);
+			msg_format("%^s crashes into %s!", m_name, target_name);
+
+			/* Damage both */
+			dead_slammer = mon_take_hit(m_idx, damroll(5, 10), &fear, " is crushed.", TRUE, FALSE);
+			mon_take_hit(target_m_idx, damroll(5, 10), &fear, " is crushed.", TRUE, FALSE);
+
+			/* Displacement: Find adjacent empty square */
+			if (!dead_slammer)
+			{
+				for (i = 0; i < 8; i++)
+				{
+					dy = ny + ddy_ddd[i];
+					dx = nx + ddx_ddd[i];
+
+					if (cave_empty_bold(dy, dx))
+					{
+						monster_swap(y, x, dy, dx);
+						update_mon(m_idx, TRUE);
+						lite_spot(y, x);
+						lite_spot(dy, dx);
+						break;
+					}
+				}
+			}
+
+			/* Aggro Shift */
+			if (!dead_slammer)
+			{
+				target_ptr->ty = m_ptr->fy;
+				target_ptr->tx = m_ptr->fx;
+			}
+
+			return TRUE;
+		}
+		/* Case: Empty (or Player, handled by swap) */
+		else
+		{
+			/* Move */
+			monster_swap(y, x, ny, nx);
+
+			/* Update visual feedback */
+			update_mon(m_idx, TRUE);
+			lite_spot(y, x);
+			lite_spot(ny, nx);
+
+			/* Check environmental effects */
+			if (cave_feat[ny][nx] == FEAT_DEEP_LAVA || cave_feat[ny][nx] == FEAT_SHAL_LAVA)
+			{
+				msg_format("%^s burns in the lava!", m_name);
+				project(-1, 0, ny, nx, damroll(5, 10), GF_FIRE, PROJECT_KILL);
+			}
+			else if (cave_feat[ny][nx] == FEAT_ACID)
+			{
+				if (!(r_ptr->flags3 & RF3_IM_ACID))
+				{
+					msg_format("%^s dissolves in the acid!", m_name);
+				}
+				project(-1, 0, ny, nx, damroll(5, 10), GF_ACID, PROJECT_KILL);
+			}
+			else if (cave_feat[ny][nx] == FEAT_OIL)
+			{
+				msg_format("%^s is covered in oil!", m_name);
+				m_ptr->mflag |= MFLAG_OIL_SOAKED;
+			}
+			else if (cave_feat[ny][nx] == FEAT_DEEP_WATER || cave_feat[ny][nx] == FEAT_SHAL_WATER)
+			{
+				/* Remove oil if dipped in water */
+				if (m_ptr->mflag & MFLAG_OIL_SOAKED)
+				{
+					msg_format("The oil washes off %^s.", m_name);
+					m_ptr->mflag &= ~(MFLAG_OIL_SOAKED);
+				}
+			}
+
+			/* Check for a trap: Override pet safety */
+			if (cave_feat[ny][nx] >= FEAT_TRAP_HEAD && cave_feat[ny][nx] <= FEAT_TRAP_TAIL)
+			{
+				msg_format("%^s is forced onto the glowing tile!", m_name);
+				mon_hit_trap(m_idx, ny, nx);
+			}
+
+			return TRUE;
+		}
+	}
+	else
+	{
+		object_type *o_ptr = cave_o_idx[y][x];
+		object_type *prev_o_ptr = NULL;
+
+		while (o_ptr)
+		{
+			if ((s16b)(o_ptr - o_list) == target_o_idx)
+			{
+				char o_name[80];
+
+				/* Describe before moving */
+				object_desc(o_name, o_ptr, TRUE, 3);
+				msg_format("You lift the %s and move it.", o_name);
+
+				/* Manual unlinking */
+				if (prev_o_ptr)
+				{
+					prev_o_ptr->next = o_ptr->next;
+				}
+				else
+				{
+					cave_o_idx[y][x] = o_ptr->next;
+				}
+
+				if (o_ptr->next)
+				{
+					o_ptr->next->prev = prev_o_ptr;
+				}
+
+				o_ptr->next = NULL;
+				o_ptr->prev = NULL;
+				o_ptr->in_list = FALSE;
+				o_ptr->stack = STACK_NONE;
+
+				/* Place at destination */
+				drop_near(o_ptr, FALSE, ny, nx);
+
+				/* Traps/Environment */
+				if (cave_feat[ny][nx] >= FEAT_TRAP_HEAD &&
+					cave_feat[ny][nx] <= FEAT_TRAP_TAIL)
+				{
+					msg_print("The item lands on a trap!");
+					if (cave_o_idx[ny][nx])
+						obj_hit_trap(ny, nx, cave_o_idx[ny][nx]);
+				}
+
+				if (cave_feat[ny][nx] == FEAT_DEEP_LAVA ||
+					cave_feat[ny][nx] == FEAT_SHAL_LAVA)
+				{
+					msg_print("The item is consumed by lava!");
+					if (cave_o_idx[ny][nx])
+						remove_object(cave_o_idx[ny][nx]);
+				}
+				else if (cave_feat[ny][nx] == FEAT_ACID)
+				{
+					msg_print("The item dissolves in acid!");
+					if (cave_o_idx[ny][nx])
+						remove_object(cave_o_idx[ny][nx]);
+				}
+
+				lite_spot(y, x);
+				lite_spot(ny, nx);
+
+				return TRUE;
+			}
+
+			prev_o_ptr = o_ptr;
+			o_ptr = o_ptr->next;
+		}
+		return FALSE;
+	}
+}
+
 static bool project_o(int who, int r, int y, int x, int dam, int typ)
 {
 	object_type *o_ptr;
@@ -3534,7 +3745,6 @@ static bool project_o(int who, int r, int y, int x, int dam, int typ)
 			case GF_TELEKINESIS:
 			{
 				int ny, nx;
-				char o_name[80];
 
 				/* Check if we are executing a move */
 				if (p_ptr->telekinesis_o_idx > 0)
@@ -3556,110 +3766,48 @@ static bool project_o(int who, int r, int y, int x, int dam, int typ)
 							break;
 						}
 
-					object_desc(o_name, o_ptr, TRUE, 3);
-					msg_format("You lift the %s and move it.", o_name);
-
-					/* Remove from source */
-					remove_from_stack(o_ptr);
-
-					/* Place at destination */
-					drop_near(o_ptr, FALSE, ny, nx);
-
-					/* Traps/Environment */
-					if (cave_feat[ny][nx] >= FEAT_TRAP_HEAD &&
-						cave_feat[ny][nx] <= FEAT_TRAP_TAIL)
+						if (telekinetic_toss_aux(y, x, ny, nx, target_o_idx, FALSE))
+						{
+							p_ptr->telekinesis_o_idx = 0;
+							dam = 0;
+							return TRUE;
+						}
+					}
+				}
+				/* Fallback for Wands/Scrolls */
+				else if (!telekinesis_fetched)
+				{
+					if (o_ptr->weight > p_ptr->lev * 15)
 					{
-						msg_print("The item lands on a trap!");
-						if (cave_o_idx[ny][nx])
-							obj_hit_trap(ny, nx, cave_o_idx[ny][nx]);
+						msg_print("That object is too heavy to lift.");
+						break;
 					}
 
-					if (cave_feat[ny][nx] == FEAT_DEEP_LAVA ||
-						cave_feat[ny][nx] == FEAT_SHAL_LAVA)
+					msg_print("Throw where?");
+					if (!target_set(TARGET_GRID | TARGET_FREE))
 					{
-						msg_print("The item is consumed by lava!");
-						if (cave_o_idx[ny][nx])
-							remove_object(cave_o_idx[ny][nx]);
-					}
-					else if (cave_feat[ny][nx] == FEAT_ACID)
-					{
-						msg_print("The item dissolves in acid!");
-						if (cave_o_idx[ny][nx])
-							remove_object(cave_o_idx[ny][nx]);
+						telekinesis_fetched = TRUE;
+						break;
 					}
 
-					lite_spot(y, x);
-					lite_spot(ny, nx);
+					ny = p_ptr->target_row;
+					nx = p_ptr->target_col;
 
-					obvious = TRUE;
+					if (!in_bounds(ny, nx)) break;
+					if (!projectable(y, x, ny, nx))
+					{
+						msg_print("Something blocks the path.");
+						telekinesis_fetched = TRUE;
+						break;
+					}
 
-					/* Clear state */
-					p_ptr->telekinesis_o_idx = 0;
-					dam = 0;
+					if (telekinetic_toss_aux(y, x, ny, nx, (s16b)(o_ptr - o_list), FALSE))
+					{
+						telekinesis_fetched = TRUE;
+						dam = 0;
+						return TRUE;
+					}
 				}
-			}
-			/* Fallback for Wands/Scrolls */
-			else if (cave_m_idx[y][x] <= 0 && !telekinesis_fetched)
-			{
-				if (o_ptr->weight > p_ptr->lev * 15)
-				{
-					msg_print("That object is too heavy to lift.");
-					break;
-				}
-
-				msg_print("Throw where?");
-				if (!target_set(TARGET_GRID | TARGET_FREE))
-				{
-					telekinesis_fetched = TRUE;
-					break;
-				}
-
-				ny = p_ptr->target_row;
-				nx = p_ptr->target_col;
-
-				if (!in_bounds(ny, nx)) break;
-				if (!projectable(y, x, ny, nx))
-				{
-					msg_print("Something blocks the path.");
-					telekinesis_fetched = TRUE;
-					break;
-				}
-
-				object_desc(o_name, o_ptr, TRUE, 3);
-				msg_format("You lift the %s and move it.", o_name);
-
-				remove_from_stack(o_ptr);
-				drop_near(o_ptr, FALSE, ny, nx);
-
-				if (cave_feat[ny][nx] >= FEAT_TRAP_HEAD &&
-					cave_feat[ny][nx] <= FEAT_TRAP_TAIL)
-				{
-					msg_print("The item lands on a trap!");
-					if (cave_o_idx[ny][nx])
-						obj_hit_trap(ny, nx, cave_o_idx[ny][nx]);
-				}
-
-				if (cave_feat[ny][nx] == FEAT_DEEP_LAVA ||
-					cave_feat[ny][nx] == FEAT_SHAL_LAVA)
-				{
-					msg_print("The item is consumed by lava!");
-					if (cave_o_idx[ny][nx])
-						remove_object(cave_o_idx[ny][nx]);
-				}
-				else if (cave_feat[ny][nx] == FEAT_ACID)
-				{
-					msg_print("The item dissolves in acid!");
-					if (cave_o_idx[ny][nx])
-						remove_object(cave_o_idx[ny][nx]);
-				}
-
-				lite_spot(y, x);
-				lite_spot(ny, nx);
-
-				obvious = TRUE;
-				telekinesis_fetched = TRUE;
-				dam = 0;
-			}
 				break;
 			}
 
@@ -5271,160 +5419,24 @@ static bool project_m(int who, int r, int y, int x, int dam, int typ)
 			int ny, nx;
 
 			if (telekinesis_fetched) break;
-			bool success = FALSE;
 
-			/* Check: (Player INT + Player Level) vs (Monster Level + 1d20) */
-			/* INT is 3-18/100. 18/100 is treated as 118. */
-			int player_power = p_ptr->stat_use[A_INT] + p_ptr->lev;
-			int monster_resist = r_ptr->level + randint(20);
+			/* Destination Phase: The Shove */
+			msg_print("Throw where?");
 
-			/* Unique monsters are harder */
-			if (r_ptr->flags1 & RF1_UNIQUE) monster_resist += 50;
-
-			if (player_power > monster_resist)
+			if (target_set(TARGET_GRID | TARGET_FREE))
 			{
-				int dir;
+				ny = p_ptr->target_row;
+				nx = p_ptr->target_col;
+				p_ptr->target_who = -1;
 
-				/* Selection Phase: Store index and clear target */
-				/* m_idx is already cave_m_idx[y][x] */
-				p_ptr->target_who = 0;
-				p_ptr->target_row = y;
-				p_ptr->target_col = x;
-
-				/* Destination Phase: The Shove */
-				msg_print("Throw where?");
-
-				if (target_set(TARGET_GRID | TARGET_FREE))
+				if (telekinetic_toss_aux(y, x, ny, nx, 0, TRUE))
 				{
-					ny = p_ptr->target_row;
-					nx = p_ptr->target_col;
-					p_ptr->target_who = -1;
-
-					/* Case: Wall */
-					if (!cave_floor_bold(ny, nx))
-					{
-						int m_idx = cave_m_idx[y][x];
-						bool fear = FALSE;
-
-						/* Apply slam damage */
-						dam = damroll(10, 6);
-						msg_format("%^s slams into the wall!", m_name);
-						mon_take_hit(m_idx, dam, &fear, " is crushed.", TRUE, FALSE);
-						obvious = TRUE;
-					}
-					/* Case: Floor */
-					else
-					{
-						int m_idx = cave_m_idx[y][x];
-						int target_m_idx = cave_m_idx[ny][nx];
-
-						/* Case: Occupied by Monster */
-						if (target_m_idx > 0)
-						{
-							if (m_idx == target_m_idx) return FALSE;
-
-							monster_type *target_ptr = &m_list[target_m_idx];
-							char target_name[80];
-							bool fear = FALSE;
-							int dy, dx, i;
-							bool dead_slammer = FALSE;
-
-							monster_desc(target_name, target_ptr, 0);
-							msg_format("%^s crashes into %s!", m_name, target_name);
-
-							/* Damage both */
-							dead_slammer = mon_take_hit(m_idx, damroll(5, 10), &fear, " is crushed.", TRUE, FALSE);
-							mon_take_hit(target_m_idx, damroll(5, 10), &fear, " is crushed.", TRUE, FALSE);
-
-							/* Displacement: Find adjacent empty square */
-							if (!dead_slammer)
-							{
-								for (i = 0; i < 8; i++)
-								{
-									dy = ny + ddy_ddd[i];
-									dx = nx + ddx_ddd[i];
-
-									if (cave_empty_bold(dy, dx))
-									{
-										monster_swap(y, x, dy, dx);
-										update_mon(m_idx, TRUE);
-										lite_spot(y, x);
-										lite_spot(dy, dx);
-										break;
-									}
-								}
-							}
-
-							/* Aggro Shift */
-							if (!dead_slammer)
-							{
-								target_ptr->ty = m_ptr->fy;
-								target_ptr->tx = m_ptr->fx;
-							}
-
-							obvious = TRUE;
-						}
-						/* Case: Empty (or Player, handled by swap) */
-						else
-						{
-							/* Move */
-							monster_swap(y, x, ny, nx);
-
-							/* Update visual feedback */
-							update_mon(m_idx, TRUE);
-							lite_spot(y, x);
-							lite_spot(ny, nx);
-
-							/* Check environmental effects */
-							if (cave_feat[ny][nx] == FEAT_DEEP_LAVA || cave_feat[ny][nx] == FEAT_SHAL_LAVA)
-							{
-								msg_format("%^s burns in the lava!", m_name);
-								project(who, 0, ny, nx, damroll(5, 10), GF_FIRE, PROJECT_KILL);
-							}
-							else if (cave_feat[ny][nx] == FEAT_ACID)
-							{
-								if (!(r_ptr->flags3 & RF3_IM_ACID))
-								{
-									msg_format("%^s dissolves in the acid!", m_name);
-								}
-								project(who, 0, ny, nx, damroll(5, 10), GF_ACID, PROJECT_KILL);
-							}
-							else if (cave_feat[ny][nx] == FEAT_OIL)
-							{
-								msg_format("%^s is covered in oil!", m_name);
-								m_ptr->mflag |= MFLAG_OIL_SOAKED;
-							}
-							else if (cave_feat[ny][nx] == FEAT_DEEP_WATER || cave_feat[ny][nx] == FEAT_SHAL_WATER)
-							{
-								/* Remove oil if dipped in water */
-								if (m_ptr->mflag & MFLAG_OIL_SOAKED)
-								{
-									msg_format("The oil washes off %^s.", m_name);
-									m_ptr->mflag &= ~(MFLAG_OIL_SOAKED);
-								}
-							}
-
-							/* Check for a trap: Override pet safety */
-							if (p_ptr->target_row == ny && p_ptr->target_col == nx &&
-								cave_feat[ny][nx] >= FEAT_TRAP_HEAD && cave_feat[ny][nx] <= FEAT_TRAP_TAIL)
-							{
-								msg_format("%^s is forced onto the glowing tile!", m_name);
-								mon_hit_trap(m_idx, ny, nx);
-							}
-
-							obvious = TRUE;
-						}
-					}
-				}
-				else
-				{
-					skipped = TRUE;
+					telekinesis_fetched = TRUE;
 				}
 			}
 			else
 			{
-				note = " resists your mental grip!";
-				obvious = TRUE;
+				skipped = TRUE;
 			}
 
 			dam = 0; /* No direct damage from the grab itself */

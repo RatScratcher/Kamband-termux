@@ -3950,11 +3950,11 @@ static int terrain_table[2][22] = {
 			FEAT_SHAL_WATER,
 
 			FEAT_MUD,
-			FEAT_MUD,
 
 			FEAT_SWAMP,
-			FEAT_SWAMP,
 
+			FEAT_GRASS,
+			FEAT_GRASS,
 			FEAT_GRASS,
 			FEAT_GRASS,
 			FEAT_GRASS,
@@ -3988,13 +3988,13 @@ static int terrain_table[2][22] = {
 			FEAT_SHAL_WATER,
 
 			FEAT_MUD,
-			FEAT_MUD,
-			FEAT_MUD,
 
 			FEAT_SWAMP,
-			FEAT_SWAMP,
-			FEAT_SWAMP,
 
+			FEAT_GRASS,
+			FEAT_GRASS,
+			FEAT_GRASS,
+			FEAT_GRASS,
 			FEAT_GRASS,
 			FEAT_GRASS,
 
@@ -5634,15 +5634,17 @@ static void cave_gen(void)
 	{
 		for (x = 0; x < dun->col_rooms; x += 2)
 		{
-			int sect_type = SECTOR_RUINS;
+			int sect_type = SECTOR_RUINS; /* Default to structural */
 			int roll = rand_int(100);
 
-			if (roll < (p_ptr->depth / 2)) sect_type = SECTOR_CAVERN;
-			else if (roll < 10) sect_type = SECTOR_PLAZA;
-			else if (roll < 20) sect_type = SECTOR_DARK;
-			else if (roll < 40 + (p_ptr->depth / 4)) sect_type = SECTOR_HILL;
-			else if (roll < 45 + (p_ptr->depth / 5)) sect_type = SECTOR_PIT;
-			else if (roll < 50 + (p_ptr->depth / 6)) sect_type = SECTOR_CLIFF;
+			/* Increase the floor for SECTOR_RUINS (structures) */
+			if (roll < 15) sect_type = SECTOR_PLAZA;      /* Increased from 10 */
+			else if (roll < 25) sect_type = SECTOR_RUINS; /* Explicitly favoring structures */
+			else if (roll < 35) sect_type = SECTOR_DARK;  /* Reduced from original high-weight */
+			else if (roll < 50 + (p_ptr->depth / 8)) sect_type = SECTOR_HILL;
+			else if (roll < 60) sect_type = SECTOR_PIT;
+			else if (roll < 70) sect_type = SECTOR_CLIFF;
+			else sect_type = SECTOR_CAVERN;               /* Caverns become the "catch-all" less often */
 
 			/* Assign to 2x2 block */
 			cave_sector[y][x] = sect_type;
@@ -5814,10 +5816,18 @@ static void cave_gen(void)
 		}
 
 		/* Attempt an "unusual" room */
-		if (rand_int(DUN_UNUSUAL) < p_ptr->depth)
+		if (rand_int(DUN_UNUSUAL) < (p_ptr->depth + 20)) /* Added +20 to boost structure frequency */
 		{
 			/* Roll for room type */
 			k = rand_int(100);
+
+			/* Higher priority for Guard Posts and Sanctums */
+			if ((k < 15) && (p_ptr->depth >= 10) && room_build(y, x, 17)) /* Guard Post */
+				continue;
+
+			/* Increase frequency of Large Rooms (Type 4) */
+			if ((k < 40) && room_build(y, x, 4))
+				continue;
 
 			/* Attempt a very unusual room */
 			if (rand_int(DUN_UNUSUAL) < p_ptr->depth)

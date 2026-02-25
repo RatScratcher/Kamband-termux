@@ -4823,6 +4823,10 @@ static void build_sector_dark(int y0, int x0)
 	int x2 = (x0 + 2) * BLOCK_WID;
 	int x, y, i;
 
+	int cy = (y1 + y2) / 2;
+	int cx = (x1 + x2) / 2;
+	/* int max_dist = MAX(y2 - y1, x2 - x1) / 2; */
+
 	/* Safety */
 	if (y2 >= DUNGEON_HGT) y2 = DUNGEON_HGT - 1;
 	if (x2 >= DUNGEON_WID) x2 = DUNGEON_WID - 1;
@@ -4832,14 +4836,18 @@ static void build_sector_dark(int y0, int x0)
 	{
 		for (x = x1; x <= x2; x++)
 		{
-			if (rand_int(100) < 40) cave_feat[y][x] = FEAT_WALL_EXTRA;
+			int dist = distance(cy, cx, y, x);
+			int wall_chance = 40 + (dist * 4);
+			if (wall_chance > 100) wall_chance = 100;
+
+			if (rand_int(100) < wall_chance) cave_feat[y][x] = FEAT_WALL_EXTRA;
 			else cave_feat[y][x] = FEAT_FLOOR;
 			cave_info[y][x] |= CAVE_ROOM;
 		}
 	}
 
-	/* Cellular Automata Smoothing (4 iterations) */
-	for (i = 0; i < 4; i++)
+	/* Cellular Automata Smoothing (6 iterations) */
+	for (i = 0; i < 6; i++)
 	{
 		bool next_grid[33][33];
         int h = y2 - y1 + 1;

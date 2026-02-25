@@ -2145,7 +2145,7 @@ bool do_cmd_walk_test(int y, int x)
 	}
 
 	/* Check for elevation obstruction */
-	if (!elev_allows_move(p_ptr->py, p_ptr->px, y, x)) return (FALSE);
+	if (!elev_allows_move(p_ptr->py, p_ptr->px, y, x, p_ptr->flying)) return (FALSE);
 
 
 	/* Hack -- walking obtains knowledge XXX XXX */

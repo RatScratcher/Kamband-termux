@@ -3923,12 +3923,19 @@ bool elev_allows_move(int sy, int sx, int dy, int dx, bool flying)
     if (dst_elev < src_elev) {
         /* Check for dangerous drop */
         if (src_elev - dst_elev >= 2) {
-            /* Need stairs, ramp, or ladder */
-            if (feat == FEAT_RAMP_DOWN ||
-                feat == FEAT_STAIRS_DOWN ||
-                feat == FEAT_LADDER_DOWN ||
-                feat == FEAT_ROPE_DOWN ||
-                feat == FEAT_JUMP_POINT) {
+            int src_feat = cave_feat[sy][sx];
+
+            /* Need stairs, ramp, or ladder (Bi-directional check) */
+            if (feat == FEAT_RAMP_DOWN || feat == FEAT_RAMP_UP ||
+                feat == FEAT_STAIRS_DOWN || feat == FEAT_STAIRS_UP ||
+                feat == FEAT_LADDER_DOWN || feat == FEAT_LADDER_UP ||
+                feat == FEAT_ROPE_DOWN || feat == FEAT_ROPE_UP ||
+                feat == FEAT_JUMP_POINT || feat == FEAT_ESCAPE_PIT ||
+                src_feat == FEAT_RAMP_DOWN || src_feat == FEAT_RAMP_UP ||
+                src_feat == FEAT_STAIRS_DOWN || src_feat == FEAT_STAIRS_UP ||
+                src_feat == FEAT_LADDER_DOWN || src_feat == FEAT_LADDER_UP ||
+                src_feat == FEAT_ROPE_DOWN || src_feat == FEAT_ROPE_UP ||
+                src_feat == FEAT_ESCAPE_PIT) {
                 return TRUE;
             }
             /* Can jump if not too far and destination is safe */
@@ -3948,15 +3955,17 @@ bool elev_allows_move(int sy, int sx, int dy, int dx, bool flying)
     if (diff >= 2) {
         int src_feat = cave_feat[sy][sx];
 
-        /* Steep climb - need stairs/ramp/ladder */
-        if (feat == FEAT_RAMP_UP ||
-            feat == FEAT_STAIRS_UP ||
-            feat == FEAT_LADDER_UP ||
-            feat == FEAT_ROPE_UP ||
+        /* Steep climb - need stairs/ramp/ladder (Bi-directional check) */
+        if (feat == FEAT_RAMP_UP || feat == FEAT_RAMP_DOWN ||
+            feat == FEAT_STAIRS_UP || feat == FEAT_STAIRS_DOWN ||
+            feat == FEAT_LADDER_UP || feat == FEAT_LADDER_DOWN ||
+            feat == FEAT_ROPE_UP || feat == FEAT_ROPE_DOWN ||
             feat == FEAT_CLIMBABLE ||
             feat == FEAT_ESCAPE_PIT ||
-            src_feat == FEAT_LADDER_UP ||
-            src_feat == FEAT_ROPE_UP ||
+            src_feat == FEAT_LADDER_UP || src_feat == FEAT_LADDER_DOWN ||
+            src_feat == FEAT_ROPE_UP || src_feat == FEAT_ROPE_DOWN ||
+            src_feat == FEAT_STAIRS_UP || src_feat == FEAT_STAIRS_DOWN ||
+            src_feat == FEAT_RAMP_UP || src_feat == FEAT_RAMP_DOWN ||
             src_feat == FEAT_ESCAPE_PIT) {
             return TRUE;
         }

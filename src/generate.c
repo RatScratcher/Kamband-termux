@@ -291,8 +291,8 @@ static room_data room[ROOM_MAX] = {
     {-2, 2, -2, 2, 1}, /* 14 = Cavern (55x55) */
     {0, 0, 0, 0, 0},   /* 15 = Unused */
     {0, 0, 0, 0, 0},   /* 16 = Unused */
-    {0, 0, -1, 1, 10}, /* 17 = Guard Post Room (33x11) */
-    {0, 0, -1, 1, 10}, /* 18 = Ambush Corridor (33x11) */
+    {0, 0, -1, 1, 5}, /* 17 = Guard Post Room (33x11) */
+    {0, 0, -1, 1, 5}, /* 18 = Ambush Corridor (33x11) */
     {0, 0, 0, 0, 0},   /* 19 = Unused */
 };
 
@@ -3623,7 +3623,9 @@ static void build_type17(int yval, int xval)
 
     /* Place guard posts at corners */
     place_guard(y1 + 1, x1 + 1, 0, GUARD_POST_HIGHGROUND);
-    place_guard(y2 - 1, x2 - 1, 0, GUARD_POST_HIGHGROUND);
+    if (p_ptr->depth >= 10) {
+        place_guard(y2 - 1, x2 - 1, 0, GUARD_POST_HIGHGROUND);
+    }
 
     /* Central patrol */
     place_patrol(yval, xval, 0, PATROL_TYPE_CIRCUIT);
@@ -3666,7 +3668,7 @@ static void build_type18(int yval, int xval)
     }
 
     /* Ambushers in tall grass */
-    int num_ambushers = 2 + rand_int(3);
+    int num_ambushers = (p_ptr->depth < 10) ? (1 + rand_int(2)) : (2 + rand_int(3));
     for (int i = 0; i < num_ambushers; i++) {
         int my = (rand_int(2) == 0) ? y1 : y2;
         int mx = x1 + 2 + rand_int(x2 - x1 - 3);
@@ -5830,7 +5832,7 @@ static void cave_gen(void)
 			k = rand_int(100);
 
 			/* Higher priority for Guard Posts and Sanctums */
-			if ((k < 15) && (p_ptr->depth >= 10) && room_build(y, x, 17)) /* Guard Post */
+			if ((k < 15) && (p_ptr->depth >= 5) && room_build(y, x, 17)) /* Guard Post */
 				continue;
 
 			/* Increase frequency of Large Rooms (Type 4) */
@@ -5840,12 +5842,12 @@ static void cave_gen(void)
 			/* Attempt a very unusual room */
 			if (rand_int(DUN_UNUSUAL) < p_ptr->depth)
 			{
-                /* Type 17 -- Guard Post Room (5% if depth > 10) */
-                if ((k < 5) && (p_ptr->depth >= 10) && room_build(y, x, 17))
+                /* Type 17 -- Guard Post Room (5% if depth >= 5) */
+                if ((k < 5) && (p_ptr->depth >= 5) && room_build(y, x, 17))
                     continue;
 
-                /* Type 18 -- Ambush Corridor (5% if depth > 15) */
-                if ((k < 10) && (p_ptr->depth >= 15) && room_build(y, x, 18))
+                /* Type 18 -- Ambush Corridor (5% if depth >= 5) */
+                if ((k < 10) && (p_ptr->depth >= 5) && room_build(y, x, 18))
                     continue;
 
                 /* Type 11 -- Folly Vault (10% if depth > 30) */

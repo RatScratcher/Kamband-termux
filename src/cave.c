@@ -3147,9 +3147,29 @@ void update_flow(void)
 		/* Add the "children" */
 		for (d = 0; d < 8; d++)
 		{
+			int ny = y + ddy_ddd[d];
+			int nx = x + ddx_ddd[d];
+
+			/* Check elevation: Monster at ny,nx must be able to move to y,x
+			   (downstream) to use this flow */
+			if (!elev_allows_move(ny, nx, y, x, FALSE)) continue;
+
+			/* Pathfinding restriction: Treat steep cliffs as walls (no jumping) */
+			if (get_elevation(ny, nx) > get_elevation(y, x)) {
+				int diff = get_elevation(ny, nx) - get_elevation(y, x);
+				if (diff >= 2) {
+					int feat = cave_feat[y][x];
+					/* Only allow if there is a valid way down */
+					if (feat != FEAT_RAMP_DOWN && feat != FEAT_STAIRS_DOWN &&
+						feat != FEAT_LADDER_DOWN && feat != FEAT_ROPE_DOWN &&
+						feat != FEAT_JUMP_POINT) {
+						continue;
+					}
+				}
+			}
+
 			/* Add that child if "legal" */
-			update_flow_aux(y + ddy_ddd[d], x + ddx_ddd[d],
-				cave_cost[y][x] + 1);
+			update_flow_aux(ny, nx, cave_cost[y][x] + 1);
 		}
 	}
 
@@ -3890,7 +3910,7 @@ int elev_movement_cost(int sy, int sx, int dy, int dx)
 /*
  * Check if movement is allowed (cliffs block from below)
  */
-bool elev_allows_move(int sy, int sx, int dy, int dx)
+bool elev_allows_move(int sy, int sx, int dy, int dx, bool flying)
 {
     int src_elev = get_elevation(sy, sx);
     int dst_elev = get_elevation(dy, dx);
@@ -3942,7 +3962,7 @@ bool elev_allows_move(int sy, int sx, int dy, int dx)
         }
 
         /* Levitation allows ignoring cliffs */
-        if (p_ptr->flying) return TRUE;
+		if (flying) return TRUE;
 
         return FALSE;
     }
@@ -3956,7 +3976,7 @@ bool elev_allows_move(int sy, int sx, int dy, int dx)
  */
 bool can_ascend(int y, int x)
 {
-    return elev_allows_move(p_ptr->py, p_ptr->px, y, x);
+	return elev_allows_move(p_ptr->py, p_ptr->px, y, x, p_ptr->flying);
 }
 
 /*
@@ -4077,7 +4097,7 @@ bool can_move_to_elev(int y, int x)
     if (!cave_floor_bold(y, x)) return FALSE;
 
     /* Elevation check */
-    if (!elev_allows_move(p_ptr->py, p_ptr->px, y, x)) {
+	if (!elev_allows_move(p_ptr->py, p_ptr->px, y, x, p_ptr->flying)) {
         return FALSE;
     }
 

@@ -350,7 +350,7 @@ extern int elev_range_mod(int ay, int ax, int ty, int tx);
 extern int elev_sight_bonus(int y, int x);
 extern bool elev_blocks_sight(int y1, int x1, int y2, int x2);
 extern int elev_movement_cost(int sy, int sx, int dy, int dx);
-extern bool elev_allows_move(int sy, int sx, int dy, int dx);
+extern bool elev_allows_move(int sy, int sx, int dy, int dx, bool flying);
 extern bool can_ascend(int y, int x);
 extern int elev_fall_damage(int from_elev, int to_elev);
 extern bool do_fall(int y, int x);

@@ -5155,6 +5155,7 @@ static void build_sector_hill(int y0, int x0)
 	/* Add ramps at cardinal directions for access */
 	int ramp_dirs[4][2] = {{0, -1}, {-1, 0}, {0, 1}, {1, 0}}; /* N, W, S, E */
 	int i;
+	int ramps_placed = 0;
 
 	for (i = 0; i < 4; i++) {
 		int dy = ramp_dirs[i][0];
@@ -5167,11 +5168,15 @@ static void build_sector_hill(int y0, int x0)
 		/* Create ramp from ground to hill */
 		int steps = 3;
 		int j;
+		bool ramp_ok = TRUE;
 		for (j = 0; j < steps; j++) {
 			int ramp_y = ry + (dy * j);
 			int ramp_x = rx + (dx * j);
 
-			if (!in_bounds(ramp_y, ramp_x)) continue;
+			if (!in_bounds(ramp_y, ramp_x)) {
+				ramp_ok = FALSE;
+				continue;
+			}
 
 			/* Mark as ramp */
 			if (j == 0) {
@@ -5185,7 +5190,28 @@ static void build_sector_hill(int y0, int x0)
 				set_elevation(ramp_y, ramp_x, ELEV_HILL);
             }
         }
+		if (ramp_ok) ramps_placed++;
     }
+
+	/* Safety Fallback: Ensure at least 2 access points */
+	if (ramps_placed < 2) {
+		/* Force placement of stairs */
+		int placed = 0;
+		int attempts = 0;
+		while (placed < (2 - ramps_placed) && attempts < 100) {
+			attempts++;
+			int angle = rand_int(256);
+			/* Try to find a spot on the slope */
+			int dist = (max_dist * 2) / 3; /* Edge of hill */
+			int ly = cy + (dist * sind(angle)) / 256;
+			int lx = cx + (dist * cosd(angle)) / 256;
+
+			if (in_bounds(ly, lx) && get_elevation(ly, lx) == ELEV_HILL) {
+				cave_feat[ly][lx] = FEAT_LADDER_DOWN;
+				placed++;
+			}
+		}
+	}
 
 	/* Add stairs to summit for direct high ground access */
 	if (rand_int(100) < 60) {
@@ -5424,12 +5450,16 @@ static void build_sector_cliff(int y0, int x0)
         }
 
 		/* Add stairs/ladders at edges */
-		int num_access = 1 + rand_int(2);
-		for (int i = 0; i < num_access; i++) {
+		int num_access = 2 + rand_int(2);
+		int placed = 0;
+		int tries = 0;
+		while (placed < num_access && tries < 20) {
+			tries++;
             int ly = y1 + 2 + rand_int(y2 - y1 - 3);
 			int lx = cliff_x;
 
             if (in_bounds(ly, lx)) {
+				placed++;
 				if (rand_int(100) < 50) {
 					cave_feat[ly][lx] = FEAT_LADDER_UP;
 				} else {
@@ -5437,6 +5467,14 @@ static void build_sector_cliff(int y0, int x0)
 				}
             }
         }
+
+		/* Safety Fallback */
+		if (placed < 2) {
+			/* Force center */
+			int ly = (y1 + y2) / 2;
+			int lx = cliff_x;
+			if (in_bounds(ly, lx)) cave_feat[ly][lx] = FEAT_LADDER_UP;
+		}
 
     } else {
 		/* Horizontal cliff - similar logic */
@@ -5487,12 +5525,16 @@ static void build_sector_cliff(int y0, int x0)
         }
 
 		/* Add access points */
-		int num_access = 1 + rand_int(2);
-		for (int i = 0; i < num_access; i++) {
+		int num_access = 2 + rand_int(2);
+		int placed = 0;
+		int tries = 0;
+		while (placed < num_access && tries < 20) {
+			tries++;
             int lx = x1 + 3 + rand_int(x2 - x1 - 5);
 			int ly = cliff_y;
 
             if (in_bounds(ly, lx)) {
+				placed++;
 				if (rand_int(100) < 50) {
 					cave_feat[ly][lx] = FEAT_LADDER_UP;
 				} else {
@@ -5500,6 +5542,14 @@ static void build_sector_cliff(int y0, int x0)
 				}
             }
         }
+
+		/* Safety Fallback */
+		if (placed < 2) {
+			/* Force center */
+			int ly = cliff_y;
+			int lx = (x1 + x2) / 2;
+			if (in_bounds(ly, lx)) cave_feat[ly][lx] = FEAT_LADDER_UP;
+		}
     }
 
 	/* Place archers on high ground */

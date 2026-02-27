@@ -3462,6 +3462,7 @@ bool do_elevated_move(int dir, int pickup)
     int src_elev = get_elevation(py, px);
     int dst_elev = get_elevation(y, x);
     int feat = cave_feat[y][x];
+    int src_feat = cave_feat[py][px];
 
     /* Check if movement is allowed */
     if (!can_ascend(y, x)) {
@@ -3481,12 +3482,30 @@ bool do_elevated_move(int dir, int pickup)
     /* Handle the elevation change */
     if (dst_elev < src_elev && src_elev - dst_elev >= 2) {
         /* Descending significant height */
-        if (feat == FEAT_JUMP_POINT ||
-            (feat != FEAT_RAMP_DOWN &&
-             feat != FEAT_STAIRS_DOWN &&
-             feat != FEAT_LADDER_DOWN)) {
+        if (feat != FEAT_RAMP_DOWN && feat != FEAT_RAMP_UP &&
+            feat != FEAT_STAIRS_DOWN && feat != FEAT_STAIRS_UP &&
+            feat != FEAT_LADDER_DOWN && feat != FEAT_LADDER_UP &&
+            feat != FEAT_ROPE_DOWN && feat != FEAT_ROPE_UP &&
+            feat != FEAT_JUMP_POINT && feat != FEAT_ESCAPE_PIT &&
+            feat != FEAT_CLIFF_DOWN && feat != FEAT_SLOPE_DOWN &&
+            src_feat != FEAT_RAMP_DOWN && src_feat != FEAT_RAMP_UP &&
+            src_feat != FEAT_STAIRS_DOWN && src_feat != FEAT_STAIRS_UP &&
+            src_feat != FEAT_LADDER_DOWN && src_feat != FEAT_LADDER_UP &&
+            src_feat != FEAT_ROPE_DOWN && src_feat != FEAT_ROPE_UP &&
+            src_feat != FEAT_ESCAPE_PIT &&
+            src_feat != FEAT_CLIFF_DOWN && src_feat != FEAT_SLOPE_DOWN) {
+
+            /* Confirmation */
+            if (!get_check("Really jump off the cliff?")) return FALSE;
+
             /* Taking a fall */
             int damage = elev_fall_damage(src_elev, dst_elev);
+
+            /* Safe Landing Logic */
+            int reduction = (adj_dex_safe[p_ptr->stat_ind[A_DEX]] / 2) + (p_ptr->skill_stl / 2);
+            if (reduction < 0) reduction = 0;
+            damage -= reduction;
+
             if (damage > 0) {
                 msg_print("You jump down!");
                 msg_format("You take %d damage from the fall.", damage);
@@ -3497,6 +3516,8 @@ bool do_elevated_move(int dir, int pickup)
                     msg_print("Some of your items were damaged!");
                     /* Damage random inventory item */
                 }
+            } else {
+                msg_print("You land safely.");
             }
         } else {
             /* Using safe descent */

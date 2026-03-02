@@ -307,6 +307,17 @@ bool los(int y1, int x1, int y2, int x2)
 
 
 
+bool is_safe_teleport_dest(int y, int x)
+{
+	if (cave_feat[y][x] == FEAT_OIL_BURNING ||
+	    cave_feat[y][x] == FEAT_ACID ||
+	    cave_feat[y][x] == FEAT_DEEP_LAVA ||
+	    cave_feat[y][x] == FEAT_SHAL_LAVA ||
+	    cave_feat[y][x] == FEAT_DEEP_WATER)
+		return FALSE;
+	return TRUE;
+}
+
 /*
  * Can the player "see" the given grid?
  *

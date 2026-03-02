@@ -271,7 +271,7 @@ void teleport_player(int dis)
 	int d, i, min, y, x;
 
 	bool look = TRUE;
-
+	int attempts = 0;
 
 	/* Initialize */
 	y = py;
@@ -312,11 +312,7 @@ void teleport_player(int dis)
 				continue;
 
 			/* Avoid hazards */
-			if (cave_feat[y][x] == FEAT_OIL_BURNING ||
-			    cave_feat[y][x] == FEAT_ACID ||
-			    cave_feat[y][x] == FEAT_DEEP_LAVA ||
-			    cave_feat[y][x] == FEAT_SHAL_LAVA ||
-			    cave_feat[y][x] == FEAT_DEEP_WATER)
+			if (!is_safe_teleport_dest(y, x))
 				continue;
 
 			/* No teleporting into vaults and such */
@@ -336,6 +332,33 @@ void teleport_player(int dis)
 
 		/* Decrease the minimum distance */
 		min = min / 2;
+
+		attempts++;
+
+		/* Fallback logic: radial search */
+		if (attempts > 10)
+		{
+			int rad, check_y, check_x;
+			for (rad = 1; rad < 200; rad++)
+			{
+				for (i = 0; i < 500; i++)
+				{
+					check_y = rand_spread(py, rad);
+					check_x = rand_spread(px, rad);
+					if (in_bounds_fully(check_y, check_x) &&
+					    cave_empty_bold(check_y, check_x) &&
+					    is_safe_teleport_dest(check_y, check_x) &&
+					    !is_sanctum_wall(check_y, check_x))
+					{
+						y = check_y;
+						x = check_x;
+						look = FALSE;
+						break;
+					}
+				}
+				if (!look) break;
+			}
+		}
 	}
 
 	/* Sound */
@@ -384,12 +407,8 @@ void teleport_player_to(int ny, int nx)
 		/* Accept an empty floor grid. */
 
 		if ((cave_empty_bold(y, x) &&
-		     cave_feat[y][x] != FEAT_OIL_BURNING &&
-		     cave_feat[y][x] != FEAT_ACID &&
-		     cave_feat[y][x] != FEAT_DEEP_LAVA &&
-		     cave_feat[y][x] != FEAT_SHAL_LAVA &&
-             !is_sanctum_wall(y, x) &&
-		     cave_feat[y][x] != FEAT_DEEP_WATER) ||
+		     is_safe_teleport_dest(y, x) &&
+		     !is_sanctum_wall(y, x)) ||
 		    (cave_feat[y][x] >= FEAT_QUEST_ENTER && cave_feat[y][x] <= FEAT_QUEST_EXIT))
 			break;
 
@@ -511,11 +530,7 @@ void teleport_player_directed(int rad, int dir)
 				continue;
 
 			/* Avoid hazards */
-			if (cave_feat[y][x] == FEAT_OIL_BURNING ||
-			    cave_feat[y][x] == FEAT_ACID ||
-			    cave_feat[y][x] == FEAT_DEEP_LAVA ||
-			    cave_feat[y][x] == FEAT_SHAL_LAVA ||
-			    cave_feat[y][x] == FEAT_DEEP_WATER)
+			if (!is_safe_teleport_dest(y, x))
 				continue;
 
 			/* This grid looks good */

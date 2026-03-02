@@ -332,6 +332,7 @@ extern void cave_set_feat(int y, int x, int feat);
 extern void mmove2(int *y, int *x, int y1, int x1, int y2, int x2);
 extern bool projectable(int y1, int x1, int y2, int x2);
 extern bool target_clear(monster_type * m_ptr, int x2, int y2);
+extern bool is_safe_teleport_dest(int y, int x);
 extern void scatter(int *yp, int *xp, int y, int x, int d, int m);
 extern void health_track(int m_idx);
 extern void monster_race_track(int r_idx);

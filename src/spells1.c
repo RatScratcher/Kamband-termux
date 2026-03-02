@@ -2068,7 +2068,7 @@ static int project_m_y;
  *
  * Perhaps we should affect doors and/or walls. XXX XXX
  */
-static void project_ice_spread(int y, int x, int dam) {
+static void project_ice_spread(int y, int x, int dam, int typ) {
     if (dam <= 0) return;
     if (!in_bounds(y, x)) return;
     if (cave_feat[y][x] != FEAT_ICE && cave_feat[y][x] != FEAT_WALL_ICE) return;
@@ -2078,17 +2078,17 @@ static void project_ice_spread(int y, int x, int dam) {
     cave_info[y][x] |= CAVE_TEMP;
 
     /* Hit grid */
-    project(-1, 0, y, x, dam, GF_ELEC, PROJECT_KILL | PROJECT_ITEM | PROJECT_GRID);
+    project(-1, 0, y, x, dam, typ, PROJECT_KILL | PROJECT_ITEM | PROJECT_GRID);
 
     /* Recurse */
-    project_ice_spread(y+1, x, dam-1);
-    project_ice_spread(y-1, x, dam-1);
-    project_ice_spread(y, x+1, dam-1);
-    project_ice_spread(y, x-1, dam-1);
-    project_ice_spread(y+1, x+1, dam-1);
-    project_ice_spread(y-1, x-1, dam-1);
-    project_ice_spread(y+1, x-1, dam-1);
-    project_ice_spread(y-1, x+1, dam-1);
+    project_ice_spread(y+1, x, dam-1, typ);
+    project_ice_spread(y-1, x, dam-1, typ);
+    project_ice_spread(y, x+1, dam-1, typ);
+    project_ice_spread(y, x-1, dam-1, typ);
+    project_ice_spread(y+1, x+1, dam-1, typ);
+    project_ice_spread(y-1, x-1, dam-1, typ);
+    project_ice_spread(y+1, x-1, dam-1, typ);
+    project_ice_spread(y-1, x+1, dam-1, typ);
 }
 
 static void project_ice_clear(int y, int x) {
@@ -2109,7 +2109,7 @@ static void project_ice_clear(int y, int x) {
     project_ice_clear(y-1, x+1);
 }
 
-static void project_water_spread(int y, int x, int dam) {
+static void project_water_spread(int y, int x, int dam, int typ) {
     if (dam <= 0) return;
     if (!in_bounds(y, x)) return;
     if (cave_feat[y][x] != FEAT_SHAL_WATER && cave_feat[y][x] != FEAT_DEEP_WATER) return;
@@ -2119,17 +2119,17 @@ static void project_water_spread(int y, int x, int dam) {
     cave_info[y][x] |= CAVE_TEMP;
 
     /* Hit grid */
-    project(-1, 0, y, x, dam, GF_ELEC, PROJECT_KILL | PROJECT_ITEM | PROJECT_GRID);
+    project(-1, 0, y, x, dam, typ, PROJECT_KILL | PROJECT_ITEM | PROJECT_GRID);
 
     /* Recurse */
-    project_water_spread(y+1, x, dam-1);
-    project_water_spread(y-1, x, dam-1);
-    project_water_spread(y, x+1, dam-1);
-    project_water_spread(y, x-1, dam-1);
-    project_water_spread(y+1, x+1, dam-1);
-    project_water_spread(y-1, x-1, dam-1);
-    project_water_spread(y+1, x-1, dam-1);
-    project_water_spread(y-1, x+1, dam-1);
+    project_water_spread(y+1, x, dam-1, typ);
+    project_water_spread(y-1, x, dam-1, typ);
+    project_water_spread(y, x+1, dam-1, typ);
+    project_water_spread(y, x-1, dam-1, typ);
+    project_water_spread(y+1, x+1, dam-1, typ);
+    project_water_spread(y-1, x-1, dam-1, typ);
+    project_water_spread(y+1, x-1, dam-1, typ);
+    project_water_spread(y-1, x+1, dam-1, typ);
 }
 
 static void project_water_clear(int y, int x) {
@@ -2166,12 +2166,12 @@ static bool project_f(int who, int r, int y, int x, int dam, int typ)
 		{
 			if ((cave_feat[y][x] == FEAT_ICE || cave_feat[y][x] == FEAT_WALL_ICE) && !(cave_info[y][x] & CAVE_TEMP)) {
 				/* Start propagation */
-				project_ice_spread(y, x, dam);
+				project_ice_spread(y, x, dam, typ);
 				project_ice_clear(y, x);
 			}
 			if ((cave_feat[y][x] == FEAT_SHAL_WATER || cave_feat[y][x] == FEAT_DEEP_WATER) && !(cave_info[y][x] & CAVE_TEMP)) {
 				/* Start propagation */
-				project_water_spread(y, x, dam);
+				project_water_spread(y, x, dam, typ);
 				project_water_clear(y, x);
 			}
 
@@ -2261,12 +2261,12 @@ static bool project_f(int who, int r, int y, int x, int dam, int typ)
 			}
 			if ((cave_feat[y][x] == FEAT_ICE || cave_feat[y][x] == FEAT_WALL_ICE) && !(cave_info[y][x] & CAVE_TEMP)) {
 				/* Start propagation */
-				project_ice_spread(y, x, dam);
+				project_ice_spread(y, x, dam, typ);
 				project_ice_clear(y, x);
 			}
 			if ((cave_feat[y][x] == FEAT_SHAL_WATER || cave_feat[y][x] == FEAT_DEEP_WATER) && !(cave_info[y][x] & CAVE_TEMP)) {
 				/* Start propagation */
-				project_water_spread(y, x, dam);
+				project_water_spread(y, x, dam, typ);
 				project_water_clear(y, x);
 			}
 			break;
@@ -4038,6 +4038,12 @@ static bool project_m(int who, int r, int y, int x, int dam, int typ)
 	/* Reduce damage by distance */
 	dam = (dam + r) / (r + 1);
 
+	/* Pet / Friendly Immunity from player's Psionic Spark */
+	if (typ == GF_PSIONIC_SPARK && who <= 0 && (m_ptr->is_pet || (r_ptr->flags3 & RF3_FRIENDLY)))
+	{
+		dam = 0;
+		skipped = TRUE;
+	}
 
 	/* Get the monster name (BEFORE polymorphing) */
 	monster_desc(m_name, m_ptr, 0);

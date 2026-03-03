@@ -3748,75 +3748,46 @@ static bool project_o(int who, int r, int y, int x, int dam, int typ)
 				break;
 			}
 
-		/* Telekinetic Toss (Fetch Item) */
-			case GF_TELEKINESIS:
-			{
-				int ny, nx;
+/* Telekinetic Toss for Items */
+case GF_TELEKINESIS:
+{
+    int ny, nx;
+    char o_name[80];
 
-				/* Check if we are executing a move */
-				if (p_ptr->telekinesis_o_idx > 0)
-				{
-					s16b target_o_idx = p_ptr->telekinesis_o_idx;
+    /* If we already grabbed a monster or another item in this spellcast, skip */
+    if (telekinesis_fetched) break;
 
-					/* Check if current object is the target */
-					if ((s16b)(o_ptr - o_list) == target_o_idx)
-					{
-						ny = p_ptr->target_row;
-						nx = p_ptr->target_col;
+    /* Get item description for the message */
+    object_desc(o_name, o_ptr, TRUE, 3);
 
-						/* Validations */
-						if (!in_bounds(ny, nx)) break;
-						if (!projectable(y, x, ny, nx))
-						{
-							msg_print("Something blocks the path.");
-							p_ptr->telekinesis_o_idx = 0;
-							break;
-						}
+    /* Destination Phase: The Shove */
+    msg_format("You grab %s! Throw where?", o_name);
 
-						if (telekinetic_toss_aux(y, x, ny, nx, target_o_idx, FALSE))
-						{
-							p_ptr->telekinesis_o_idx = 0;
-							dam = 0;
-							return TRUE;
-						}
-					}
-				}
-				/* Fallback for Wands/Scrolls */
-				else if (!telekinesis_fetched)
-				{
-					if (o_ptr->weight > p_ptr->lev * 15)
-					{
-						msg_print("That object is too heavy to lift.");
-						break;
-					}
+    /* Use the target_set function to pick a destination grid */
+    if (target_set(TARGET_GRID | TARGET_FREE))
+    {
+        ny = p_ptr->target_row;
+        nx = p_ptr->target_col;
 
-					msg_print("Throw where?");
-					if (!target_set(TARGET_GRID | TARGET_FREE))
-					{
-						telekinesis_fetched = TRUE;
-						break;
-					}
+        /* Execute the toss (using the helper for physics/damage) */
+        if (telekinetic_toss_aux(y, x, ny, nx, 0, FALSE))
+        {
+            telekinesis_fetched = TRUE;
+            obvious = TRUE;
 
-					ny = p_ptr->target_row;
-					nx = p_ptr->target_col;
+            /* The item is moved/deleted inside toss_aux,
+             * so we stop processing this specific grid. */
+            return (TRUE);
+        }
+    }
+    else
+    {
+        /* Player cancelled targeting */
+        msg_print("You release your grip.");
+    }
 
-					if (!in_bounds(ny, nx)) break;
-					if (!projectable(y, x, ny, nx))
-					{
-						msg_print("Something blocks the path.");
-						telekinesis_fetched = TRUE;
-						break;
-					}
-
-					if (telekinetic_toss_aux(y, x, ny, nx, (s16b)(o_ptr - o_list), FALSE))
-					{
-						telekinesis_fetched = TRUE;
-						dam = 0;
-						return TRUE;
-					}
-				}
-				break;
-			}
+    break;
+}
 
 		/* Psionic Spark (Ignite Oil) */
 		case GF_PSIONIC_SPARK:

@@ -5426,33 +5426,39 @@ static bool project_m(int who, int r, int y, int x, int dam, int typ)
 		}
 
 
-		/* Telekinetic Toss */
+		/* Telekinetic Toss for Monsters */
 		case GF_TELEKINESIS:
 		{
 			int ny, nx;
 
+			/* If we already threw something in this 'project' call, stop. */
 			if (telekinesis_fetched) break;
 
 			/* Destination Phase: The Shove */
-			msg_print("Throw where?");
+			msg_format("You grab %s! Throw where?", m_name);
 
+			/* Use the target_set function to pick a destination */
 			if (target_set(TARGET_GRID | TARGET_FREE))
 			{
 				ny = p_ptr->target_row;
 				nx = p_ptr->target_col;
-				p_ptr->target_who = -1;
 
+				/* Execute the toss */
 				if (telekinetic_toss_aux(y, x, ny, nx, 0, TRUE))
 				{
 					telekinesis_fetched = TRUE;
+					obvious = TRUE;
 				}
 			}
 			else
 			{
+				/* Player cancelled targeting */
+				msg_print("You release your grip.");
 				skipped = TRUE;
 			}
 
-			dam = 0; /* No direct damage from the grab itself */
+			dam = 0; /* Grab doesn't do damage; the 'slam' in
+		 toss_aux does. */
 			break;
 		}
 

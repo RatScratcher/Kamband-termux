@@ -3527,6 +3527,14 @@ static void process_monster(int m_idx)
 				}
 			}
 
+			/* Pet AI: Avoid burning oil */
+			if (m_ptr->is_pet && !(r_ptr->flags2 & RF2_FLY)) {
+				int f = cave_feat[ny][nx];
+				if (f == FEAT_OIL_BURNING && !(r_ptr->flags3 & RF3_IM_FIRE) && !(r_ptr->flags4 & RF4_BR_FIRE)) {
+					do_move = FALSE;
+				}
+			}
+
 			/* Smart monsters avoid hazards */
 			if ((r_ptr->flags2 & RF2_SMART) && !(r_ptr->flags2 & RF2_FLY))
 			{

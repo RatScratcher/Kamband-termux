@@ -126,11 +126,7 @@ void teleport_away(int m_idx, int dis)
 				continue;
 
 			/* Avoid hazards */
-			if (cave_feat[ny][nx] == FEAT_OIL_BURNING ||
-			    cave_feat[ny][nx] == FEAT_ACID ||
-			    cave_feat[ny][nx] == FEAT_DEEP_LAVA ||
-			    cave_feat[ny][nx] == FEAT_SHAL_LAVA ||
-			    cave_feat[ny][nx] == FEAT_DEEP_WATER)
+			if (!is_safe_teleport_dest(ny, nx))
 				continue;
 
 			/* Hack -- no teleport onto glyph of warding */
@@ -225,11 +221,7 @@ void teleport_away_to(int m_idx, int y, int x)
 				continue;
 
 			/* Avoid hazards */
-			if (cave_feat[ny][nx] == FEAT_OIL_BURNING ||
-			    cave_feat[ny][nx] == FEAT_ACID ||
-			    cave_feat[ny][nx] == FEAT_DEEP_LAVA ||
-			    cave_feat[ny][nx] == FEAT_SHAL_LAVA ||
-			    cave_feat[ny][nx] == FEAT_DEEP_WATER)
+			if (!is_safe_teleport_dest(ny, nx))
 				continue;
 
 			/* Hack -- no teleport onto glyph of warding */
@@ -3165,7 +3157,7 @@ static bool telekinetic_toss_aux(int y, int x, int ny, int nx, s16b target_o_idx
 			if (cave_feat[ny][nx] == FEAT_DEEP_LAVA || cave_feat[ny][nx] == FEAT_SHAL_LAVA)
 			{
 				msg_format("%^s burns in the lava!", m_name);
-				project(-1, 0, ny, nx, damroll(5, 10), GF_FIRE, PROJECT_KILL);
+				project(0, 0, ny, nx, damroll(5, 10), GF_FIRE, PROJECT_KILL);
 			}
 			else if (cave_feat[ny][nx] == FEAT_ACID)
 			{
@@ -3173,7 +3165,7 @@ static bool telekinetic_toss_aux(int y, int x, int ny, int nx, s16b target_o_idx
 				{
 					msg_format("%^s dissolves in the acid!", m_name);
 				}
-				project(-1, 0, ny, nx, damroll(5, 10), GF_ACID, PROJECT_KILL);
+				project(0, 0, ny, nx, damroll(5, 10), GF_ACID, PROJECT_KILL);
 			}
 			else if (cave_feat[ny][nx] == FEAT_OIL)
 			{

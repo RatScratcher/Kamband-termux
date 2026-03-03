@@ -15,3 +15,5 @@ kamband
 # Debug files
 *.dSYM/
 *.stackdump
+angband
+src/angband

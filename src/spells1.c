@@ -3055,7 +3055,7 @@ static bool project_f(int who, int r, int y, int x, int dam, int typ)
  */
 static bool telekinesis_fetched = FALSE;
 
-static bool telekinetic_toss_aux(int y, int x, int ny, int nx, s16b target_o_idx, bool is_monster)
+bool telekinetic_toss_aux(int y, int x, int ny, int nx, s16b target_o_idx, bool is_monster)
 {
 	if (is_monster)
 	{

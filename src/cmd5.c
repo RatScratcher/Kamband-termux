@@ -1169,7 +1169,73 @@ void do_cmd_cast_power(void)
 		int y = p_ptr->target_row;
 		int x = p_ptr->target_col;
 
-		if (cave_o_idx[y][x] && cave_m_idx[y][x] <= 0)
+		/* CASE A: A Monster is at the target */
+		if (cave_m_idx[y][x] > 0)
+		{
+			monster_type *m_ptr = &m_list[cave_m_idx[y][x]];
+			monster_race *r_ptr = &r_info[m_ptr->r_idx];
+			char m_name[80];
+			int ny, nx;
+
+			monster_desc(m_name, m_ptr, 0);
+
+			/* Weight check for monsters (using monster level/size as proxy) */
+			if (r_ptr->level > p_ptr->lev + 10 && !m_ptr->is_pet && !(r_ptr->flags3 & RF3_FRIENDLY))
+			{
+				msg_format("%^s is too powerful to be lifted!", m_name);
+				return;
+			}
+
+			msg_print("Throw where?");
+			if (!target_set(TARGET_GRID | TARGET_FREE)) return;
+
+			ny = p_ptr->target_row;
+			nx = p_ptr->target_col;
+
+			if (s_ptr->mana > p_ptr->csp)
+			{
+				mprint(MSG_WARNING,
+					"You do not have enough mana to use this power.");
+				if (!get_check("Attempt it anyway? "))
+					return;
+			}
+
+			chance = spell_chance(s_ptr);
+
+			if (randint(100) < chance)
+			{
+				if (flush_failure)
+					flush();
+
+				msg_format("A cloud of %s appears above you.",
+					get_random_line("sfail.txt"));
+				failed = TRUE;
+				goto finalize_spell;
+			}
+
+			if (!in_bounds(ny, nx))
+			{
+				msg_print("You cannot throw it there.");
+				return;
+			}
+			if (!projectable(y, x, ny, nx))
+			{
+				msg_print("Something blocks the path.");
+				return;
+			}
+
+			/* Execute the toss using the helper we refined earlier */
+			if (telekinetic_toss_aux(y, x, ny, nx, 0, TRUE))
+			{
+				msg_format("You seize %s and hurl them!", m_name);
+				cast = TRUE;
+				goto finalize_spell;
+			}
+			return;
+		}
+
+		/* CASE B: An Object is at the target */
+		else if (cave_o_idx[y][x])
 		{
 			object_type *o_ptr = cave_o_idx[y][x];
 			char o_name[80];
@@ -1253,7 +1319,13 @@ void do_cmd_cast_power(void)
 			cast = TRUE;
 			goto finalize_spell;
 		}
-		/* If monster or empty, fall through to normal execution */
+
+		/* CASE C: Empty square */
+		else
+		{
+			msg_print("There is nothing there to toss.");
+			return;
+		}
 	}
 
 check_spell:

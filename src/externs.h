@@ -742,6 +742,7 @@ extern bool apply_disenchant(int mode);
 extern bool project(int who, int rad, int y, int x, int dam, int typ,
 	u32b flg);
 extern void ghost_data(void);
+extern bool telekinetic_toss_aux(int y, int x, int ny, int nx, s16b target_o_idx, bool is_monster);
 
 /* spells2.c */
 extern bool hp_player(int num);

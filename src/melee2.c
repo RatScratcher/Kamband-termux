@@ -3496,6 +3496,11 @@ static void process_monster(int m_idx)
 		ny = oy + ddy[d];
 		nx = ox + ddx[d];
 
+		/* Elevation check for all moves. */
+		if (!elev_allows_move(oy, ox, ny, nx, (r_ptr->flags2 & RF2_FLY) || (r_ptr->flags2 & RF2_PASS_WALL))) {
+			continue;
+		}
+
 		/* Empty space. */
 		if (cave_feat[ny][nx] == FEAT_UNSEEN)
 		{
@@ -3508,10 +3513,6 @@ static void process_monster(int m_idx)
 			/* Go ahead and move */
 			do_move = TRUE;
 
-			/* Check for elevation validity */
-			if (!elev_allows_move(oy, ox, ny, nx, (r_ptr->flags2 & RF2_FLY) || (r_ptr->flags2 & RF2_PASS_WALL))) {
-				do_move = FALSE;
-			}
 
 			/* Ambush Logic: Guard Posts should utilize high ground */
 			if (m_guard[m_idx] && m_guard[m_idx]->guard_post_type == GUARD_POST_HIGHGROUND) {

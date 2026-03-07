@@ -617,7 +617,7 @@ void add_psionic_spark_spell(void)
 	rspell->proj_list = pnode;
 
 	pnode->attack_kind = GF_PSIONIC_SPARK;
-	pnode->proj_flags = PROJECT_KILL | PROJECT_THRU | PROJECT_GRID;
+	pnode->proj_flags = PROJECT_STOP | PROJECT_KILL | PROJECT_THRU | PROJECT_GRID;
 	pnode->radius = 0; /* Single target */
 	pnode->safe = TRUE;
 	pnode->dam_dice = 1; /* 1 damage */

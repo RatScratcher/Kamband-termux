@@ -5256,19 +5256,24 @@ static void build_sector_hill(int y0, int x0)
 		for (x = x1; x <= x2; x++) {
 			if (get_elevation(y, x) == ELEV_HILL || get_elevation(y, x) == ELEV_HIGH) {
 				bool is_boundary = FALSE;
+				bool is_exposed = FALSE;
 				int dy, dx;
 				for (dy = -1; dy <= 1; dy++) {
 					for (dx = -1; dx <= 1; dx++) {
 						if (dy == 0 && dx == 0) continue;
 						int ny = y + dy;
 						int nx = x + dx;
-						if (!in_bounds(ny, nx) || ny < y1 || ny > y2 || nx < x1 || nx > x2 || get_elevation(ny, nx) == ELEV_GROUND) {
+						if (!in_bounds(ny, nx) || ny < y1 || ny > y2 || nx < x1 || nx > x2) {
+							is_exposed = TRUE;
+						} else if (get_elevation(ny, nx) == ELEV_GROUND) {
 							is_boundary = TRUE;
 						}
 					}
 				}
 
-				if (is_boundary) {
+				if (is_exposed) {
+					cave_feat[y][x] = FEAT_CLIFF_UP;
+				} else if (is_boundary) {
 					cave_feat[y][x] = FEAT_CLIFF_UP;
 					if (num_boundary < 1000) {
 						boundary_y[num_boundary] = y;
@@ -5281,14 +5286,27 @@ static void build_sector_hill(int y0, int x0)
 	}
 
 	/* Pick one designated access point */
+	int access_y = -1;
+	int access_x = -1;
 	if (num_boundary > 0) {
 		int access_idx = rand_int(num_boundary);
-		int ay = boundary_y[access_idx];
-		int ax = boundary_x[access_idx];
+		access_y = boundary_y[access_idx];
+		access_x = boundary_x[access_idx];
 		if (rand_int(100) < 50) {
-			cave_feat[ay][ax] = FEAT_RAMP_UP;
+			cave_feat[access_y][access_x] = FEAT_RAMP_UP;
 		} else {
-			cave_feat[ay][ax] = FEAT_STAIRS_UP;
+			cave_feat[access_y][access_x] = FEAT_STAIRS_UP;
+		}
+	}
+
+	/* The "One-Way" Rule: Enforce no other slope or floor connects high ground to low ground */
+	for (y = y1; y <= y2; y++) {
+		for (x = x1; x <= x2; x++) {
+			if (get_elevation(y, x) == ELEV_HILL) {
+				if (y != access_y || x != access_x) {
+					cave_feat[y][x] = FEAT_CLIFF_UP;
+				}
+			}
 		}
 	}
 

@@ -859,68 +859,81 @@ static void build_streamer2(int feat, int killwall)
 	y = rand_spread(DUNGEON_HGT / 2, 10);
 	x = rand_spread(DUNGEON_WID / 2, 15);
 
-	/* Choose a random compass direction */
-	dir = ddd[rand_int(8)];
-
 	if (poolchance > 2)
 	{
-		/* Place streamer into dungeon */
-		while (TRUE)
+		/* Agent-based Drunkard's Walk */
+		int life = 50 + randint(150);
+
+		int by = y / BLOCK_HGT;
+		int bx = x / BLOCK_WID;
+		if (by >= MAX_ROOMS_ROW) by = MAX_ROOMS_ROW - 1;
+		if (bx >= MAX_ROOMS_COL) bx = MAX_ROOMS_COL - 1;
+		int current_sector = cave_sector[by][bx];
+
+		while (life > 0)
 		{
-			/* One grid per density */
-			for (i = 0; i < (DUN_STR_DWLW + 1); i++)
+			/* Do not mess up vaults */
+			if (in_bounds(y, x) && !(cave_info[y][x] & CAVE_ICKY))
 			{
-				int d = DUN_STR_WLW;
-
-				/* Pick a nearby grid */
-				while (1)
+				bool valid = TRUE;
+				if (feat == FEAT_ACID)
 				{
-					ty = rand_spread(y, d);
-					tx = rand_spread(x, d);
-					if (!in_bounds(ty, tx))
-						continue;
-					break;
+					/* Acid eats through standard walls, but not permanent walls or stairs/doors */
+					if (cave_feat[y][x] >= FEAT_PERM_EXTRA || cave_feat[y][x] == FEAT_LESS || cave_feat[y][x] == FEAT_MORE || (cave_feat[y][x] >= FEAT_DOOR_HEAD && cave_feat[y][x] <= FEAT_DOOR_TAIL))
+						valid = FALSE;
 				}
-
-				/* Do not mess up vaults */
-				if (cave_info[ty][tx] & CAVE_ICKY)
-					continue;
-
-
-				/* Only convert non-permanent features */
-				if (killwall == 0)
+				else if (killwall == 0)
 				{
-					if (cave_feat[ty][tx] >= FEAT_MAGMA)
-						continue;
-					if (cave_feat[ty][tx] == FEAT_LESS)
-						continue;
-					if (cave_feat[ty][tx] == FEAT_MORE)
-						continue;
+					if (cave_feat[y][x] >= FEAT_MAGMA || cave_feat[y][x] == FEAT_LESS || cave_feat[y][x] == FEAT_MORE)
+						valid = FALSE;
 				}
 				else
 				{
-					if (cave_feat[ty][tx] >= FEAT_PERM_EXTRA)
-						continue;
-					if (cave_feat[ty][tx] == FEAT_LESS)
-						continue;
-					if (cave_feat[ty][tx] == FEAT_MORE)
-						continue;
+					if (cave_feat[y][x] >= FEAT_PERM_EXTRA || cave_feat[y][x] == FEAT_LESS || cave_feat[y][x] == FEAT_MORE)
+						valid = FALSE;
 				}
 
-				/* Clear previous contents, add proper vein type */
-				cave_feat[ty][tx] = feat;
+				if (valid)
+				{
+					cave_feat[y][x] = feat;
+				}
 			}
 
-			/* Advance the streamer */
-			y += ddy[dir];
-			x += ddx[dir];
+			/* Move to random adjacent tile */
+			dir = ddd[rand_int(8)];
+			int ny = y + ddy[dir];
+			int nx = x + ddx[dir];
 
-			if (randint(20) == 1)
-				dir = ddd[rand_int(8)];	/* change direction */
+			if (in_bounds(ny, nx))
+			{
+				int nby = ny / BLOCK_HGT;
+				int nbx = nx / BLOCK_WID;
+				if (nby >= MAX_ROOMS_ROW) nby = MAX_ROOMS_ROW - 1;
+				if (nbx >= MAX_ROOMS_COL) nbx = MAX_ROOMS_COL - 1;
+				int next_sector = cave_sector[nby][nbx];
 
-			/* Stop at dungeon edge */
-			if (!in_bounds(y, x))
-				break;
+				/* Sector overflow check (10% chance to overflow, 90% to stay within sector) */
+				if (next_sector != current_sector)
+				{
+					if (rand_int(100) < 10)
+					{
+						current_sector = next_sector; /* Overflow allowed, update sector */
+						y = ny;
+						x = nx;
+					}
+					else
+					{
+						/* Try another direction next turn */
+					}
+				}
+				else
+				{
+					y = ny;
+					x = nx;
+				}
+			}
+
+			life--;
 		}
 	}
 	else if ((feat == FEAT_DEEP_WATER) || (feat == FEAT_DEEP_LAVA) ||
@@ -5569,6 +5582,159 @@ static void build_sector_cliff(int y0, int x0)
  *
  * Note that "dun_body" adds about 4000 bytes of memory to the stack.
  */
+
+/*
+ * Jitter sector boundaries to break up straight walls.
+ */
+static void jitter_sector_boundaries(void)
+{
+	int y, x;
+	int dir;
+
+	for (y = 1; y < DUNGEON_HGT - 1; y++)
+	{
+		for (x = 1; x < DUNGEON_WID - 1; x++)
+		{
+			if (cave_feat[y][x] < FEAT_WALL_EXTRA) continue;
+			if (cave_feat[y][x] > FEAT_WALL_SOLID) continue;
+
+			bool is_boundary = FALSE;
+			int by = y / BLOCK_HGT;
+			int bx = x / BLOCK_WID;
+			if (by >= MAX_ROOMS_ROW) by = MAX_ROOMS_ROW - 1;
+			if (bx >= MAX_ROOMS_COL) bx = MAX_ROOMS_COL - 1;
+			int sect = cave_sector[by][bx];
+
+			int by_minus = (y - 1) / BLOCK_HGT;
+			int bx_minus = (x - 1) / BLOCK_WID;
+			int by_plus = (y + 1) / BLOCK_HGT;
+			int bx_plus = (x + 1) / BLOCK_WID;
+
+			if (by_minus >= 0 && cave_sector[by_minus][bx] != sect) is_boundary = TRUE;
+			if (by_plus < MAX_ROOMS_ROW && cave_sector[by_plus][bx] != sect) is_boundary = TRUE;
+			if (bx_minus >= 0 && cave_sector[by][bx_minus] != sect) is_boundary = TRUE;
+			if (bx_plus < MAX_ROOMS_COL && cave_sector[by][bx_plus] != sect) is_boundary = TRUE;
+
+			if (is_boundary)
+			{
+				int roll = rand_int(100);
+				if (roll < 33)
+				{
+					/* Offset -1: turn wall into floor */
+					cave_feat[y][x] = FEAT_FLOOR;
+					cave_info[y][x] |= CAVE_ROOM;
+				}
+				else if (roll < 66)
+				{
+					/* Offset +1: turn an adjacent floor into a wall, if it's safe */
+					for (dir = 0; dir < 8; dir++)
+					{
+						int ny = y + ddy_ddd[dir];
+						int nx = x + ddx_ddd[dir];
+						if (in_bounds(ny, nx))
+						{
+							if (cave_feat[ny][nx] == FEAT_FLOOR)
+							{
+								/* Check if it's safe to turn into wall (not a corridor) */
+								int floor_neighbors = 0;
+								int ndir;
+								for (ndir = 0; ndir < 8; ndir++)
+								{
+									int nny = ny + ddy_ddd[ndir];
+									int nnx = nx + ddx_ddd[ndir];
+									if (in_bounds(nny, nnx) && cave_feat[nny][nnx] == FEAT_FLOOR) floor_neighbors++;
+								}
+								if (floor_neighbors >= 5)
+								{
+									cave_feat[ny][nx] = FEAT_WALL_INNER;
+									cave_info[ny][nx] &= ~CAVE_ROOM;
+									break; /* Only do one */
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+
+/*
+ * Cellular Automata (CA) Cave Smoothing Pass.
+ * Analyzes wall/floor neighbors and toggles them if they are overwhelmingly
+ * one or the other. Softens the "boxiness" of cavern sectors.
+ */
+static void smooth_caverns(void)
+{
+	int i, y, x;
+	int dir;
+	byte temp_feat[DUNGEON_HGT][DUNGEON_WID];
+
+	/* Run for 2 iterations */
+	for (i = 0; i < 2; i++)
+	{
+		/* Copy current state to temp array to allow simultaneous updates */
+		for (y = 1; y < DUNGEON_HGT - 1; y++)
+		{
+			for (x = 1; x < DUNGEON_WID - 1; x++)
+			{
+				temp_feat[y][x] = cave_feat[y][x];
+			}
+		}
+
+		for (y = 1; y < DUNGEON_HGT - 1; y++)
+		{
+			for (x = 1; x < DUNGEON_WID - 1; x++)
+			{
+				int by = y / BLOCK_HGT;
+				int bx = x / BLOCK_WID;
+				if (by >= MAX_ROOMS_ROW) by = MAX_ROOMS_ROW - 1;
+				if (bx >= MAX_ROOMS_COL) bx = MAX_ROOMS_COL - 1;
+
+				/* Only apply to SECTOR_CAVERN to maintain other sector structures */
+				if (cave_sector[by][bx] != SECTOR_CAVERN) continue;
+
+				/* Do not overwrite permanent features or stairs/doors */
+				if (cave_feat[y][x] >= FEAT_PERM_EXTRA || cave_feat[y][x] == FEAT_LESS || cave_feat[y][x] == FEAT_MORE || (cave_feat[y][x] >= FEAT_DOOR_HEAD && cave_feat[y][x] <= FEAT_DOOR_TAIL)) continue;
+
+				int floor_count = 0;
+				int wall_count = 0;
+
+				for (dir = 0; dir < 8; dir++)
+				{
+					int ny = y + ddy_ddd[dir];
+					int nx = x + ddx_ddd[dir];
+					if (ny > 0 && ny < DUNGEON_HGT - 1 && nx > 0 && nx < DUNGEON_WID - 1)
+					{
+						if (temp_feat[ny][nx] == FEAT_FLOOR)
+						{
+							floor_count++;
+						}
+						else if (temp_feat[ny][nx] >= FEAT_WALL_EXTRA && temp_feat[ny][nx] <= FEAT_PERM_SOLID)
+						{
+							wall_count++;
+						}
+					}
+				}
+
+				/* If wall has 5+ floor neighbors, turn to floor */
+				if (temp_feat[y][x] >= FEAT_WALL_EXTRA && temp_feat[y][x] <= FEAT_WALL_SOLID && floor_count >= 5)
+				{
+					cave_feat[y][x] = FEAT_FLOOR;
+					cave_info[y][x] |= CAVE_ROOM; /* Treat as room/open area */
+				}
+				/* If floor has 5+ wall neighbors, turn to wall */
+				else if (temp_feat[y][x] == FEAT_FLOOR && wall_count >= 5)
+				{
+					cave_feat[y][x] = FEAT_WALL_INNER;
+					cave_info[y][x] &= ~CAVE_ROOM;
+				}
+			}
+		}
+	}
+}
+
 static void cave_gen(void)
 {
 	int i, k, y, x, y1, x1;
@@ -5979,6 +6145,12 @@ static void cave_gen(void)
 		cave_feat[y][x] = FEAT_PERM_SOLID;
 	}
 
+	/* Jitter sector boundaries to reduce boxiness */
+	jitter_sector_boundaries();
+
+	/* Cellular Automata cave smoothing pass */
+	smooth_caverns();
+
 	/* Hack -- Scramble the room order */
 	for (i = 0; i < dun->cent_n; i++)
 	{
@@ -6040,6 +6212,10 @@ static void cave_gen(void)
 	    try_door(y + 1, x);
 	  }
 	}
+
+
+
+
 
 	/* Hack -- Add some magma streamers */
 

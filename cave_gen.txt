@@ -1,0 +1,704 @@
+static void cave_gen(void)
+{
+	int i, k, y, x, y1, x1;
+
+	bool destroyed = FALSE;
+
+	bool lit_level = FALSE;
+
+	dun_data dun_body;
+
+	byte level_bg = FEAT_WALL_EXTRA;
+	s16b dun_rooms = DUN_ROOMS;
+
+	/* Global data */
+	dun = &dun_body;
+
+	/* Allow open levels. */
+
+	if (allow_open_levels)
+	{
+		int chance1 = DUN_OPEN_FLOOR;
+		int chance2 = DUN_OPEN_WATER;
+		int chance3 = DUN_OPEN_CHAOS;
+		int chance4 = DUN_OPEN_MAZE;
+		int chance5 = DUN_OPEN_FOG;
+
+		if (weirdness_is_rare)
+		{
+			chance1 /= 2;
+			chance2 /= 2;
+			chance3 /= 2;
+			chance4 /= 2;
+			chance5 /= 2;
+		}
+
+		if (magik(chance1))
+		{
+			level_bg = FEAT_FLOOR;
+			lit_level = TRUE;
+		}
+		else if (magik(chance2))
+		{
+			level_bg = FEAT_SHAL_WATER;
+			lit_level = TRUE;
+		}
+		else if (magik(chance3))
+		{
+			level_bg = FEAT_CHAOS_FOG;
+		}
+		else if (magik(chance4))
+		{
+			level_bg = FEAT_NONE;
+			lit_level = TRUE;
+		}
+		else if (magik(chance5))
+		{
+			level_bg = FEAT_FOG;
+		}
+	}
+
+	/* Hack -- Start with basic granite (or not) */
+	for (y = 0; y < DUNGEON_HGT; y++)
+	{
+		for (x = 0; x < DUNGEON_WID; x++)
+		{
+			byte bg = level_bg;
+
+			/* Hack -- try to make something random if unspecified. */
+			if (!level_bg)
+			{
+				switch ((x + y + randint(12)) % 12)
+				{
+					case 0:
+					case 1:
+					case 2:
+					case 3:
+					case 4:
+					case 5:
+					case 6:
+					case 7:
+					case 8:
+						bg = FEAT_FLOOR;
+						break;
+					case 9:
+						bg = FEAT_WALL_EXTRA;
+						break;
+					case 10:
+						bg = FEAT_QUARTZ;
+						break;
+					case 11:
+						bg = FEAT_MAGMA;
+						break;
+				}
+			}
+
+			/* Create level background */
+			cave_feat[y][x] = bg;
+		}
+	}
+
+	/* Possible "destroyed" level */
+	if ((p_ptr->depth > 10) && (rand_int(DUN_DEST) == 0))
+		destroyed = TRUE;
+
+	/* Actual maximum number of rooms on this level */
+	dun->row_rooms = DUNGEON_HGT / BLOCK_HGT;
+	dun->col_rooms = DUNGEON_WID / BLOCK_WID;
+
+	/* Initialize the room table */
+	for (y = 0; y < dun->row_rooms; y++)
+	{
+		for (x = 0; x < dun->col_rooms; x++)
+		{
+			dun->room_map[y][x] = FALSE;
+		}
+	}
+
+	/* Initialize Elevation */
+	init_elevation();
+
+	/* Initialize Sector Map */
+	for (y = 0; y < dun->row_rooms; y += 2)
+	{
+		for (x = 0; x < dun->col_rooms; x += 2)
+		{
+			int sect_type = SECTOR_RUINS; /* Default to structural */
+			int roll = rand_int(100);
+
+			/* Increase the floor for SECTOR_RUINS (structures) */
+			if (roll < 15) sect_type = SECTOR_PLAZA;      /* Increased from 10 */
+			else if (roll < 25) sect_type = SECTOR_RUINS; /* Explicitly favoring structures */
+			else if (roll < 35) sect_type = SECTOR_DARK;  /* Reduced from original high-weight */
+			else if (roll < 50 + (p_ptr->depth / 8)) sect_type = SECTOR_HILL;
+			else if (roll < 60) sect_type = SECTOR_PIT;
+			else if (roll < 70) sect_type = SECTOR_CLIFF;
+			else sect_type = SECTOR_CAVERN;               /* Caverns become the "catch-all" less often */
+
+			/* Assign to 2x2 block */
+			cave_sector[y][x] = sect_type;
+			if (y + 1 < dun->row_rooms) cave_sector[y+1][x] = sect_type;
+			if (x + 1 < dun->col_rooms) cave_sector[y][x+1] = sect_type;
+			if (y + 1 < dun->row_rooms && x + 1 < dun->col_rooms) cave_sector[y+1][x+1] = sect_type;
+		}
+	}
+
+	/* No "crowded" rooms yet */
+	dun->crowded = FALSE;
+
+
+	/* No rooms yet */
+	dun->cent_n = 0;
+
+	/* Build Special Sectors (Caverns and Plazas) */
+	for (y = 0; y < dun->row_rooms; y += 2)
+	{
+		for (x = 0; x < dun->col_rooms; x += 2)
+		{
+			int sect = cave_sector[y][x];
+			if (sect == SECTOR_CAVERN)
+			{
+				build_sector_cavern(y, x);
+				/* Mark blocks as used */
+				dun->room_map[y][x] = TRUE;
+				if (y + 1 < dun->row_rooms) dun->room_map[y + 1][x] = TRUE;
+				if (x + 1 < dun->col_rooms) dun->room_map[y][x + 1] = TRUE;
+				if (y + 1 < dun->row_rooms && x + 1 < dun->col_rooms) dun->room_map[y + 1][x + 1] = TRUE;
+
+				/* Add center for tunnels */
+				if (dun->cent_n < CENT_MAX) {
+					dun->cent[dun->cent_n].y = (y * BLOCK_HGT) + BLOCK_HGT;
+					dun->cent[dun->cent_n].x = (x * BLOCK_WID) + BLOCK_WID;
+					dun->cent_n++;
+				}
+			}
+			else if (sect == SECTOR_HILL)
+			{
+				build_sector_hill(y, x);
+				/* Mark blocks as used */
+				dun->room_map[y][x] = TRUE;
+				if (y + 1 < dun->row_rooms) dun->room_map[y + 1][x] = TRUE;
+				if (x + 1 < dun->col_rooms) dun->room_map[y][x + 1] = TRUE;
+				if (y + 1 < dun->row_rooms && x + 1 < dun->col_rooms) dun->room_map[y + 1][x + 1] = TRUE;
+
+				/* Add center for tunnels */
+				if (dun->cent_n < CENT_MAX) {
+					dun->cent[dun->cent_n].y = (y * BLOCK_HGT) + BLOCK_HGT;
+					dun->cent[dun->cent_n].x = (x * BLOCK_WID) + BLOCK_WID;
+					dun->cent_n++;
+				}
+			}
+			else if (sect == SECTOR_PIT)
+			{
+				build_sector_pit(y, x);
+				/* Mark blocks as used */
+				dun->room_map[y][x] = TRUE;
+				if (y + 1 < dun->row_rooms) dun->room_map[y + 1][x] = TRUE;
+				if (x + 1 < dun->col_rooms) dun->room_map[y][x + 1] = TRUE;
+				if (y + 1 < dun->row_rooms && x + 1 < dun->col_rooms) dun->room_map[y + 1][x + 1] = TRUE;
+
+				/* Add center for tunnels */
+				if (dun->cent_n < CENT_MAX) {
+					dun->cent[dun->cent_n].y = (y * BLOCK_HGT) + BLOCK_HGT;
+					dun->cent[dun->cent_n].x = (x * BLOCK_WID) + BLOCK_WID;
+					dun->cent_n++;
+				}
+			}
+			else if (sect == SECTOR_CLIFF)
+			{
+				build_sector_cliff(y, x);
+				/* Mark blocks as used */
+				dun->room_map[y][x] = TRUE;
+				if (y + 1 < dun->row_rooms) dun->room_map[y + 1][x] = TRUE;
+				if (x + 1 < dun->col_rooms) dun->room_map[y][x + 1] = TRUE;
+				if (y + 1 < dun->row_rooms && x + 1 < dun->col_rooms) dun->room_map[y + 1][x + 1] = TRUE;
+
+				/* Add center for tunnels */
+				if (dun->cent_n < CENT_MAX) {
+					dun->cent[dun->cent_n].y = (y * BLOCK_HGT) + BLOCK_HGT;
+					dun->cent[dun->cent_n].x = (x * BLOCK_WID) + BLOCK_WID;
+					dun->cent_n++;
+				}
+			}
+			else if (sect == SECTOR_DARK)
+			{
+				build_sector_dark(y, x);
+				/* Mark blocks as used */
+				dun->room_map[y][x] = TRUE;
+				if (y + 1 < dun->row_rooms) dun->room_map[y + 1][x] = TRUE;
+				if (x + 1 < dun->col_rooms) dun->room_map[y][x + 1] = TRUE;
+				if (y + 1 < dun->row_rooms && x + 1 < dun->col_rooms) dun->room_map[y + 1][x + 1] = TRUE;
+
+				/* Add center for tunnels */
+				if (dun->cent_n < CENT_MAX) {
+					dun->cent[dun->cent_n].y = (y * BLOCK_HGT) + BLOCK_HGT;
+					dun->cent[dun->cent_n].x = (x * BLOCK_WID) + BLOCK_WID;
+					dun->cent_n++;
+				}
+			}
+			else if (sect == SECTOR_PLAZA)
+			{
+				build_sector_plaza(y, x);
+				/* Mark blocks as used */
+				dun->room_map[y][x] = TRUE;
+				if (y + 1 < dun->row_rooms) dun->room_map[y + 1][x] = TRUE;
+				if (x + 1 < dun->col_rooms) dun->room_map[y][x + 1] = TRUE;
+				if (y + 1 < dun->row_rooms && x + 1 < dun->col_rooms) dun->room_map[y + 1][x + 1] = TRUE;
+
+				/* Add center for tunnels */
+				if (dun->cent_n < CENT_MAX) {
+					dun->cent[dun->cent_n].y = (y * BLOCK_HGT) + BLOCK_HGT;
+					dun->cent[dun->cent_n].x = (x * BLOCK_WID) + BLOCK_WID;
+					dun->cent_n++;
+				}
+			}
+		}
+	}
+
+	/* Build some rooms */
+	for (i = 0; i < dun_rooms; i++)
+	{
+		/* Pick a block for the room */
+		y = rand_int(dun->row_rooms);
+		x = rand_int(dun->col_rooms);
+
+		/* Only build in RUINS sectors */
+		if (cave_sector[y][x] != SECTOR_RUINS) continue;
+
+		/* Align dungeon rooms */
+		if (dungeon_align)
+		{
+			/* Slide some rooms right */
+			if ((x % 3) == 0)
+				x++;
+
+			/* Slide some rooms left */
+			if ((x % 3) == 2)
+				x--;
+		}
+
+		/* Destroyed levels are boring */
+		if (destroyed)
+		{
+			/* Attempt a "trivial" room */
+			if (room_build(y, x, 1))
+				continue;
+
+			/* Never mind */
+			continue;
+		}
+
+
+		/* Attempt a themed vault */
+		if (allow_theme_vaults)
+		{
+			int chance = 70;
+
+			if (weirdness_is_rare)
+				chance = 10;
+
+			if (magik(chance))
+			{
+				if (room_build(y, x, 9))
+					continue;
+			}
+		}
+
+		/* Attempt an "unusual" room */
+		if (rand_int(DUN_UNUSUAL) < (p_ptr->depth + 20)) /* Added +20 to boost structure frequency */
+		{
+			/* Roll for room type */
+			k = rand_int(100);
+
+			/* Higher priority for Guard Posts and Sanctums */
+			if ((k < 15) && (p_ptr->depth >= 5) && room_build(y, x, 17)) /* Guard Post */
+				continue;
+
+			/* Increase frequency of Large Rooms (Type 4) */
+			if ((k < 40) && room_build(y, x, 4))
+				continue;
+
+			/* Attempt a very unusual room */
+			if (rand_int(DUN_UNUSUAL) < p_ptr->depth)
+			{
+                /* Type 17 -- Guard Post Room (5% if depth >= 5) */
+                if ((k < 5) && (p_ptr->depth >= 5) && room_build(y, x, 17))
+                    continue;
+
+                /* Type 18 -- Ambush Corridor (5% if depth >= 5) */
+                if ((k < 10) && (p_ptr->depth >= 5) && room_build(y, x, 18))
+                    continue;
+
+                /* Type 11 -- Folly Vault (10% if depth > 30) */
+                if ((k < 20) && (p_ptr->depth >= 30) && room_build(y, x, 11))
+                    continue;
+
+                /* Type 10 -- Sanctum (10% if depth > 40) */
+                if ((k < 20) && (p_ptr->depth >= 40) && room_build(y, x, 10))
+                    continue;
+
+				/* Type 8 -- Greater vault (10%) */
+				if ((k < 20) && room_build(y, x, 8))
+					continue;
+
+				/* Type 7 -- Lesser vault (15%) */
+				if ((k < 25) && room_build(y, x, 7))
+					continue;
+
+				/* Type 6 -- Monster pit (25%) */
+				if ((k < 50) && room_build(y, x, 6))
+					continue;
+
+				/* Type 5 -- Monster nest (30%) */
+				if ((k < 80) && room_build(y, x, 5))
+					continue;
+			}
+
+			/* Type 4 -- Large room (25%) */
+			if ((k < 25) && room_build(y, x, 4))
+				continue;
+
+			/* Type 3 -- Cross room (25%) */
+			if ((k < 50) && room_build(y, x, 3))
+				continue;
+
+			/* Type 2 -- Overlapping (50%) */
+			if ((k < 100) && room_build(y, x, 2))
+				continue;
+		}
+
+		/* Attempt a trivial room */
+		if (room_build(y, x, 1))
+			continue;
+	}
+
+	/* Special boundary walls -- Top */
+	for (x = 0; x < DUNGEON_WID; x++)
+	{
+		y = 0;
+
+		/* Clear previous contents, add "solid" perma-wall */
+		cave_feat[y][x] = FEAT_PERM_SOLID;
+	}
+
+	/* Special boundary walls -- Bottom */
+	for (x = 0; x < DUNGEON_WID; x++)
+	{
+		y = DUNGEON_HGT - 1;
+
+		/* Clear previous contents, add "solid" perma-wall */
+		cave_feat[y][x] = FEAT_PERM_SOLID;
+	}
+
+	/* Special boundary walls -- Left */
+	for (y = 0; y < DUNGEON_HGT; y++)
+	{
+		x = 0;
+
+		/* Clear previous contents, add "solid" perma-wall */
+		cave_feat[y][x] = FEAT_PERM_SOLID;
+	}
+
+	/* Special boundary walls -- Right */
+	for (y = 0; y < DUNGEON_HGT; y++)
+	{
+		x = DUNGEON_WID - 1;
+
+		/* Clear previous contents, add "solid" perma-wall */
+		cave_feat[y][x] = FEAT_PERM_SOLID;
+	}
+
+	/* Hack -- Scramble the room order */
+	for (i = 0; i < dun->cent_n; i++)
+	{
+		int pick1 = rand_int(dun->cent_n);
+		int pick2 = rand_int(dun->cent_n);
+		y1 = dun->cent[pick1].y;
+		x1 = dun->cent[pick1].x;
+		dun->cent[pick1].y = dun->cent[pick2].y;
+		dun->cent[pick1].x = dun->cent[pick2].x;
+		dun->cent[pick2].y = y1;
+		dun->cent[pick2].x = x1;
+	}
+
+	/* Start with no tunnel doors */
+	dun->door_n = 0;
+
+	/* Hack -- connect the first room to the last room */
+	y = dun->cent[dun->cent_n - 1].y;
+	x = dun->cent[dun->cent_n - 1].x;
+
+	/* Connect all the rooms together */
+	for (i = 0; i < dun->cent_n; i++)
+	{
+		/* Connect the room to the previous room */
+        if (rand_int(100) < 75) /* 75% chance for winding tunnel */
+		    build_tunnel_winding(dun->cent[i].y, dun->cent[i].x, y, x);
+        else
+            build_tunnel(dun->cent[i].y, dun->cent[i].x, y, x);
+
+		/* Remember the "previous" room */
+		y = dun->cent[i].y;
+		x = dun->cent[i].x;
+	}
+
+    /* Interconnectivity: Connect some random rooms */
+    for (i = 0; i < dun->cent_n; i++)
+    {
+        if (rand_int(100) < 40) /* 40% chance */
+        {
+            int target = rand_int(dun->cent_n);
+            if (target != i)
+            {
+                build_tunnel_winding(dun->cent[i].y, dun->cent[i].x, dun->cent[target].y, dun->cent[target].x);
+            }
+        }
+    }
+
+	/* Place intersection doors */
+	if (level_bg == FEAT_WALL_EXTRA) {
+	  for (i = 0; i < dun->door_n; i++) {
+	    /* Extract junction location */
+	    y = dun->door[i].y;
+	    x = dun->door[i].x;
+
+	    /* Try placing doors */
+	    try_door(y, x - 1);
+	    try_door(y, x + 1);
+	    try_door(y - 1, x);
+	    try_door(y + 1, x);
+	  }
+	}
+
+	/* Hack -- Add some magma streamers */
+
+	if (level_bg == FEAT_WALL_EXTRA)
+	{
+		u32b level_area = (u32b)DUNGEON_HGT * DUNGEON_WID;
+		u32b standard_area = 64 * 64;
+		int scale = (level_area + standard_area - 1) / standard_area;
+
+		for (i = 0; i < DUN_STR_MAG * scale; i++)
+		{
+			build_streamer(FEAT_MAGMA, DUN_STR_MC, 32 + randint(32));
+		}
+
+		/* Hack -- Add some quartz streamers */
+		for (i = 0; i < DUN_STR_QUA * scale; i++)
+		{
+			build_streamer(FEAT_QUARTZ, DUN_STR_QC, 32 + randint(32));
+		}
+	}
+
+	/* Destroy the level if necessary */
+	if (destroyed)
+		destroy_level();
+
+	/* Add streamers of trees, water, or lava -KMW- */
+	if ((p_ptr->depth <= 2) && (randint(20) > 15))
+		for (i = 0; i < randint(DUN_STR_QUA); i++)
+			build_streamer2(FEAT_TREES, 1);
+	if ((p_ptr->depth <= 19) && (randint(20) > 15))
+	{
+		for (i = 0; i < randint(DUN_STR_QUA - 1); i++)
+			build_streamer2(FEAT_SHAL_WATER, 0);
+		if (randint(20) > 15)
+		{
+			for (i = 0; i < randint(DUN_STR_QUA); i++)
+				build_streamer2(FEAT_DEEP_WATER, 1);
+		}
+	}
+	else if ((p_ptr->depth > 19) && (randint(20) > 15))
+	{
+		for (i = 0; i < randint(DUN_STR_QUA); i++)
+			build_streamer2(FEAT_SHAL_LAVA, 0);
+		if (randint(20) > 15)
+		{
+			for (i = 0; i < randint(DUN_STR_QUA - 1); i++)
+				build_streamer2(FEAT_DEEP_LAVA, 1);
+		}
+	}
+	else if (randint(10) > 7)
+	{
+		for (i = 0; i < randint(DUN_STR_QUA); i++)
+		{
+			build_streamer2(FEAT_CHAOS_FOG, 1);
+		}
+	}
+
+	if (randint(10) > 7)
+	{
+		build_streamer2(FEAT_OIL, 0);
+	}
+
+	if (randint(10) > 7)
+	{
+		build_streamer2(FEAT_ICE, 0);
+	}
+
+	if (randint(10) > 7)
+	{
+		build_streamer2(FEAT_ACID, 0);
+	}
+
+	/* Place 3 or 4 down stairs near some walls */
+	alloc_stairs(FEAT_MORE, rand_range(100, 120), 3, (level_bg == FEAT_FOG || level_bg == FEAT_CHAOS_FOG));
+
+	/* Place 1 or 2 up stairs near some walls */
+	alloc_stairs(FEAT_LESS, rand_range(40, 60), 3, (level_bg == FEAT_FOG || level_bg == FEAT_CHAOS_FOG));
+
+	/* Find level start (up stairs) to seed loot generation logic */
+	{
+		int sy, sx;
+		bool found_start = FALSE;
+		/* Scan for up stairs (FEAT_LESS) usually */
+		int start_feat = (!p_ptr->depth) ? FEAT_MORE : FEAT_LESS;
+		if (!p_ptr->depth && p_ptr->inside_special == SPECIAL_WILD) start_feat = FEAT_SHAFT;
+
+		for (sy = 0; sy < DUNGEON_HGT; sy++) {
+			for (sx = 0; sx < DUNGEON_WID; sx++) {
+				if (cave_feat[sy][sx] == start_feat) {
+					set_generation_origin(sy, sx);
+					found_start = TRUE;
+					break;
+				}
+			}
+			if (found_start) break;
+		}
+		if (!found_start) {
+			/* Fallback to center */
+			set_generation_origin(DUNGEON_HGT / 2, DUNGEON_WID / 2);
+		}
+	}
+
+	/* Determine the character location */
+	new_player_spot();
+
+	/* Monsters and objects change even in persistent dungeons. */
+	if (seed_dungeon)
+	{
+		Rand_quick = FALSE;
+	}
+
+	/* Basic "amount" */
+	k = (p_ptr->depth / 3);
+	if (k > 10)
+		k = 10;
+	if (k < 2)
+		k = 2;
+
+
+	/* Pick a base number of monsters */
+	i = (MIN_M_ALLOC_LEVEL + randint(8)) * 4;
+
+	if (!dun->crowded) i += 100;
+
+	/* Put some monsters in the dungeon */
+	for (i = i + k; i > 0; i--)
+	{
+		/* Hack -- flooded levels get fishy inhabitants. */
+		if (level_bg == FEAT_SHAL_WATER)
+		{
+			alloc_monster(0, MON_ALLOC_SLEEP | MON_ALLOC_AQUATIC);
+		}
+
+		alloc_monster(0, MON_ALLOC_SLEEP);
+	}
+
+	/* Place some good items */
+	for (i = 0; i < 6; i++)
+	{
+		int y, x;
+		int d = 0;
+		while (d < 1000)
+		{
+			d++;
+			y = rand_int(DUNGEON_HGT);
+			x = rand_int(DUNGEON_WID);
+			if (cave_naked_bold(y, x))
+			{
+				place_object(y, x, TRUE, FALSE);
+				break;
+			}
+		}
+	}
+
+	/* Place some small gold piles */
+	for (i = 0; i < 50; i++)
+	{
+		int y, x;
+		int d = 0;
+		while (d < 1000)
+		{
+			d++;
+			y = rand_int(DUNGEON_HGT);
+			x = rand_int(DUNGEON_WID);
+			if (cave_naked_bold(y, x))
+			{
+				place_gold_small(y, x);
+				break;
+			}
+		}
+	}
+
+	/* Place some traps in the dungeon */
+	{
+		/* Scaled Density */
+		u32b level_area = (u32b)DUNGEON_HGT * DUNGEON_WID;
+		u32b standard_area = 64 * 64;
+		int scale = (level_area + standard_area - 1) / standard_area;
+		int base_traps, total_traps;
+
+		if (scale < 1) scale = 1;
+
+		/* Original was randint(k), where k approx 2-10. */
+		/* New target: 5-10 per 64x64 unit. */
+		base_traps = 5 + rand_int(6);
+		total_traps = base_traps * scale;
+
+		alloc_object(ALLOC_SET_BOTH, ALLOC_TYP_TRAP, total_traps / 2);
+		/* Corridors get extra love */
+		alloc_object(ALLOC_SET_CORR, ALLOC_TYP_TRAP, total_traps / 2);
+
+		/* High traffic areas */
+		place_traps_near_doors(20);
+		place_traps_near_chests(40);
+	}
+
+	/* Put some rubble in corridors */
+	alloc_object(ALLOC_SET_CORR, ALLOC_TYP_RUBBLE, randint(k));
+
+	/* Put some objects in rooms */
+	alloc_object(ALLOC_SET_ROOM, ALLOC_TYP_OBJECT, randnor(DUN_AMT_ROOM,
+			3));
+
+	/* Put some altars */
+	alloc_object(ALLOC_SET_ROOM, ALLOC_TYP_ALTAR, randnor(DUN_AMT_ALTAR,
+			3));
+
+	/* Put some objects/gold in the dungeon */
+	alloc_object(ALLOC_SET_BOTH, ALLOC_TYP_OBJECT, randnor(DUN_AMT_ITEM,
+			3));
+
+	/* Populate with new features */
+	populate_features();
+    populate_cover_features();
+
+	/* Do not light floors inside rooms. */
+	/* Floors outside rooms or walls are lit. */
+
+	if (lit_level)
+	{
+		for (y = 0; y < DUNGEON_HGT; y++)
+		{
+			for (x = 0; x < DUNGEON_WID; x++)
+			{
+				if (!(cave_info[y][x] & CAVE_ROOM) ||
+					!(cave_floor_bold(y, x)))
+				{
+					cave_info[y][x] |= (CAVE_GLOW);
+				}
+			}
+		}
+	}
+}

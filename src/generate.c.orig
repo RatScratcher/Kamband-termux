@@ -2591,8 +2591,8 @@ static void build_vault(int yval, int xval, vault_type* v_ptr) {
 	    y = yval - (ymax / 2) + dy;
 
 
-	    /* 
-	     * Place some monsters/objects. 
+	    /*
+	     * Place some monsters/objects.
 	     */
 	    if (datum != ' ' && datum != '-') {
 
@@ -2680,7 +2680,7 @@ static void build_vault(int yval, int xval, vault_type* v_ptr) {
 		/* [Arena] Monster */
 	      case '&':
 		if (town_symb) {
-		  place_monster_aux(y, x, 
+		  place_monster_aux(y, x,
 				    arena_monsters[p_ptr->which_arena]
 				    [p_ptr->arena_number[p_ptr->which_arena]],
 				    MON_ALLOC_ARENA | MON_ALLOC_JUST_ONE);
@@ -2725,7 +2725,7 @@ static void build_vault(int yval, int xval, vault_type* v_ptr) {
 		  place_monster(y, x, mode);
 		  monster_level = p_ptr->depth;
 		}
-		
+
 		if (rand_int(100) < 50) {
 		  object_level = p_ptr->depth + 7;
 		  place_object(y, x, FALSE, FALSE);
@@ -4096,7 +4096,7 @@ static void lite_up_town(bool daytime)
 				cave_info[y][x] |= (CAVE_GLOW);
 
 				/* Wiz-lite if appropriate. */
-				if (wiz_lite_town && 
+				if (wiz_lite_town &&
 				    p_ptr->wild_x == 0 && p_ptr->wild_y == 0)
 				{
 					/* Memorize the grid */
@@ -4167,8 +4167,8 @@ static void terrain_gen(void) {
   }
 
   /* Hack -- implement scrolly terrains. */
-  if (!hook_vault_place_player && 
-      ((p_ptr->py <= 2 || p_ptr->py >= DUNGEON_HGT - 3) || 
+  if (!hook_vault_place_player &&
+      ((p_ptr->py <= 2 || p_ptr->py >= DUNGEON_HGT - 3) ||
        (p_ptr->px <= 2 || p_ptr->px >= DUNGEON_WID - 3))) {
 
     /* Scroll up. */
@@ -4196,7 +4196,7 @@ static void terrain_gen(void) {
 
 
   /* Initialize the four corners.
-   * The corners are generated as permanent separately from the 
+   * The corners are generated as permanent separately from the
    * contents. This means that the wilderness is fairly "tileable".
    *
    * Again, the contents of the code below were taken arbitrarily,
@@ -4222,7 +4222,7 @@ static void terrain_gen(void) {
 
 #define HASH_CORNERS(X, Y) (((X) - (Y)) ^ (((X) + seed_wild) & (Y)))
 #define HASH_LEVEL(X, Y)   (((Y) - (X)) ^ ((Y) & ((X) + seed_wild)))
-  
+
   Rand_value = HASH_CORNERS(p_ptr->wild_x, p_ptr->wild_y);
   cave_feat[1][1] = rand_int(table_size);
 
@@ -4236,7 +4236,7 @@ static void terrain_gen(void) {
   cave_feat[DUNGEON_HGT - 2][DUNGEON_WID - 2] = rand_int(table_size);
 
 
-  /* Terrain levels are always ``permanent''. 
+  /* Terrain levels are always ``permanent''.
    * Note the random bit shuffling to make a unique seed.
    * There's no real rationale behind this. Anyone know a good hashing
    * function for pairs of numbers? */
@@ -4473,16 +4473,16 @@ static void terrain_gen(void) {
   }
 
   /* Put some objects in rooms */
-  alloc_object(ALLOC_SET_ROOM, ALLOC_TYP_OBJECT, 
+  alloc_object(ALLOC_SET_ROOM, ALLOC_TYP_OBJECT,
 	       randnor(DUN_AMT_ROOM, 3));
 
   /* Put some altars */
-  alloc_object(ALLOC_SET_ROOM, ALLOC_TYP_ALTAR, 
+  alloc_object(ALLOC_SET_ROOM, ALLOC_TYP_ALTAR,
 	       randnor(DUN_AMT_ALTAR, 3));
 
   /* Put some objects/gold in the dungeon */
 
-  alloc_object(ALLOC_SET_ROOM, ALLOC_TYP_OBJECT, 
+  alloc_object(ALLOC_SET_ROOM, ALLOC_TYP_OBJECT,
 	       randnor(DUN_AMT_ITEM, 3));
 
   Rand_quick = quick_prev;
@@ -5135,8 +5135,8 @@ static void build_sector_hill(int y0, int x0)
     if (y2 >= DUNGEON_HGT) y2 = DUNGEON_HGT - 1;
     if (x2 >= DUNGEON_WID) x2 = DUNGEON_WID - 1;
 
-    int cy = (y1 + y2) / 2 + rand_int(BLOCK_HGT) - (BLOCK_HGT / 2);
-    int cx = (x1 + x2) / 2 + rand_int(BLOCK_WID) - (BLOCK_WID / 2);
+    int cy = (y1 + y2) / 2 + rand_int(9) - 4;
+    int cx = (x1 + x2) / 2 + rand_int(9) - 4;
     int max_dist = MAX(y2 - y1, x2 - x1) / 2;
 
 	/* Build hill with elevation gradient */
@@ -5168,7 +5168,7 @@ static void build_sector_hill(int y0, int x0)
 	/* Apply Cellular Automata to smooth the boundary (Organic Smoothing) */
 	int i;
 	for (i = 0; i < 2; i++) {
-		int next_elev[BLOCK_HGT * 2 + 2][BLOCK_WID * 2 + 2];
+		int next_elev[50][50];
 		int h = y2 - y1 + 1;
 		int w = x2 - x1 + 1;
 
@@ -5238,7 +5238,7 @@ static void build_sector_hill(int y0, int x0)
 						if (dy == 0 && dx == 0) continue;
 						int ny = y + dy;
 						int nx = x + dx;
-						if (!in_bounds(ny, nx) || ny < y1 || ny > y2 || nx < x1 || nx > x2 || get_elevation(ny, nx) == ELEV_GROUND) {
+						if (in_bounds(ny, nx) && get_elevation(ny, nx) == ELEV_GROUND) {
 							is_boundary = TRUE;
 						}
 					}
@@ -5265,6 +5265,15 @@ static void build_sector_hill(int y0, int x0)
 			cave_feat[ay][ax] = FEAT_RAMP_UP;
 		} else {
 			cave_feat[ay][ax] = FEAT_STAIRS_UP;
+		}
+	}
+
+	/* Add stairs to summit for direct high ground access */
+	if (rand_int(100) < 60) {
+		int sy = cy + rand_int(3) - 1;
+		int sx = cx + rand_int(3) - 1;
+		if (in_bounds(sy, sx) && get_elevation(sy, sx) == ELEV_HIGH) {
+			cave_feat[sy][sx] = FEAT_STAIRS_DOWN;
 		}
 	}
 

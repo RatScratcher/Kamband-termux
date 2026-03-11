@@ -1,0 +1,7 @@
+Generated mutation: 44
+Generated mutation: 26
+Generated mutation: 61
+Generated mutation: 64
+Generated mutation: 60
+Final mutations2: 30001000
+SUCCESS: MUT_MINUS_INT absent

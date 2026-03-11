@@ -870,34 +870,58 @@ static void build_streamer2(int feat, int killwall)
 		if (bx >= MAX_ROOMS_COL) bx = MAX_ROOMS_COL - 1;
 		int current_sector = cave_sector[by][bx];
 
-		while (life > 0)
-		{
-			/* Do not mess up vaults */
-			if (in_bounds(y, x) && !(cave_info[y][x] & CAVE_ICKY))
+			while (life > 0)
 			{
-				bool valid = TRUE;
-				if (feat == FEAT_ACID)
+				bool is_blob = (life % 5 == 0);
+				bool placed_island = FALSE;
+
+				if (is_blob && rand_int(100) < 25)
 				{
-					/* Acid eats through standard walls, but not permanent walls or stairs/doors */
-					if (cave_feat[y][x] >= FEAT_PERM_EXTRA || cave_feat[y][x] == FEAT_LESS || cave_feat[y][x] == FEAT_MORE || (cave_feat[y][x] >= FEAT_DOOR_HEAD && cave_feat[y][x] <= FEAT_DOOR_TAIL))
-						valid = FALSE;
-				}
-				else if (killwall == 0)
-				{
-					if (cave_feat[y][x] >= FEAT_MAGMA || cave_feat[y][x] == FEAT_LESS || cave_feat[y][x] == FEAT_MORE)
-						valid = FALSE;
-				}
-				else
-				{
-					if (cave_feat[y][x] >= FEAT_PERM_EXTRA || cave_feat[y][x] == FEAT_LESS || cave_feat[y][x] == FEAT_MORE)
-						valid = FALSE;
+					placed_island = TRUE;
 				}
 
-				if (valid)
+				for (int dy = (is_blob ? -1 : 0); dy <= (is_blob ? 1 : 0); dy++)
 				{
-					cave_feat[y][x] = feat;
+					for (int dx = (is_blob ? -1 : 0); dx <= (is_blob ? 1 : 0); dx++)
+					{
+						int cy = y + dy;
+						int cx = x + dx;
+
+						/* Do not mess up vaults */
+						if (in_bounds(cy, cx) && !(cave_info[cy][cx] & CAVE_ICKY))
+						{
+							bool valid = TRUE;
+							if (feat == FEAT_ACID)
+							{
+								/* Acid eats through standard walls, but not permanent walls or stairs/doors */
+								if (cave_feat[cy][cx] >= FEAT_PERM_EXTRA || cave_feat[cy][cx] == FEAT_LESS || cave_feat[cy][cx] == FEAT_MORE || (cave_feat[cy][cx] >= FEAT_DOOR_HEAD && cave_feat[cy][cx] <= FEAT_DOOR_TAIL))
+									valid = FALSE;
+							}
+							else if (killwall == 0)
+							{
+								if (cave_feat[cy][cx] >= FEAT_MAGMA || cave_feat[cy][cx] == FEAT_LESS || cave_feat[cy][cx] == FEAT_MORE)
+									valid = FALSE;
+							}
+							else
+							{
+								if (cave_feat[cy][cx] >= FEAT_PERM_EXTRA || cave_feat[cy][cx] == FEAT_LESS || cave_feat[cy][cx] == FEAT_MORE)
+									valid = FALSE;
+							}
+
+							if (valid)
+							{
+								if (dy == 0 && dx == 0 && placed_island)
+								{
+									cave_feat[cy][cx] = FEAT_FLOOR;
+								}
+								else
+								{
+									cave_feat[cy][cx] = feat;
+								}
+							}
+						}
+					}
 				}
-			}
 
 			/* Move to random adjacent tile */
 			dir = ddd[rand_int(8)];

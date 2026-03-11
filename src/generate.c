@@ -5139,18 +5139,15 @@ static void build_sector_hill(int y0, int x0)
     int cx = (x1 + x2) / 2 + rand_int(9) - 4;
     int max_dist = MAX(y2 - y1, x2 - x1) / 2;
 
-	/* Build hill with elevation gradient */
+	/* Build hill with single elevation (ELEV_HIGH) to enforce diff >= 2 */
     for (y = y1; y <= y2; y++) {
         for (x = x1; x <= x2; x++) {
             int dist = distance(cy, cx, y, x);
             int elev = ELEV_GROUND;
 
-            if (dist < max_dist / 3) {
+            if (dist < (max_dist * 2) / 3) {
 				elev = ELEV_HIGH;
                 cave_feat[y][x] = FEAT_HILL_TOP;
-            } else if (dist < 2 * max_dist / 3) {
-				elev = ELEV_HILL;
-                cave_feat[y][x] = FEAT_SLOPE_UP;
             } else {
 				elev = ELEV_GROUND;
                 cave_feat[y][x] = FEAT_FLOOR;
@@ -5184,17 +5181,17 @@ static void build_sector_hill(int y0, int x0)
 						if (dy == 0 && dx == 0) continue;
 						int ny = cy_coord + dy;
 						int nx = cx_coord + dx;
-						if (in_bounds(ny, nx) && get_elevation(ny, nx) > ELEV_GROUND) {
+						if (in_bounds(ny, nx) && get_elevation(ny, nx) == ELEV_HIGH) {
 							elev_neighbors++;
 						}
 					}
 				}
 
 				int current_elev = get_elevation(cy_coord, cx_coord);
-				if (current_elev > ELEV_GROUND && elev_neighbors < 3) {
+				if (current_elev == ELEV_HIGH && elev_neighbors < 3) {
 					next_elev[y][x] = ELEV_GROUND;
 				} else if (current_elev == ELEV_GROUND && elev_neighbors >= 5) {
-					next_elev[y][x] = ELEV_HILL;
+					next_elev[y][x] = ELEV_HIGH;
 				} else {
 					next_elev[y][x] = current_elev;
 				}
@@ -5212,8 +5209,6 @@ static void build_sector_hill(int y0, int x0)
 					if (new_elev == ELEV_GROUND) {
 						cave_feat[cy_coord][cx_coord] = FEAT_FLOOR;
 						cave_info[cy_coord][cx_coord] &= ~CAVE_GLOW;
-					} else if (new_elev == ELEV_HILL) {
-						cave_feat[cy_coord][cx_coord] = FEAT_SLOPE_UP;
 					} else if (new_elev == ELEV_HIGH) {
 						cave_feat[cy_coord][cx_coord] = FEAT_HILL_TOP;
 						cave_info[cy_coord][cx_coord] |= CAVE_GLOW;
@@ -5230,7 +5225,7 @@ static void build_sector_hill(int y0, int x0)
 
 	for (y = y1; y <= y2; y++) {
 		for (x = x1; x <= x2; x++) {
-			if (get_elevation(y, x) == ELEV_HILL || get_elevation(y, x) == ELEV_HIGH) {
+			if (get_elevation(y, x) == ELEV_HIGH) {
 				bool is_boundary = FALSE;
 				int dy, dx;
 				for (dy = -1; dy <= 1; dy++) {
@@ -5265,15 +5260,6 @@ static void build_sector_hill(int y0, int x0)
 			cave_feat[ay][ax] = FEAT_RAMP_UP;
 		} else {
 			cave_feat[ay][ax] = FEAT_STAIRS_UP;
-		}
-	}
-
-	/* Add stairs to summit for direct high ground access */
-	if (rand_int(100) < 60) {
-		int sy = cy + rand_int(3) - 1;
-		int sx = cx + rand_int(3) - 1;
-		if (in_bounds(sy, sx) && get_elevation(sy, sx) == ELEV_HIGH) {
-			cave_feat[sy][sx] = FEAT_STAIRS_DOWN;
 		}
 	}
 

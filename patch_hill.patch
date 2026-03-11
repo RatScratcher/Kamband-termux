@@ -1,0 +1,47 @@
+--- src/generate.c	2023-10-25 15:00:00.000000000 +0000
++++ src/generate.c	2023-10-25 15:00:00.000000000 +0000
+@@ -5134,8 +5134,8 @@
+     if (y2 >= DUNGEON_HGT) y2 = DUNGEON_HGT - 1;
+     if (x2 >= DUNGEON_WID) x2 = DUNGEON_WID - 1;
+
+-    int cy = (y1 + y2) / 2 + rand_int(9) - 4;
+-    int cx = (x1 + x2) / 2 + rand_int(9) - 4;
++    int cy = (y1 + y2) / 2 + rand_int(BLOCK_HGT) - (BLOCK_HGT / 2);
++    int cx = (x1 + x2) / 2 + rand_int(BLOCK_WID) - (BLOCK_WID / 2);
+     int max_dist = MAX(y2 - y1, x2 - x1) / 2;
+
+	/* Build hill with elevation gradient */
+@@ -5168,7 +5168,7 @@
+	/* Apply Cellular Automata to smooth the boundary (Organic Smoothing) */
+	int i;
+	for (i = 0; i < 2; i++) {
+-		int next_elev[50][50];
++		int next_elev[BLOCK_HGT * 2 + 2][BLOCK_WID * 2 + 2];
+		int h = y2 - y1 + 1;
+		int w = x2 - x1 + 1;
+
+@@ -5228,7 +5228,7 @@
+						if (dy == 0 && dx == 0) continue;
+						int ny = y + dy;
+						int nx = x + dx;
+-						if (in_bounds(ny, nx) && get_elevation(ny, nx) == ELEV_GROUND) {
++						if (!in_bounds(ny, nx) || ny < y1 || ny > y2 || nx < x1 || nx > x2 || get_elevation(ny, nx) == ELEV_GROUND) {
+							is_boundary = TRUE;
+						}
+					}
+@@ -5256,15 +5256,6 @@
+		}
+	}
+
+-	/* Add stairs to summit for direct high ground access */
+-	if (rand_int(100) < 60) {
+-		int sy = cy + rand_int(3) - 1;
+-		int sx = cx + rand_int(3) - 1;
+-		if (in_bounds(sy, sx) && get_elevation(sy, sx) == ELEV_HIGH) {
+-			cave_feat[sy][sx] = FEAT_STAIRS_DOWN;
+-		}
+-	}
+-
+	/* Place defenders on high ground with patrol routes */
+     if (rand_int(100) < 60) {
+         int my = cy + rand_int(3) - 1;

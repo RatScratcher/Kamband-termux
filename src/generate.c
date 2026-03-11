@@ -5302,12 +5302,18 @@ static void build_sector_hill(int y0, int x0)
 		}
 	}
 
-	/* Validation Check: Run a quick check: if there is more than one passable path to the ELEV_HIGH area, turn the extras back into FEAT_CLIFF_UP. */
+	/* Validation Check: Ensure ONLY the access point allows vertical movement */
 	for (y = y1; y <= y2; y++) {
 		for (x = x1; x <= x2; x++) {
-			if (get_elevation(y, x) == ELEV_HILL) {
+			// If it's elevated and NOT the one chosen access point...
+			if (get_elevation(y, x) > ELEV_GROUND) {
 				if (y != access_y || x != access_x) {
-					if (cave_feat[y][x] == FEAT_SLOPE_UP || cave_feat[y][x] == FEAT_RAMP_UP || cave_feat[y][x] == FEAT_STAIRS_UP || cave_feat[y][x] == FEAT_FLOOR) {
+					// ...and it's currently set to a passable feature...
+					if (cave_feat[y][x] == FEAT_SLOPE_UP ||
+						cave_feat[y][x] == FEAT_HILL_TOP ||
+						cave_feat[y][x] == FEAT_FLOOR) {
+
+						// ...seal it off!
 						cave_feat[y][x] = FEAT_CLIFF_UP;
 					}
 				}

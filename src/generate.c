@@ -5256,24 +5256,27 @@ static void build_sector_hill(int y0, int x0)
 		for (x = x1; x <= x2; x++) {
 			if (get_elevation(y, x) == ELEV_HILL || get_elevation(y, x) == ELEV_HIGH) {
 				bool is_boundary = FALSE;
-				bool is_exposed = FALSE;
 				int dy, dx;
+
+				/* The "Out-of-Sector" Rule */
+				if (y == y1 || y == y2 || x == x1 || x == x2) {
+					is_boundary = TRUE;
+				}
+
 				for (dy = -1; dy <= 1; dy++) {
 					for (dx = -1; dx <= 1; dx++) {
 						if (dy == 0 && dx == 0) continue;
 						int ny = y + dy;
 						int nx = x + dx;
-						if (!in_bounds(ny, nx) || ny < y1 || ny > y2 || nx < x1 || nx > x2) {
-							is_exposed = TRUE;
+						if (!in_bounds(ny, nx)) {
+							is_boundary = TRUE;
 						} else if (get_elevation(ny, nx) == ELEV_GROUND) {
 							is_boundary = TRUE;
 						}
 					}
 				}
 
-				if (is_exposed) {
-					cave_feat[y][x] = FEAT_CLIFF_UP;
-				} else if (is_boundary) {
+				if (is_boundary) {
 					cave_feat[y][x] = FEAT_CLIFF_UP;
 					if (num_boundary < 1000) {
 						boundary_y[num_boundary] = y;
@@ -5299,12 +5302,14 @@ static void build_sector_hill(int y0, int x0)
 		}
 	}
 
-	/* The "One-Way" Rule: Enforce no other slope or floor connects high ground to low ground */
+	/* Validation Check: Run a quick check: if there is more than one passable path to the ELEV_HIGH area, turn the extras back into FEAT_CLIFF_UP. */
 	for (y = y1; y <= y2; y++) {
 		for (x = x1; x <= x2; x++) {
 			if (get_elevation(y, x) == ELEV_HILL) {
 				if (y != access_y || x != access_x) {
-					cave_feat[y][x] = FEAT_CLIFF_UP;
+					if (cave_feat[y][x] == FEAT_SLOPE_UP || cave_feat[y][x] == FEAT_RAMP_UP || cave_feat[y][x] == FEAT_STAIRS_UP || cave_feat[y][x] == FEAT_FLOOR) {
+						cave_feat[y][x] = FEAT_CLIFF_UP;
+					}
 				}
 			}
 		}

@@ -1072,6 +1072,46 @@ static void wr_dungeon(void)
 		wr_byte((byte) prev_char);
 	}
 
+	/*** Simple "Run-Length-Encoding" of elevation ***/
+
+	/* Reset counters */
+	count = 0;
+	prev_char = 0;
+
+	/* Dump the elevation data */
+	for (y = 0; y < DUNGEON_HGT; y++)
+	{
+		for (x = 0; x < DUNGEON_WID; x++)
+		{
+			/* Extract the elevation byte */
+			tmp8u = (byte)get_elevation(y, x);
+
+			/* If the run is broken, or too full, flush it */
+			if ((tmp8u != prev_char) || (count == MAX_UCHAR))
+			{
+				if (count)
+				{
+					wr_byte((byte) count);
+					wr_byte((byte) prev_char);
+				}
+				prev_char = tmp8u;
+				count = 1;
+			}
+			/* Continue the run */
+			else
+			{
+				count++;
+			}
+		}
+	}
+
+	/* Flush the data (if any) */
+	if (count)
+	{
+		wr_byte((byte) count);
+		wr_byte((byte) prev_char);
+	}
+
 
 	/*** Simple "Run-Length-Encoding" of cave fire life ***/
 

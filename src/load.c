@@ -1192,6 +1192,25 @@ static errr rd_dungeon(void)
 			}
 		}
 
+		/*** Read RLE elevation data ***/
+		for (x = y = 0; y < DUNGEON_HGT; )
+		{
+			/* Read count and value */
+			rd_byte(&count);
+			rd_byte(&tmp8u);
+
+			/* Apply to the map */
+			while (count--)
+			{
+				set_elevation(y, x, (int)tmp8u);
+				if (++x >= DUNGEON_WID)
+				{
+					x = 0;
+					if (++y >= DUNGEON_HGT) break;
+				}
+			}
+		}
+
 		debug_log("rd_dungeon: start RLE 2 (fire life)");
 		if (sf_patch >= 1)
 		{
@@ -1301,25 +1320,6 @@ static errr rd_dungeon(void)
 			}
 		}
 	}
-
-		/*** Read RLE elevation data ***/
-		for (x = y = 0; y < DUNGEON_HGT; )
-		{
-			/* Read count and value */
-			rd_byte(&count);
-			rd_byte(&tmp8u);
-
-			/* Apply to the map */
-			while (count--)
-			{
-				set_elevation(y, x, (int)tmp8u);
-				if (++x >= DUNGEON_WID)
-				{
-					x = 0;
-					if (++y >= DUNGEON_HGT) break;
-				}
-			}
-		}
 
 
 	/*** Player ***/

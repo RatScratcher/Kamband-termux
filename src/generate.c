@@ -5154,7 +5154,7 @@ static void build_sector_hill(int y0, int x0)
     int x1 = x0 * BLOCK_WID;
     int y2 = (y0 + 2) * BLOCK_HGT;
     int x2 = (x0 + 2) * BLOCK_WID;
-    int x, y;
+    int x, y, dx, dy;
 
     if (y2 >= DUNGEON_HGT) y2 = DUNGEON_HGT - 1;
     if (x2 >= DUNGEON_WID) x2 = DUNGEON_WID - 1;
@@ -5302,20 +5302,29 @@ static void build_sector_hill(int y0, int x0)
 		}
 	}
 
-	/* Validation Check: Ensure ONLY the access point allows vertical movement */
+	/* Improved Choke Point Logic */
 	for (y = y1; y <= y2; y++) {
 		for (x = x1; x <= x2; x++) {
-			// If it's elevated and NOT the one chosen access point...
 			if (get_elevation(y, x) > ELEV_GROUND) {
-				if (y != access_y || x != access_x) {
-					// ...and it's currently set to a passable feature...
-					if (cave_feat[y][x] == FEAT_SLOPE_UP ||
-						cave_feat[y][x] == FEAT_HILL_TOP ||
-						cave_feat[y][x] == FEAT_FLOOR) {
+				bool needs_cliff = FALSE;
 
-						// ...seal it off!
-						cave_feat[y][x] = FEAT_CLIFF_UP;
+				/* Check all 8 neighbors */
+				for (dy = -1; dy <= 1; dy++) {
+					for (dx = -1; dx <= 1; dx++) {
+						int ny = y + dy;
+						int nx = x + dx;
+
+						/* If neighbor is outside sector OR lower elevation, we need a cliff */
+						if (ny < y1 || ny > y2 || nx < x1 || nx > x2) {
+							needs_cliff = TRUE;
+						} else if (get_elevation(ny, nx) < get_elevation(y, x)) {
+							needs_cliff = TRUE;
+						}
 					}
+				}
+
+				if (needs_cliff && (y != access_y || x != access_x)) {
+					cave_feat[y][x] = FEAT_CLIFF_UP;
 				}
 			}
 		}

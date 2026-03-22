@@ -4515,6 +4515,24 @@ static void terrain_gen(void) {
 
 
 /*
+ * Place gold with specific value
+ */
+void place_gold(int y, int x, int gold_val)
+{
+	object_type *i_ptr;
+
+	/* Allocate space for the new object. */
+	i_ptr = new_object();
+
+	/* Set up gold */
+	i_ptr->tval = TV_GOLD;
+	i_ptr->pval = gold_val;
+
+	/* Drop the object */
+	drop_near(i_ptr, FALSE, y, x);
+}
+
+/*
  * Places some small gold
  */
 static void place_gold_small(int y, int x)
@@ -5287,12 +5305,21 @@ static void build_sector_fractal_pit(int y0, int x0)
     /* Generate the organic heightmap into cave_feat temporarily */
     plasma_recursive(px1, py1, px2, py2, 100, 1);
 
-    /* 3. Threshold the fractal: High values become pit, Low values become ground */
+    /* 3. Hazard Selection */
+    int roll = rand_int(100);
+    int pit_feat;
+
+    if (roll < 40)      pit_feat = FEAT_SWAMP;      /* 40% Swamp (Slow) */
+    else if (roll < 70) pit_feat = FEAT_SHAL_WATER; /* 30% Water (Slow) */
+    else if (roll < 85) pit_feat = FEAT_OIL;        /* 15% Oil (Flammable!) */
+    else                pit_feat = FEAT_SHAL_LAVA;  /* 15% Lava (Painful) */
+
+    /* 4. Threshold and Threshold Path Clearing */
     for (y = py1; y <= py2; y++) {
         for (x = px1; x <= px2; x++) {
-            if (cave_feat[y][x] > 55) { /* Threshold for "organic" pit */
+            if (cave_feat[y][x] > 55) {
                 set_elevation(y, x, ELEV_LOW);
-                cave_feat[y][x] = FEAT_PIT;
+                cave_feat[y][x] = pit_feat;
             } else {
                 set_elevation(y, x, ELEV_GROUND);
                 cave_feat[y][x] = FEAT_FLOOR;
@@ -5300,6 +5327,33 @@ static void build_sector_fractal_pit(int y0, int x0)
         }
     }
 
+    /* 5. Place the "Incentive" (Loot) at the center of mass */
+    int cy = (py1 + py2) / 2;
+    int cx = (px1 + px2) / 2;
+
+    /* Ensure we place loot on a valid pit tile near the center */
+    if (get_elevation(cy, cx) == ELEV_LOW) {
+        if (pit_feat == FEAT_OIL) {
+            /* Boost object level for the high-risk area */
+            object_level += 5;
+
+            if (rand_int(100) < 50) {
+                /* Big pile of gold */
+                int gold_val = (p_ptr->depth * 100) + randint(500);
+                place_gold(cy, cx, gold_val);
+            } else {
+                /* Good quality item */
+                place_object(cy, cx, TRUE, FALSE);
+            }
+
+            object_level -= 5;
+
+            /* Visual cue: make the loot tile glow so they see it through the oil/lava */
+            cave_info[cy][cx] |= (CAVE_GLOW | CAVE_MARK);
+        }
+    }
+
+    /* 6. Cliffs and Access Points */
     /* 4. Place Slopes at the boundaries of the fractal shape */
     for (y = py1; y <= py2; y++) {
         for (x = px1; x <= px2; x++) {

@@ -681,6 +681,7 @@ extern void apply_magic(object_type * o_ptr, int lev, bool okay, bool good,
 extern bool make_object(object_type * j_ptr, bool good, bool great);
 extern void drop_near(object_type * j_ptr, bool do_dam, int y, int x);
 extern void acquirement(int y1, int x1, int num, bool great);
+extern void place_gold(int y, int x, int gold_val);
 extern void place_object(int y, int x, bool good, bool great);
 extern void pick_trap(int y, int x);
 extern void place_trap(int y, int x);

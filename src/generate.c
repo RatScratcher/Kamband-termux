@@ -5370,16 +5370,18 @@ static void build_sector_pit(int y0, int x0)
 /*
  * Build a Cliff Sector with climbable sections
  */
+/*
+ * Build a Cliff Sector with climbable sections and guaranteed clear access paths.
+ */
 static void build_sector_cliff(int y0, int x0)
 {
+    int y, x, i;
     int y1 = y0 * BLOCK_HGT;
     int x1 = x0 * BLOCK_WID;
-    int y2 = (y0 + 2) * BLOCK_HGT;
-    int x2 = (x0 + 2) * BLOCK_WID;
-    int x, y;
+    int y2 = (y0 + 2) * BLOCK_HGT - 1;
+    int x2 = (x0 + 2) * BLOCK_WID - 1;
 
-    if (y2 >= DUNGEON_HGT) y2 = DUNGEON_HGT - 1;
-    if (x2 >= DUNGEON_WID) x2 = DUNGEON_WID - 1;
+    if (!in_bounds(y1, x1) || !in_bounds(y2, x2)) return;
 
     bool vertical = (rand_int(100) < 50);
 
@@ -5393,73 +5395,63 @@ static void build_sector_cliff(int y0, int x0)
                     if (x < cliff_x - 1) {
                         set_elevation(y, x, ELEV_HIGH);
                         cave_feat[y][x] = FEAT_FLOOR;
-					} else if (x == cliff_x - 1) {
+                    } else if (x == cliff_x - 1) {
                         set_elevation(y, x, ELEV_HIGH);
-						cave_feat[y][x] = FEAT_CLIFF_DOWN;
-					} else if (x == cliff_x) {
-						set_elevation(y, x, ELEV_GROUND);
-						/* Make some sections climbable */
-						if (rand_int(100) < 40) {
-							cave_feat[y][x] = FEAT_CLIMBABLE;
-						} else {
-							cave_feat[y][x] = FEAT_CLIFF_UP;
-						}
+                        cave_feat[y][x] = FEAT_CLIFF_DOWN;
+                    } else if (x == cliff_x) {
+                        set_elevation(y, x, ELEV_GROUND);
+                        cave_feat[y][x] = (rand_int(100) < 40) ? FEAT_CLIMBABLE : FEAT_CLIFF_UP;
                     } else {
                         set_elevation(y, x, ELEV_GROUND);
-						cave_feat[y][x] = FEAT_FLOOR;
+                        cave_feat[y][x] = FEAT_FLOOR;
                     }
                 } else {
                     if (x > cliff_x + 1) {
                         set_elevation(y, x, ELEV_HIGH);
                         cave_feat[y][x] = FEAT_FLOOR;
-					} else if (x == cliff_x + 1) {
+                    } else if (x == cliff_x + 1) {
                         set_elevation(y, x, ELEV_HIGH);
                         cave_feat[y][x] = FEAT_CLIFF_DOWN;
-					} else if (x == cliff_x) {
-						set_elevation(y, x, ELEV_GROUND);
-						if (rand_int(100) < 40) {
-							cave_feat[y][x] = FEAT_CLIMBABLE;
-						} else {
-							cave_feat[y][x] = FEAT_CLIFF_UP;
-						}
+                    } else if (x == cliff_x) {
+                        set_elevation(y, x, ELEV_GROUND);
+                        cave_feat[y][x] = (rand_int(100) < 40) ? FEAT_CLIMBABLE : FEAT_CLIFF_UP;
                     } else {
                         set_elevation(y, x, ELEV_GROUND);
-						cave_feat[y][x] = FEAT_FLOOR;
+                        cave_feat[y][x] = FEAT_FLOOR;
                     }
                 }
                 cave_info[y][x] |= CAVE_ROOM;
             }
         }
 
-		/* Add stairs/ladders at edges */
-		int num_access = 2 + rand_int(2);
-		int placed = 0;
-		int tries = 0;
-		while (placed < num_access && tries < 20) {
-			tries++;
+        /* Place and Clear Access Points for Vertical Cliff */
+        int num_access = 2 + rand_int(2);
+        int placed = 0, tries = 0;
+        while (placed < num_access && tries < 20) {
+            tries++;
             int ly = y1 + 2 + rand_int(y2 - y1 - 3);
-			int lx = cliff_x;
+            int lx = cliff_x;
 
             if (in_bounds(ly, lx)) {
-				placed++;
-				if (rand_int(100) < 50) {
-					cave_feat[ly][lx] = FEAT_LADDER_UP;
-				} else {
-					cave_feat[ly][lx] = FEAT_STAIRS_UP;
-				}
+                placed++;
+                cave_feat[ly][lx] = (rand_int(100) < 50) ? FEAT_LADDER_UP : FEAT_STAIRS_UP;
+
+                /* Safety Path: Clear 3x3 area around access point to prevent blockage */
+                for (int dy = -1; dy <= 1; dy++) {
+                    for (int dx = -1; dx <= 1; dx++) {
+                        int ny = ly + dy, nx = lx + dx;
+                        if (!in_bounds(ny, nx)) continue;
+                        /* Force floor on landing areas (Ground or High ground) */
+                        if (get_elevation(ny, nx) != ELEV_GROUND && get_elevation(ny, nx) != ELEV_HIGH) continue;
+                        if (cave_feat[ny][nx] != FEAT_CLIFF_UP && cave_feat[ny][nx] != FEAT_CLIFF_DOWN) {
+                            cave_feat[ny][nx] = FEAT_FLOOR;
+                        }
+                    }
+                }
             }
         }
-
-		/* Safety Fallback */
-		if (placed < 2) {
-			/* Force center */
-			int ly = (y1 + y2) / 2;
-			int lx = cliff_x;
-			if (in_bounds(ly, lx)) cave_feat[ly][lx] = FEAT_LADDER_UP;
-		}
-
     } else {
-		/* Horizontal cliff - similar logic */
+        /* Horizontal Cliff Logic */
         int cliff_y = (y1 + y2) / 2;
         bool high_top = (rand_int(100) < 50);
 
@@ -5469,76 +5461,67 @@ static void build_sector_cliff(int y0, int x0)
                     if (y < cliff_y - 1) {
                         set_elevation(y, x, ELEV_HIGH);
                         cave_feat[y][x] = FEAT_FLOOR;
-					} else if (y == cliff_y - 1) {
+                    } else if (y == cliff_y - 1) {
                         set_elevation(y, x, ELEV_HIGH);
                         cave_feat[y][x] = FEAT_CLIFF_DOWN;
-					} else if (y == cliff_y) {
-						set_elevation(y, x, ELEV_GROUND);
-						if (rand_int(100) < 40) {
-							cave_feat[y][x] = FEAT_CLIMBABLE;
-						} else {
-							cave_feat[y][x] = FEAT_CLIFF_UP;
-						}
+                    } else if (y == cliff_y) {
+                        set_elevation(y, x, ELEV_GROUND);
+                        cave_feat[y][x] = (rand_int(100) < 40) ? FEAT_CLIMBABLE : FEAT_CLIFF_UP;
                     } else {
                         set_elevation(y, x, ELEV_GROUND);
-						cave_feat[y][x] = FEAT_FLOOR;
+                        cave_feat[y][x] = FEAT_FLOOR;
                     }
                 } else {
                     if (y > cliff_y + 1) {
                         set_elevation(y, x, ELEV_HIGH);
                         cave_feat[y][x] = FEAT_FLOOR;
-					} else if (y == cliff_y + 1) {
+                    } else if (y == cliff_y + 1) {
                         set_elevation(y, x, ELEV_HIGH);
                         cave_feat[y][x] = FEAT_CLIFF_DOWN;
-					} else if (y == cliff_y) {
-						set_elevation(y, x, ELEV_GROUND);
-						if (rand_int(100) < 40) {
-							cave_feat[y][x] = FEAT_CLIMBABLE;
-						} else {
-							cave_feat[y][x] = FEAT_CLIFF_UP;
-						}
+                    } else if (y == cliff_y) {
+                        set_elevation(y, x, ELEV_GROUND);
+                        cave_feat[y][x] = (rand_int(100) < 40) ? FEAT_CLIMBABLE : FEAT_CLIFF_UP;
                     } else {
                         set_elevation(y, x, ELEV_GROUND);
-						cave_feat[y][x] = FEAT_FLOOR;
+                        cave_feat[y][x] = FEAT_FLOOR;
                     }
                 }
                 cave_info[y][x] |= CAVE_ROOM;
             }
         }
 
-		/* Add access points */
-		int num_access = 2 + rand_int(2);
-		int placed = 0;
-		int tries = 0;
-		while (placed < num_access && tries < 20) {
-			tries++;
+        /* Place and Clear Access Points for Horizontal Cliff */
+        int num_access = 2 + rand_int(2);
+        int placed = 0, tries = 0;
+        while (placed < num_access && tries < 20) {
+            tries++;
             int lx = x1 + 3 + rand_int(x2 - x1 - 5);
-			int ly = cliff_y;
+            int ly = cliff_y;
 
             if (in_bounds(ly, lx)) {
-				placed++;
-				if (rand_int(100) < 50) {
-					cave_feat[ly][lx] = FEAT_LADDER_UP;
-				} else {
-					cave_feat[ly][lx] = FEAT_STAIRS_UP;
-				}
+                placed++;
+                cave_feat[ly][lx] = (rand_int(100) < 50) ? FEAT_LADDER_UP : FEAT_STAIRS_UP;
+
+                /* Safety Path Logic */
+                for (int dy = -1; dy <= 1; dy++) {
+                    for (int dx = -1; dx <= 1; dx++) {
+                        int ny = ly + dy, nx = lx + dx;
+                        if (!in_bounds(ny, nx)) continue;
+                        if (get_elevation(ny, nx) != ELEV_GROUND && get_elevation(ny, nx) != ELEV_HIGH) continue;
+                        if (cave_feat[ny][nx] != FEAT_CLIFF_UP && cave_feat[ny][nx] != FEAT_CLIFF_DOWN) {
+                            cave_feat[ny][nx] = FEAT_FLOOR;
+                        }
+                    }
+                }
             }
         }
-
-		/* Safety Fallback */
-		if (placed < 2) {
-			/* Force center */
-			int ly = cliff_y;
-			int lx = (x1 + x2) / 2;
-			if (in_bounds(ly, lx)) cave_feat[ly][lx] = FEAT_LADDER_UP;
-		}
     }
 
-	/* Place archers on high ground */
+    /* Place archers on high ground */
     if (rand_int(100) < 50) {
-		for (int i = 0; i < 2; i++) {
-            int hy = y1 + rand_int(y2 - y1);
-            int hx = x1 + rand_int(x2 - x1);
+        for (i = 0; i < 2; i++) {
+            int hy = y1 + rand_int(y2 - y1), hx = x1 + rand_int(x2 - x1);
+
             if (in_bounds(hy, hx) && get_elevation(hy, hx) == ELEV_HIGH) {
                 vault_monsters(hy, hx, MON_ALLOC_SLEEP);
             }

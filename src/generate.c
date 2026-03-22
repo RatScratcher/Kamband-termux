@@ -5367,180 +5367,117 @@ static void build_sector_pit(int y0, int x0)
     }
 }
 
+
 /*
- * Build a Cliff Sector with climbable sections
+ * Build an organic, fractal-based plateau sector with guaranteed accessibility.
  */
-static void build_sector_cliff(int y0, int x0)
+static void build_sector_fractal_hill(int y0, int x0)
 {
+    int y, x, i;
     int y1 = y0 * BLOCK_HGT;
     int x1 = x0 * BLOCK_WID;
-    int y2 = (y0 + 2) * BLOCK_HGT;
-    int x2 = (x0 + 2) * BLOCK_WID;
-    int x, y;
+    int y2 = (y0 + 2) * BLOCK_HGT - 1;
+    int x2 = (x0 + 2) * BLOCK_WID - 1;
 
-    if (y2 >= DUNGEON_HGT) y2 = DUNGEON_HGT - 1;
-    if (x2 >= DUNGEON_WID) x2 = DUNGEON_WID - 1;
-
-    bool vertical = (rand_int(100) < 50);
-
-    if (vertical) {
-        int cliff_x = (x1 + x2) / 2;
-        bool high_left = (rand_int(100) < 50);
-
-        for (y = y1; y <= y2; y++) {
-            for (x = x1; x <= x2; x++) {
-                if (high_left) {
-                    if (x < cliff_x - 1) {
-                        set_elevation(y, x, ELEV_HIGH);
-                        cave_feat[y][x] = FEAT_FLOOR;
-					} else if (x == cliff_x - 1) {
-                        set_elevation(y, x, ELEV_HIGH);
-						cave_feat[y][x] = FEAT_CLIFF_DOWN;
-					} else if (x == cliff_x) {
-						set_elevation(y, x, ELEV_GROUND);
-						/* Make some sections climbable */
-						if (rand_int(100) < 40) {
-							cave_feat[y][x] = FEAT_CLIMBABLE;
-						} else {
-							cave_feat[y][x] = FEAT_CLIFF_UP;
-						}
-                    } else {
-                        set_elevation(y, x, ELEV_GROUND);
-						cave_feat[y][x] = FEAT_FLOOR;
-                    }
-                } else {
-                    if (x > cliff_x + 1) {
-                        set_elevation(y, x, ELEV_HIGH);
-                        cave_feat[y][x] = FEAT_FLOOR;
-					} else if (x == cliff_x + 1) {
-                        set_elevation(y, x, ELEV_HIGH);
-                        cave_feat[y][x] = FEAT_CLIFF_DOWN;
-					} else if (x == cliff_x) {
-						set_elevation(y, x, ELEV_GROUND);
-						if (rand_int(100) < 40) {
-							cave_feat[y][x] = FEAT_CLIMBABLE;
-						} else {
-							cave_feat[y][x] = FEAT_CLIFF_UP;
-						}
-                    } else {
-                        set_elevation(y, x, ELEV_GROUND);
-						cave_feat[y][x] = FEAT_FLOOR;
-                    }
-                }
-                cave_info[y][x] |= CAVE_ROOM;
-            }
+    /* 1. Initialize the area as flat ground floor */
+    for (y = y1; y <= y2; y++) {
+        for (x = x1; x <= x2; x++) {
+            if (!in_bounds(y, x)) continue;
+            set_elevation(y, x, ELEV_GROUND);
+            cave_feat[y][x] = FEAT_FLOOR;
+            cave_info[y][x] |= CAVE_ROOM;
         }
-
-		/* Add stairs/ladders at edges */
-		int num_access = 2 + rand_int(2);
-		int placed = 0;
-		int tries = 0;
-		while (placed < num_access && tries < 20) {
-			tries++;
-            int ly = y1 + 2 + rand_int(y2 - y1 - 3);
-			int lx = cliff_x;
-
-            if (in_bounds(ly, lx)) {
-				placed++;
-				if (rand_int(100) < 50) {
-					cave_feat[ly][lx] = FEAT_LADDER_UP;
-				} else {
-					cave_feat[ly][lx] = FEAT_STAIRS_UP;
-				}
-            }
-        }
-
-		/* Safety Fallback */
-		if (placed < 2) {
-			/* Force center */
-			int ly = (y1 + y2) / 2;
-			int lx = cliff_x;
-			if (in_bounds(ly, lx)) cave_feat[ly][lx] = FEAT_LADDER_UP;
-		}
-
-    } else {
-		/* Horizontal cliff - similar logic */
-        int cliff_y = (y1 + y2) / 2;
-        bool high_top = (rand_int(100) < 50);
-
-        for (y = y1; y <= y2; y++) {
-            for (x = x1; x <= x2; x++) {
-                if (high_top) {
-                    if (y < cliff_y - 1) {
-                        set_elevation(y, x, ELEV_HIGH);
-                        cave_feat[y][x] = FEAT_FLOOR;
-					} else if (y == cliff_y - 1) {
-                        set_elevation(y, x, ELEV_HIGH);
-                        cave_feat[y][x] = FEAT_CLIFF_DOWN;
-					} else if (y == cliff_y) {
-						set_elevation(y, x, ELEV_GROUND);
-						if (rand_int(100) < 40) {
-							cave_feat[y][x] = FEAT_CLIMBABLE;
-						} else {
-							cave_feat[y][x] = FEAT_CLIFF_UP;
-						}
-                    } else {
-                        set_elevation(y, x, ELEV_GROUND);
-						cave_feat[y][x] = FEAT_FLOOR;
-                    }
-                } else {
-                    if (y > cliff_y + 1) {
-                        set_elevation(y, x, ELEV_HIGH);
-                        cave_feat[y][x] = FEAT_FLOOR;
-					} else if (y == cliff_y + 1) {
-                        set_elevation(y, x, ELEV_HIGH);
-                        cave_feat[y][x] = FEAT_CLIFF_DOWN;
-					} else if (y == cliff_y) {
-						set_elevation(y, x, ELEV_GROUND);
-						if (rand_int(100) < 40) {
-							cave_feat[y][x] = FEAT_CLIMBABLE;
-						} else {
-							cave_feat[y][x] = FEAT_CLIFF_UP;
-						}
-                    } else {
-                        set_elevation(y, x, ELEV_GROUND);
-						cave_feat[y][x] = FEAT_FLOOR;
-                    }
-                }
-                cave_info[y][x] |= CAVE_ROOM;
-            }
-        }
-
-		/* Add access points */
-		int num_access = 2 + rand_int(2);
-		int placed = 0;
-		int tries = 0;
-		while (placed < num_access && tries < 20) {
-			tries++;
-            int lx = x1 + 3 + rand_int(x2 - x1 - 5);
-			int ly = cliff_y;
-
-            if (in_bounds(ly, lx)) {
-				placed++;
-				if (rand_int(100) < 50) {
-					cave_feat[ly][lx] = FEAT_LADDER_UP;
-				} else {
-					cave_feat[ly][lx] = FEAT_STAIRS_UP;
-				}
-            }
-        }
-
-		/* Safety Fallback */
-		if (placed < 2) {
-			/* Force center */
-			int ly = cliff_y;
-			int lx = (x1 + x2) / 2;
-			if (in_bounds(ly, lx)) cave_feat[ly][lx] = FEAT_LADDER_UP;
-		}
     }
 
-	/* Place archers on high ground */
-    if (rand_int(100) < 50) {
-		for (int i = 0; i < 2; i++) {
-            int hy = y1 + rand_int(y2 - y1);
-            int hx = x1 + rand_int(x2 - x1);
-            if (in_bounds(hy, hx) && get_elevation(hy, hx) == ELEV_HIGH) {
-                vault_monsters(hy, hx, MON_ALLOC_SLEEP);
+    /* 2. Generate fractal heights using the existing plasma algorithm */
+    /* We use a sub-region (inset by 2) to ensure a walking path around the hill */
+    int inset = 2;
+    int py1 = y1 + inset, px1 = x1 + inset;
+    int py2 = y2 - inset, px2 = x2 - inset;
+
+    /* Initialize corners for the plasma fractal */
+    cave_feat[py1][px1] = rand_int(100);
+    cave_feat[py1][px2] = rand_int(100);
+    cave_feat[py2][px1] = rand_int(100);
+    cave_feat[py2][px2] = rand_int(100);
+
+    /* Generate the organic heightmap into cave_feat temporarily */
+    plasma_recursive(px1, py1, px2, py2, 100, 1);
+
+    /* 3. Threshold the fractal: High values become plateau, Low values become ground */
+    /* Values > 50 are elevated. We convert them to proper features and elevation flags. */
+    for (y = py1; y <= py2; y++) {
+        for (x = px1; x <= px2; x++) {
+            if (cave_feat[y][x] > 55) { /* Threshold for "organic" plateau */
+                set_elevation(y, x, ELEV_HIGH);
+                cave_feat[y][x] = FEAT_HILL_TOP;
+                cave_info[y][x] |= CAVE_GLOW;
+            } else {
+                set_elevation(y, x, ELEV_GROUND);
+                cave_feat[y][x] = FEAT_FLOOR;
+            }
+        }
+    }
+
+    /* 4. Place Cliffs at the boundaries of the fractal shape */
+    for (y = py1; y <= py2; y++) {
+        for (x = px1; x <= px2; x++) {
+            if (get_elevation(y, x) == ELEV_HIGH) {
+                bool is_edge = FALSE;
+                for (int dy = -1; dy <= 1; dy++) {
+                    for (int dx = -1; dx <= 1; dx++) {
+                        int ny = y + dy, nx = x + dx;
+                        if (in_bounds(ny, nx) && get_elevation(ny, nx) == ELEV_GROUND) {
+                            is_edge = TRUE;
+                            break;
+                        }
+                    }
+                    if (is_edge) break;
+                }
+                if (is_edge) cave_feat[y][x] = FEAT_CLIFF_UP;
+            }
+        }
+    }
+
+    /* 5. Guaranteed Access Points (North, South, East, West) */
+    /* We scan inward from each side to find the first cliff tile of the organic shape */
+    int dy_dir[4] = {1, -1, 0, 0};
+    int dx_dir[4] = {0, 0, 1, -1};
+    int start_y[4] = {y1, y2, (y1+y2)/2, (y1+y2)/2};
+    int start_x[4] = {(x1+x2)/2, (x1+x2)/2, x1, x2};
+
+    for (i = 0; i < 4; i++) {
+        int cy = start_y[i], cx = start_x[i];
+        bool found = FALSE;
+
+        /* Scan toward center to find the edge of the organic plateau */
+        for (int step = 0; step < BLOCK_HGT; step++) {
+            if (!in_bounds(cy, cx)) break;
+            if (cave_feat[cy][cx] == FEAT_CLIFF_UP) {
+                found = TRUE;
+                break;
+            }
+            cy += dy_dir[i]; cx += dx_dir[i];
+        }
+
+        if (found) {
+            /* Convert cliff to access point */
+            cave_feat[cy][cx] = (rand_int(100) < 50) ? FEAT_LADDER_UP : FEAT_STAIRS_UP;
+
+            /* SAFETY PATH LOGIC: Clear 3x3 area around access point */
+            for (int dy = -1; dy <= 1; dy++) {
+                for (int dx = -1; dx <= 1; dx++) {
+                    int ny = cy + dy, nx = cx + dx;
+                    if (!in_bounds(ny, nx)) continue;
+                    /* Clear hazards (lava/acid) on ground or plateau landings */
+                    if (get_elevation(ny, nx) == ELEV_GROUND || get_elevation(ny, nx) == ELEV_HIGH) {
+                        if (cave_feat[ny][nx] != FEAT_CLIFF_UP &&
+                            cave_feat[ny][nx] != FEAT_LADDER_UP &&
+                            cave_feat[ny][nx] != FEAT_STAIRS_UP) {
+                            cave_feat[ny][nx] = FEAT_FLOOR;
+                        }
+                    }
+                }
             }
         }
     }
@@ -5829,17 +5766,17 @@ static void cave_gen(void)
 	{
 		for (x = 0; x < dun->col_rooms; x += 2)
 		{
-			int sect_type = SECTOR_RUINS; /* Default to structural */
+				int sect_type = SECTOR_RUINS;
 			int roll = rand_int(100);
 
-			/* Increase the floor for SECTOR_RUINS (structures) */
-			if (roll < 15) sect_type = SECTOR_PLAZA;      /* Increased from 10 */
-			else if (roll < 25) sect_type = SECTOR_RUINS; /* Explicitly favoring structures */
-			else if (roll < 35) sect_type = SECTOR_DARK;  /* Reduced from original high-weight */
-			else if (roll < 50 + (p_ptr->depth / 8)) sect_type = SECTOR_HILL;
-			else if (roll < 60) sect_type = SECTOR_PIT;
-			else if (roll < 70) sect_type = SECTOR_CLIFF;
-			else sect_type = SECTOR_CAVERN;               /* Caverns become the "catch-all" less often */
+				/* Redistributed probabilities: SECTOR_CLIFF merged into SECTOR_HILL */
+				if (roll < 15) sect_type = SECTOR_PLAZA;
+				else if (roll < 25) sect_type = SECTOR_RUINS;
+				else if (roll < 35) sect_type = SECTOR_DARK;
+				/* Hill probability now covers the old cliff range for more fractal terrain */
+				else if (roll < 70 + (p_ptr->depth / 8)) sect_type = SECTOR_HILL;
+				else if (roll < 80) sect_type = SECTOR_PIT;
+				else sect_type = SECTOR_CAVERN;
 
 			/* Assign to 2x2 block */
 			cave_sector[y][x] = sect_type;
@@ -5880,7 +5817,9 @@ static void cave_gen(void)
 			}
 			else if (sect == SECTOR_HILL)
 			{
-				build_sector_hill(y, x);
+					/* Now using the fractal implementation for more organic plateaus */
+					build_sector_fractal_hill(y, x);
+
 				/* Mark blocks as used */
 				dun->room_map[y][x] = TRUE;
 				if (y + 1 < dun->row_rooms) dun->room_map[y + 1][x] = TRUE;
@@ -5910,22 +5849,7 @@ static void cave_gen(void)
 					dun->cent_n++;
 				}
 			}
-			else if (sect == SECTOR_CLIFF)
-			{
-				build_sector_cliff(y, x);
-				/* Mark blocks as used */
-				dun->room_map[y][x] = TRUE;
-				if (y + 1 < dun->row_rooms) dun->room_map[y + 1][x] = TRUE;
-				if (x + 1 < dun->col_rooms) dun->room_map[y][x + 1] = TRUE;
-				if (y + 1 < dun->row_rooms && x + 1 < dun->col_rooms) dun->room_map[y + 1][x + 1] = TRUE;
-
-				/* Add center for tunnels */
-				if (dun->cent_n < CENT_MAX) {
-					dun->cent[dun->cent_n].y = (y * BLOCK_HGT) + BLOCK_HGT;
-					dun->cent[dun->cent_n].x = (x * BLOCK_WID) + BLOCK_WID;
-					dun->cent_n++;
-				}
-			}
+				/* SECTOR_CLIFF block has been removed as build_sector_fractal_hill handles cliff generation */
 			else if (sect == SECTOR_DARK)
 			{
 				build_sector_dark(y, x);

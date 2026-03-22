@@ -5150,197 +5150,101 @@ static void populate_features(void)
  */
 static void build_sector_hill(int y0, int x0)
 {
+    int y, x, i;
     int y1 = y0 * BLOCK_HGT;
     int x1 = x0 * BLOCK_WID;
-    int y2 = (y0 + 2) * BLOCK_HGT;
-    int x2 = (x0 + 2) * BLOCK_WID;
-    int x, y, dx, dy;
+    int y2 = (y0 + 2) * BLOCK_HGT - 1;
+    int x2 = (x0 + 2) * BLOCK_WID - 1;
 
-    if (y2 >= DUNGEON_HGT) y2 = DUNGEON_HGT - 1;
-    if (x2 >= DUNGEON_WID) x2 = DUNGEON_WID - 1;
+    /* Sector Center */
+    int cy = (y1 + y2) / 2;
+    int cx = (x1 + x2) / 2;
 
-    int cy = (y1 + y2) / 2 + rand_int(BLOCK_HGT) - (BLOCK_HGT / 2);
-    int cx = (x1 + x2) / 2 + rand_int(BLOCK_WID) - (BLOCK_WID / 2);
-    int max_dist = MAX(y2 - y1, x2 - x1) / 2;
+    /* Radius for the plateau - keep it away from sector edges to allow ground paths */
+    int rad = 6;
 
-	/* Build hill with elevation gradient */
+    /* 1. Preliminary: Fill the sector with ground and floor */
     for (y = y1; y <= y2; y++) {
         for (x = x1; x <= x2; x++) {
-            int dist = distance(cy, cx, y, x);
-            int elev = ELEV_GROUND;
-
-            if (dist < max_dist / 3) {
-				elev = ELEV_HIGH;
-                cave_feat[y][x] = FEAT_HILL_TOP;
-            } else if (dist < 2 * max_dist / 3) {
-				elev = ELEV_HILL;
-                cave_feat[y][x] = FEAT_SLOPE_UP;
-            } else {
-				elev = ELEV_GROUND;
-                cave_feat[y][x] = FEAT_FLOOR;
-            }
-
-            set_elevation(y, x, elev);
+            if (!in_bounds(y, x)) continue;
+            set_elevation(y, x, ELEV_GROUND);
+            cave_feat[y][x] = FEAT_FLOOR;
             cave_info[y][x] |= CAVE_ROOM;
+        }
+    }
 
-            if (elev == ELEV_HIGH) {
+    /* 2. Generate Plateau Elevation */
+    for (y = y1; y <= y2; y++) {
+        for (x = x1; x <= x2; x++) {
+            if (!in_bounds(y, x)) continue;
+            if (distance(cy, cx, y, x) <= rad) {
+                set_elevation(y, x, ELEV_HIGH);
+                cave_feat[y][x] = FEAT_HILL_TOP;
                 cave_info[y][x] |= CAVE_GLOW;
             }
         }
     }
 
-	/* Apply Cellular Automata to smooth the boundary (Organic Smoothing) */
-	int i;
-	for (i = 0; i < 2; i++) {
-		int next_elev[BLOCK_HGT * 2 + 2][BLOCK_WID * 2 + 2];
-		int h = y2 - y1 + 1;
-		int w = x2 - x1 + 1;
-
-		for (y = 0; y < h; y++) {
-			for (x = 0; x < w; x++) {
-				int cy_coord = y1 + y;
-				int cx_coord = x1 + x;
-				int elev_neighbors = 0;
-				int dy, dx;
-
-				for (dy = -1; dy <= 1; dy++) {
-					for (dx = -1; dx <= 1; dx++) {
-						if (dy == 0 && dx == 0) continue;
-						int ny = cy_coord + dy;
-						int nx = cx_coord + dx;
-						if (in_bounds(ny, nx) && get_elevation(ny, nx) > ELEV_GROUND) {
-							elev_neighbors++;
-						}
-					}
-				}
-
-				int current_elev = get_elevation(cy_coord, cx_coord);
-				if (current_elev > ELEV_GROUND && elev_neighbors < 3) {
-					next_elev[y][x] = ELEV_GROUND;
-				} else if (current_elev == ELEV_GROUND && elev_neighbors >= 5) {
-					next_elev[y][x] = ELEV_HILL;
-				} else {
-					next_elev[y][x] = current_elev;
-				}
-			}
-		}
-
-		for (y = 0; y < h; y++) {
-			for (x = 0; x < w; x++) {
-				int cy_coord = y1 + y;
-				int cx_coord = x1 + x;
-				int new_elev = next_elev[y][x];
-
-				if (new_elev != get_elevation(cy_coord, cx_coord)) {
-					set_elevation(cy_coord, cx_coord, new_elev);
-					if (new_elev == ELEV_GROUND) {
-						cave_feat[cy_coord][cx_coord] = FEAT_FLOOR;
-						cave_info[cy_coord][cx_coord] &= ~CAVE_GLOW;
-					} else if (new_elev == ELEV_HILL) {
-						cave_feat[cy_coord][cx_coord] = FEAT_SLOPE_UP;
-					} else if (new_elev == ELEV_HIGH) {
-						cave_feat[cy_coord][cx_coord] = FEAT_HILL_TOP;
-						cave_info[cy_coord][cx_coord] |= CAVE_GLOW;
-					}
-				}
-			}
-		}
-	}
-
-	/* Choke Point Logic: Convert outer boundary to CLIFF_UP and pick one access point */
-	int boundary_y[1000];
-	int boundary_x[1000];
-	int num_boundary = 0;
-
-	for (y = y1; y <= y2; y++) {
-		for (x = x1; x <= x2; x++) {
-			if (get_elevation(y, x) == ELEV_HILL || get_elevation(y, x) == ELEV_HIGH) {
-				bool is_boundary = FALSE;
-				int dy, dx;
-
-				/* The "Out-of-Sector" Rule */
-				if (y == y1 || y == y2 || x == x1 || x == x2) {
-					is_boundary = TRUE;
-				}
-
-				for (dy = -1; dy <= 1; dy++) {
-					for (dx = -1; dx <= 1; dx++) {
-						if (dy == 0 && dx == 0) continue;
-						int ny = y + dy;
-						int nx = x + dx;
-						if (!in_bounds(ny, nx)) {
-							is_boundary = TRUE;
-						} else if (get_elevation(ny, nx) == ELEV_GROUND) {
-							is_boundary = TRUE;
-						}
-					}
-				}
-
-				if (is_boundary) {
-					cave_feat[y][x] = FEAT_CLIFF_UP;
-					if (num_boundary < 1000) {
-						boundary_y[num_boundary] = y;
-						boundary_x[num_boundary] = x;
-						num_boundary++;
-					}
-				}
-			}
-		}
-	}
-
-	/* Pick one designated access point */
-	int access_y = -1;
-	int access_x = -1;
-	if (num_boundary > 0) {
-		int access_idx = rand_int(num_boundary);
-		access_y = boundary_y[access_idx];
-		access_x = boundary_x[access_idx];
-		if (rand_int(100) < 50) {
-			cave_feat[access_y][access_x] = FEAT_RAMP_UP;
-		} else {
-			cave_feat[access_y][access_x] = FEAT_STAIRS_UP;
-		}
-	}
-
-	/* Improved Choke Point Logic */
-	for (y = y1; y <= y2; y++) {
-		for (x = x1; x <= x2; x++) {
-			if (get_elevation(y, x) > ELEV_GROUND) {
-				bool needs_cliff = FALSE;
-
-				/* Check all 8 neighbors */
-				for (dy = -1; dy <= 1; dy++) {
-					for (dx = -1; dx <= 1; dx++) {
-						int ny = y + dy;
-						int nx = x + dx;
-
-						/* If neighbor is outside sector OR lower elevation, we need a cliff */
-						if (ny < y1 || ny > y2 || nx < x1 || nx > x2) {
-							needs_cliff = TRUE;
-						} else if (get_elevation(ny, nx) < get_elevation(y, x)) {
-							needs_cliff = TRUE;
-						}
-					}
-				}
-
-				if (needs_cliff && (y != access_y || x != access_x)) {
-					cave_feat[y][x] = FEAT_CLIFF_UP;
-				}
-			}
-		}
-	}
-
-	/* Place defenders on high ground with patrol routes */
-    if (rand_int(100) < 60) {
-        int my = cy + rand_int(3) - 1;
-        int mx = cx + rand_int(3) - 1;
-        if (in_bounds(my, mx) && get_elevation(my, mx) == ELEV_HIGH) {
-			int m_idx = place_monster_aux(my, mx, 0, MON_ALLOC_SLEEP);
-			if (m_idx > 0) {
-				/* Guard has patrol route down the ramps */
-				setup_guard_post(m_idx, GUARD_POST_HIGHGROUND, my, mx);
-			}
+    /* 3. Identify and Place Cliffs */
+    /* A cliff is any ELEV_HIGH tile adjacent to an ELEV_GROUND tile */
+    for (y = y1; y <= y2; y++) {
+        for (x = x1; x <= x2; x++) {
+            if (!in_bounds(y, x)) continue;
+            if (get_elevation(y, x) == ELEV_HIGH) {
+                bool is_edge = FALSE;
+                for (int dy = -1; dy <= 1; dy++) {
+                    for (int dx = -1; dx <= 1; dx++) {
+                        int ny = y + dy;
+                        int nx = x + dx;
+                        if (in_bounds(ny, nx) && get_elevation(ny, nx) == ELEV_GROUND) {
+                            is_edge = TRUE;
+                            break;
+                        }
+                    }
+                    if (is_edge) break;
+                }
+                if (is_edge) {
+                    cave_feat[y][x] = FEAT_CLIFF_UP;
+                }
+            }
         }
+    }
+
+    /* 4. Guaranteed Access Points (N, S, E, W) */
+    int sides_y[4] = { cy - rad, cy + rad, cy, cy };
+    int sides_x[4] = { cx, cx, cx - rad, cx + rad };
+
+    for (i = 0; i < 4; i++) {
+        int ay = sides_y[i];
+        int ax = sides_x[i];
+
+        if (!in_bounds(ay, ax)) continue;
+
+        /* Convert the cliff tile to an access feature */
+        int roll = rand_int(100);
+        if (roll < 40) cave_feat[ay][ax] = FEAT_RAMP_UP;
+        else if (roll < 70) cave_feat[ay][ax] = FEAT_STAIRS_UP;
+        else cave_feat[ay][ax] = FEAT_LADDER_UP;
+
+        /* Safety: Clear paths at both ends of the access point */
+        /* This prevents acid/lava/walls from spawning at the doorstep */
+        for (int dy = -1; dy <= 1; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                int ny = ay + dy;
+                int nx = ax + dx;
+                if (!in_bounds(ny, nx)) continue;
+
+                /* If it's the ground level leading to the ramp or the top level exit */
+                if (cave_feat[ny][nx] == FEAT_HILL_TOP || cave_feat[ny][nx] == FEAT_FLOOR) {
+                    cave_feat[ny][nx] = FEAT_FLOOR;
+                }
+            }
+        }
+    }
+
+    /* 5. Optional: Add a few high-ground defenders */
+    if (rand_int(100) < 50) {
+        place_monster(cy, cx, MON_ALLOC_SLEEP);
     }
 }
 

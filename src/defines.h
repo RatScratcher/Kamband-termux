@@ -59,7 +59,6 @@
 #define SECTOR_VOID   4
 #define SECTOR_HILL     6
 #define SECTOR_PIT      7
-#define SECTOR_CLIFF    8
 
 /*
  * Dungeon Flags

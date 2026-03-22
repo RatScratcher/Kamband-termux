@@ -5249,77 +5249,128 @@ static void build_sector_hill(int y0, int x0)
 }
 
 /*
- * Build a Pit Sector with escape routes
+ * Build an organic, fractal-based pit sector with guaranteed escape routes.
  */
-static void build_sector_pit(int y0, int x0)
+static void build_sector_fractal_pit(int y0, int x0)
 {
+    int y, x, i;
     int y1 = y0 * BLOCK_HGT;
     int x1 = x0 * BLOCK_WID;
-    int y2 = (y0 + 2) * BLOCK_HGT;
-    int x2 = (x0 + 2) * BLOCK_WID;
-    int x, y;
+    int y2 = (y0 + 2) * BLOCK_HGT - 1;
+    int x2 = (x0 + 2) * BLOCK_WID - 1;
 
     if (y2 >= DUNGEON_HGT) y2 = DUNGEON_HGT - 1;
     if (x2 >= DUNGEON_WID) x2 = DUNGEON_WID - 1;
 
-    int cy = (y1 + y2) / 2;
-    int cx = (x1 + x2) / 2;
-
-	/* Create pit depression */
+    /* 1. Initialize the area as flat ground floor */
     for (y = y1; y <= y2; y++) {
         for (x = x1; x <= x2; x++) {
-            int dist = distance(cy, cx, y, x);
-
-            if (dist < 3) {
-                set_elevation(y, x, ELEV_LOW);
-                cave_feat[y][x] = FEAT_PIT;
-			} else if (dist < 5) {
-				set_elevation(y, x, ELEV_GROUND);
-				cave_feat[y][x] = FEAT_SLOPE_DOWN;
-            } else {
-                set_elevation(y, x, ELEV_GROUND);
-				cave_feat[y][x] = FEAT_FLOOR;
-            }
-
+            if (!in_bounds(y, x)) continue;
+            set_elevation(y, x, ELEV_GROUND);
+            cave_feat[y][x] = FEAT_FLOOR;
             cave_info[y][x] |= CAVE_ROOM;
         }
     }
 
-	/* Add escape routes from pit */
-	int num_exits = 1 + rand_int(2);
-	int i;
+    /* 2. Generate fractal depths using the existing plasma algorithm */
+    /* We use a sub-region (inset by 2) to ensure a walking path around the pit */
+    int inset = 2;
+    int py1 = y1 + inset, px1 = x1 + inset;
+    int py2 = y2 - inset, px2 = x2 - inset;
 
-	for (i = 0; i < num_exits; i++) {
-		/* Place ladder or stairs */
-		int angle = rand_int(256);
-		int dist = 2; /* Near center of pit */
+    /* Initialize corners for the plasma fractal */
+    cave_feat[py1][px1] = rand_int(100);
+    cave_feat[py1][px2] = rand_int(100);
+    cave_feat[py2][px1] = rand_int(100);
+    cave_feat[py2][px2] = rand_int(100);
 
-		int ly = cy + (dist * sind(angle)) / 256;
-		int lx = cx + (dist * cosd(angle)) / 256;
+    /* Generate the organic heightmap into cave_feat temporarily */
+    plasma_recursive(px1, py1, px2, py2, 100, 1);
 
-		if (in_bounds(ly, lx) && get_elevation(ly, lx) == ELEV_LOW) {
-			if (rand_int(100) < 50) {
-				cave_feat[ly][lx] = FEAT_ESCAPE_PIT; /* Ladder out */
-			} else {
-				cave_feat[ly][lx] = FEAT_STAIRS_UP; /* Stone stairs */
-			}
-		}
+    /* 3. Threshold the fractal: High values become pit, Low values become ground */
+    for (y = py1; y <= py2; y++) {
+        for (x = px1; x <= px2; x++) {
+            if (cave_feat[y][x] > 55) { /* Threshold for "organic" pit */
+                set_elevation(y, x, ELEV_LOW);
+                cave_feat[y][x] = FEAT_PIT;
+            } else {
+                set_elevation(y, x, ELEV_GROUND);
+                cave_feat[y][x] = FEAT_FLOOR;
+            }
+        }
+    }
 
-		/* Create ramp up from pit edge */
-		int ramp_y = cy + ((dist + 2) * sind(angle)) / 256;
-		int ramp_x = cx + ((dist + 2) * cosd(angle)) / 256;
-
-		if (in_bounds(ramp_y, ramp_x)) {
-			cave_feat[ramp_y][ramp_x] = FEAT_RAMP_UP;
-			set_elevation(ramp_y, ramp_x, ELEV_GROUND);
-		}
-	}
-
-    /* Add hazards in pit */
-    int hazard = rand_int(3);
-    for (y = y1 + 2; y <= y2 - 2; y++) {
-        for (x = x1 + 2; x <= x2 - 2; x++) {
+    /* 4. Place Slopes at the boundaries of the fractal shape */
+    for (y = py1; y <= py2; y++) {
+        for (x = px1; x <= px2; x++) {
             if (get_elevation(y, x) == ELEV_LOW) {
+                bool is_edge = FALSE;
+                for (int dy = -1; dy <= 1; dy++) {
+                    for (int dx = -1; dx <= 1; dx++) {
+                        int ny = y + dy, nx = x + dx;
+                        if (in_bounds(ny, nx) && get_elevation(ny, nx) == ELEV_GROUND) {
+                            is_edge = TRUE;
+                            break;
+                        }
+                    }
+                    if (is_edge) break;
+                }
+                if (is_edge) cave_feat[y][x] = FEAT_SLOPE_DOWN;
+            }
+        }
+    }
+
+    /* 5. Guaranteed Escape Routes (North, South, East, West) */
+    /* We scan inward from each side to find the first slope tile of the organic shape */
+    int dy_dir[4] = {1, -1, 0, 0};
+    int dx_dir[4] = {0, 0, 1, -1};
+    int start_y[4] = {y1, y2, (y1+y2)/2, (y1+y2)/2};
+    int start_x[4] = {(x1+x2)/2, (x1+x2)/2, x1, x2};
+
+    for (i = 0; i < 4; i++) {
+        int cy = start_y[i], cx = start_x[i];
+        bool found = FALSE;
+
+        /* Scan toward center to find the edge of the organic pit */
+        for (int step = 0; step < BLOCK_HGT; step++) {
+            if (!in_bounds(cy, cx)) break;
+            if (cave_feat[cy][cx] == FEAT_SLOPE_DOWN) {
+                found = TRUE;
+                break;
+            }
+            cy += dy_dir[i]; cx += dx_dir[i];
+        }
+
+        if (found) {
+            /* Convert slope to escape point */
+            cave_feat[cy][cx] = (rand_int(100) < 50) ? FEAT_ESCAPE_PIT : FEAT_STAIRS_UP;
+
+            /* SAFETY PATH LOGIC: Clear 3x3 area around access point */
+            for (int dy = -1; dy <= 1; dy++) {
+                for (int dx = -1; dx <= 1; dx++) {
+                    int ny = cy + dy, nx = cx + dx;
+                    if (!in_bounds(ny, nx)) continue;
+                    /* Clear hazards on ground or pit landings */
+                    if (get_elevation(ny, nx) == ELEV_GROUND || get_elevation(ny, nx) == ELEV_LOW) {
+                        if (cave_feat[ny][nx] != FEAT_SLOPE_DOWN &&
+                            cave_feat[ny][nx] != FEAT_ESCAPE_PIT &&
+                            cave_feat[ny][nx] != FEAT_STAIRS_UP) {
+                            if (get_elevation(ny, nx) == ELEV_LOW)
+                                cave_feat[ny][nx] = FEAT_PIT;
+                            else
+                                cave_feat[ny][nx] = FEAT_FLOOR;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /* 6. Add hazards in pit */
+    int hazard = rand_int(3);
+    for (y = py1 + 1; y <= py2 - 1; y++) {
+        for (x = px1 + 1; x <= px2 - 1; x++) {
+            if (get_elevation(y, x) == ELEV_LOW && cave_feat[y][x] == FEAT_PIT) {
                 switch (hazard) {
 					case 0:
                         if (rand_int(100) < 30)
@@ -5835,7 +5886,9 @@ static void cave_gen(void)
 			}
 			else if (sect == SECTOR_PIT)
 			{
-				build_sector_pit(y, x);
+				/* Now using the fractal implementation for organic, slowing pits */
+				build_sector_fractal_pit(y, x);
+
 				/* Mark blocks as used */
 				dun->room_map[y][x] = TRUE;
 				if (y + 1 < dun->row_rooms) dun->room_map[y + 1][x] = TRUE;

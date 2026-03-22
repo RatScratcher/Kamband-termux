@@ -1340,6 +1340,69 @@ void update_monsters(bool full)
 
 
 /*
+ * Check if a monster can move between elevations and apply falling damage.
+ * Returns TRUE if the move is allowed.
+ */
+bool monster_check_cliff_move(int m_idx, int ny, int nx)
+{
+	monster_type *m_ptr = &m_list[m_idx];
+	monster_race *r_ptr = &r_info[m_ptr->r_idx];
+
+	int old_elev = get_elevation(m_ptr->fy, m_ptr->fx);
+	int new_elev = get_elevation(ny, nx);
+
+	/* Same elevation: Proceed normally */
+	if (old_elev == new_elev) return TRUE;
+
+	/* Flying monsters ignore all cliff constraints */
+	if (r_ptr->flags2 & (RF2_FLY)) return TRUE;
+
+	/* Check for access points (Ladders, Stairs, Ramps) */
+	int feat = cave_feat[ny][nx];
+	bool has_access = (feat == FEAT_LADDER_UP || feat == FEAT_STAIRS_UP ||
+	                   feat == FEAT_RAMP_UP || feat == FEAT_ESCAPE_PIT);
+
+	/* Rule 1: Moving UP is impossible without access */
+	if (new_elev > old_elev && !has_access)
+	{
+		return FALSE;
+	}
+
+	/* Rule 2: Moving DOWN without access causes falling damage (The Jump) */
+	if (new_elev < old_elev && !has_access)
+	{
+		int damage;
+		char m_name[80];
+
+		/* Calculate damage: random damage of Max HP per level of drop to reflect the range of damage possible when falling from height, including instant death */
+		damage = rand_int(m_ptr->maxhp ) ;
+		if (damage < (m_ptr->maxhp/2)) damage = m_ptr->maxhp/2;
+
+		if (m_ptr->ml)
+		{
+			monster_desc(m_name, m_ptr, 0);
+			msg_format("%^s jumps off the cliff and is hurt!", m_name);
+		}
+
+		/* Apply damage to the monster */
+		m_ptr->hp -= damage;
+
+		/* Check for death */
+		if (m_ptr->hp <= 0)
+		{
+			if (m_ptr->ml) msg_format("%^s is killed by the fall!", m_name);
+			delete_monster_idx(m_idx);
+			return FALSE; /* Move "failed" because they died */
+		}
+
+		/* Falling causes a momentary speed penalty (shock) */
+		m_ptr->mspeed -= 5;
+	}
+
+	return TRUE;
+}
+
+/*
  * Swap the players/monsters (if any) at two locations XXX XXX XXX
  */
 void monster_swap(int y1, int x1, int y2, int x2)

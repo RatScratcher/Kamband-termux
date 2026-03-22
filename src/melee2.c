@@ -3976,6 +3976,9 @@ static void process_monster(int m_idx)
 			/* Take a turn */
 			do_turn = TRUE;
 
+			/* Check if monster can move down cliffs and apply falling damage */
+			if (!monster_check_cliff_move(m_idx, ny, nx)) return;
+
 			/* Move the monster */
 			monster_swap(oy, ox, ny, nx);
 
@@ -4344,6 +4347,7 @@ void process_monsters(void)
 					int ny = m_ptr->fy + ddy[dir];
 					int nx = m_ptr->fx + ddx[dir];
 					if (cave_floor_bold(ny, nx) && cave_m_idx[ny][nx] == 0 && (ny != p_ptr->py || nx != p_ptr->px)) {
+						if (!monster_check_cliff_move(i, ny, nx)) continue;
 						monster_swap(m_ptr->fy, m_ptr->fx, ny, nx);
 						/* Trigger trap? Maybe monsters are smart enough or just fall in */
 						if (cave_feat[ny][nx] == FEAT_TRAP_GRAVITY) {

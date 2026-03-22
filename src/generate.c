@@ -1112,9 +1112,6 @@ static void destroy_level(void)
 		}
 	}
 }
-
-
-
 /*
  * Create up to "num" objects near the given coordinates
  * Only really called by some of the "vault" routines.
@@ -5087,7 +5084,52 @@ void populate_cover_features(void)
 }
 
 /*
- * Populate the level with new features
+ * Adds atmospheric "flavor" features to empty floor spaces to break up the void.
+ */
+static void scatter_ambient_detail(void)
+{
+    int y, x, i;
+    /* Determine density based on dungeon size */
+    int density = (DUNGEON_HGT * DUNGEON_WID) / 100;
+
+    for (i = 0; i < density; i++)
+    {
+        y = rand_int(DUNGEON_HGT);
+        x = rand_int(DUNGEON_WID);
+
+        /* Only place on empty, non-room floor tiles */
+        if (cave_naked_bold(y, x) && !(cave_info[y][x] & CAVE_ROOM))
+        {
+            int roll = rand_int(100);
+
+            if (roll < 5) {
+                /* An old, abandoned campsite */
+                cave_feat[y][x] = FEAT_RUBBLE;
+                cave_info[y][x] |= (CAVE_GLOW | CAVE_MARK); /* A lingering spark? */
+            }
+            else if (roll < 15) {
+                /* Patches of moss or grass */
+                cave_feat[y][x] = FEAT_GRASS;
+            }
+            else if (roll < 20) {
+                /* A lone, mysterious pillar */
+                cave_feat[y][x] = FEAT_STONE_PILLAR;
+            }
+            else if (roll < 25) {
+                /* Natural glowing crystals (Breaks up the darkness) */
+                cave_feat[y][x] = FEAT_GLOWING_TILE;
+                cave_info[y][x] |= (CAVE_GLOW | CAVE_MARK);
+            }
+            else if (roll < 30) {
+                /* A puddle of water */
+                cave_feat[y][x] = FEAT_SHAL_WATER;
+            }
+        }
+    }
+}
+
+/*
+ * Updated populate_features to be more aggressive with detail.
  */
 static void populate_features(void)
 {

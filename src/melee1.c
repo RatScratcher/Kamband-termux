@@ -382,6 +382,35 @@ bool make_attack_normal(int m_idx)
 	if (!cave_floor_bold(m_ptr->fy, m_ptr->fx))
 		return (FALSE);
 
+	/* NEW: Elevation Check */
+	/* Non-fliers cannot reach across different elevations without climbing features */
+	if (get_elevation(m_ptr->fy, m_ptr->fx) != get_elevation(p_ptr->py, p_ptr->px))
+	{
+		bool can_reach = FALSE;
+
+		/* 1. Fliers ignore elevation differences */
+		if (r_ptr->flags2 & (RF2_FLY)) can_reach = TRUE;
+
+		/* 2. Check if either is on an access feature (Ladder, Stair, Ramp) */
+		if (!can_reach)
+		{
+			int mf = cave_feat[m_ptr->fy][m_ptr->fx];
+			int pf = cave_feat[p_ptr->py][p_ptr->px];
+
+			/* Reference the access features from our fractal generation */
+			if (mf == FEAT_LADDER_UP || mf == FEAT_STAIRS_UP ||
+			    mf == FEAT_RAMP_UP || mf == FEAT_ESCAPE_PIT ||
+			    pf == FEAT_LADDER_UP || pf == FEAT_STAIRS_UP ||
+			    pf == FEAT_RAMP_UP || pf == FEAT_ESCAPE_PIT)
+			{
+				can_reach = TRUE;
+			}
+		}
+
+		/* If they can't bridge the gap, the attack fails */
+		if (!can_reach) return (FALSE);
+	}
+
 
 	/* Total armor */
 	ac = p_ptr->ac + p_ptr->to_a;

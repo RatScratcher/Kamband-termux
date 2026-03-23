@@ -6432,7 +6432,7 @@ static void cave_gen(void)
 	}
 
 	/* Place some small gold piles */
-	for (i = 0; i < 50; i++)
+	for (i = 0; i < 200; i++)
 	{
 		int y, x;
 		int d = 0;

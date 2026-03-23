@@ -2496,6 +2496,27 @@ static bool update_view_aux(int y, int x, int y1, int x1, int y2, int x2)
 /*
  * Update the "CAVE_VIEW" grids, redrawing as needed
  */
+
+
+
+/* Update visibility in SECTOR_DARK to hide distant tiles */
+static void update_dark_sector_visibility(void) {
+    int py = p_ptr->py;
+    int px = p_ptr->px;
+
+    for (int y = py - 5; y <= py + 5; y++) {
+        for (int x = px - 5; x <= px + 5; x++) {
+            if (!in_bounds(y, x)) continue;
+            if (cave_sector[y][x] == SECTOR_DARK) {
+                /* If tile is outside the 3x3 (distance > 1) */
+                if (distance(py, px, y, x) > 1) {
+                    cave_info[y][x] &= ~(CAVE_MARK); /* Hide from map */
+                }
+            }
+        }
+    }
+}
+
 void update_view(void)
 {
 	int py = p_ptr->py;
@@ -2970,6 +2991,9 @@ void update_view(void)
 
 	/* None left */
 	temp_n = 0;
+
+	/* Apply vision restrictions for SECTOR_DARK */
+	update_dark_sector_visibility();
 }
 
 

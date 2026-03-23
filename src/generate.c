@@ -4869,100 +4869,108 @@ static void build_sector_plaza(int y0, int x0)
 /*
  * Build a Dark Sector (Shifting Labyrinth)
  */
-static void build_sector_dark(int y0, int x0)
+/*
+ * Build a Shifting Maze Sector: Organic, hazardous, and rare.
+ */
+static void build_sector_shifting_maze(int y0, int x0)
 {
-	int y1 = y0 * BLOCK_HGT;
-	int x1 = x0 * BLOCK_WID;
-	int y2 = (y0 + 2) * BLOCK_HGT;
-	int x2 = (x0 + 2) * BLOCK_WID;
-	int x, y, i;
+    int y1 = y0 * BLOCK_HGT;
+    int x1 = x0 * BLOCK_WID;
+    int y2 = (y0 + 2) * BLOCK_HGT - 1;
+    int x2 = (x0 + 2) * BLOCK_WID - 1;
+    int x, y, i;
 
-	int cy = (y1 + y2) / 2;
-	int cx = (x1 + x2) / 2;
-	/* int max_dist = MAX(y2 - y1, x2 - x1) / 2; */
+    int cy = (y1 + y2) / 2;
+    int cx = (x1 + x2) / 2;
 
-	/* Safety */
-	if (y2 >= DUNGEON_HGT) y2 = DUNGEON_HGT - 1;
-	if (x2 >= DUNGEON_WID) x2 = DUNGEON_WID - 1;
+    /* Initialize with high-density noise to make it feel cramped */
+    for (y = y1; y <= y2; y++) {
+        for (x = x1; x <= x2; x++) {
+            if (!in_bounds(y, x)) continue;
+            int dist = distance(cy, cx, y, x);
+            int wall_chance = 45 + (dist * 3);
+            cave_feat[y][x] = (rand_int(100) < wall_chance) ? FEAT_WALL_EXTRA : FEAT_FLOOR;
+            /* Mark as room to prevent standard tunnel interference */
+            cave_info[y][x] |= CAVE_ROOM;
+        }
+    }
 
-	/* Initialize with noise */
-	for (y = y1; y <= y2; y++)
-	{
-		for (x = x1; x <= x2; x++)
-		{
-			int dist = distance(cy, cx, y, x);
-			int wall_chance = 40 + (dist * 4);
-			if (wall_chance > 100) wall_chance = 100;
-
-			if (rand_int(100) < wall_chance) cave_feat[y][x] = FEAT_WALL_EXTRA;
-			else cave_feat[y][x] = FEAT_FLOOR;
-			cave_info[y][x] |= CAVE_ROOM;
-		}
-	}
-
-	/* Cellular Automata Smoothing (6 iterations) */
-	for (i = 0; i < 6; i++)
-	{
-		bool next_grid[33][33];
+    /* CA iterations to create organic pathways */
+    for (i = 0; i < 5; i++) {
+        bool next_grid[33][33];
         int h = y2 - y1 + 1;
         int w = x2 - x1 + 1;
-
-		for (y = 0; y < h; y++) {
-			for (x = 0; x < w; x++) {
-				int walls = 0;
-				int dy, dx;
-                int cy = y1 + y;
-                int cx = x1 + x;
-
-				for (dy = -1; dy <= 1; dy++)
-					for (dx = -1; dx <= 1; dx++) {
-                        int ny = cy + dy;
-                        int nx = cx + dx;
-                        if (in_bounds(ny, nx)) {
-                            if (cave_feat[ny][nx] == FEAT_WALL_EXTRA) walls++;
-                        } else {
-                            walls++; /* Edge is wall */
-                        }
+        for (y = 0; y < h; y++) {
+            for (x = 0; x < w; x++) {
+                int walls = 0;
+                for (int dy = -1; dy <= 1; dy++) {
+                    for (int dx = -1; dx <= 1; dx++) {
+                        int ny = y1 + y + dy, nx = x1 + x + dx;
+                        if (!in_bounds(ny, nx) || cave_feat[ny][nx] == FEAT_WALL_EXTRA) walls++;
                     }
-
-				if (cave_feat[cy][cx] == FEAT_WALL_EXTRA)
-					next_grid[y][x] = (walls >= 4);
-				else
-					next_grid[y][x] = (walls >= 5);
-			}
-		}
-
-        /* Apply back */
-		for (y = 0; y < h; y++) {
-			for (x = 0; x < w; x++) {
-                if (next_grid[y][x]) cave_feat[y1+y][x1+x] = FEAT_WALL_EXTRA;
-                else cave_feat[y1+y][x1+x] = FEAT_FLOOR;
+                }
+                next_grid[y][x] = (cave_feat[y1+y][x1+x] == FEAT_WALL_EXTRA) ? (walls >= 4) : (walls >= 5);
             }
         }
-	}
-
-    /* Ensure connectivity */
-    ensure_connectivity(y1, x1, y2, x2);
-
-    /* Place Heart of the Maze */
-    {
-        int ty, tx;
-        int tries = 0;
-        while (tries++ < 1000) {
-            ty = rand_range(y1 + 1, y2 - 1);
-            tx = rand_range(x1 + 1, x2 - 1);
-            if (cave_floor_bold(ty, tx)) {
-                /* Place item */
-                object_level += 10;
-                place_object(ty, tx, TRUE, TRUE);
-                object_level -= 10;
-
-                /* Glowing beacon */
-                cave_set_feat(ty, tx, FEAT_GLOWING_TILE);
-                break;
+        for (y = 0; y < h; y++) {
+            for (x = 0; x < w; x++) {
+                cave_feat[y1+y][x1+x] = next_grid[y][x] ? FEAT_WALL_EXTRA : FEAT_FLOOR;
             }
         }
     }
+
+    ensure_connectivity(y1, x1, y2, x2);
+
+    /* Place the High-Value Object at the center */
+    if (cave_floor_bold(cy, cx)) {
+        object_level += 15; /* Significant boost for this rare sector */
+        place_object(cy, cx, TRUE, TRUE);
+        object_level -= 15;
+        cave_feat[cy][cx] = FEAT_GLOWING_TILE;
+
+     cave_info[cy][cx] |= (CAVE_GLOW | CAVE_MARK);
+    }
+}
+
+/*
+ * Build a Dark Maze Sector: A perfect geometric maze that restricts vision.
+ */
+static void build_sector_dark(int y0, int x0)
+{
+    int y, x;
+    int y1 = y0 * BLOCK_HGT;
+    int x1 = x0 * BLOCK_WID;
+    int y2 = (y0 + 2) * BLOCK_HGT - 1;
+    int x2 = (x0 + 2) * BLOCK_WID - 1;
+
+    /* Fill with walls initially */
+    for (y = y1; y <= y2; y++) {
+        for (x = x1; x <= x2; x++) {
+            if (!in_bounds(y, x)) continue;
+            cave_feat[y][x] = FEAT_WALL_INNER;
+            /* CRITICAL: Ensure NO CAVE_GLOW is set here */
+            cave_info[y][x] &= ~(CAVE_GLOW | CAVE_ROOM);
+        }
+    }
+
+    /* Simple Recursive Backtracker / Hunt-and-Kill implementation */
+    /* (This carves paths every 2 grids to maintain wall-thick boundaries) */
+    for (y = y1 + 1; y < y2; y += 2) {
+        for (x = x1 + 1; x < x2; x += 2) {
+            cave_feat[y][x] = FEAT_FLOOR;
+            if (x > x1 + 1) {
+                if (rand_int(100) < 50) cave_feat[y][x-1] = FEAT_FLOOR;
+                else if (y > y1 + 1) cave_feat[y-1][x] = FEAT_FLOOR;
+            } else if (y > y1 + 1) {
+                cave_feat[y-1][x] = FEAT_FLOOR;
+            }
+        }
+    }
+
+    /* Ensure there are entry/exit points to the rest of the dungeon */
+    cave_feat[y1][x1+1] = FEAT_FLOOR;
+
+  cave_feat[y2][x2-1] = FEAT_FLOOR;
 }
 
 /*
@@ -5923,7 +5931,8 @@ static void cave_gen(void)
 				/* Redistributed probabilities: SECTOR_CLIFF merged into SECTOR_HILL */
 				if (roll < 15) sect_type = SECTOR_PLAZA;
 				else if (roll < 25) sect_type = SECTOR_RUINS;
-				else if (roll < 35) sect_type = SECTOR_DARK;
+				else if (roll < 35) sect_type = SECTOR_DARK;  /* Now the True Dark Maze */
+				else if (roll < 38) sect_type = SECTOR_SHIFTING; /* Rare: 3% chance */
 				/* Hill probability now covers the old cliff range for more fractal terrain */
 				else if (roll < 70 + (p_ptr->depth / 8)) sect_type = SECTOR_HILL;
 				else if (roll < 80) sect_type = SECTOR_PIT;
@@ -6003,9 +6012,9 @@ static void cave_gen(void)
 				}
 			}
 				/* SECTOR_CLIFF block has been removed as build_sector_fractal_hill handles cliff generation */
-			else if (sect == SECTOR_DARK)
+			else if (sect == SECTOR_SHIFTING)
 			{
-				build_sector_dark(y, x);
+				build_sector_shifting_maze(y, x);
 				/* Mark blocks as used */
 				dun->room_map[y][x] = TRUE;
 				if (y + 1 < dun->row_rooms) dun->room_map[y + 1][x] = TRUE;
@@ -6018,6 +6027,12 @@ static void cave_gen(void)
 					dun->cent[dun->cent_n].x = (x * BLOCK_WID) + BLOCK_WID;
 					dun->cent_n++;
 				}
+			}
+			else if (sect == SECTOR_DARK)
+			{
+				build_sector_dark(y, x);
+				/* Note: We do NOT mark dun->room_map here if we want tunnels
+				   to potentially pierce it, or we do to keep it isolated. */
 			}
 			else if (sect == SECTOR_PLAZA)
 			{

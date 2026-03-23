@@ -57,6 +57,7 @@
 #define SECTOR_PLAZA  2
 #define SECTOR_DARK   3
 #define SECTOR_VOID   4
+#define SECTOR_SHIFTING 5
 #define SECTOR_HILL     6
 #define SECTOR_PIT      7
 

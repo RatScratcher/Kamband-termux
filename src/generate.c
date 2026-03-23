@@ -5089,38 +5089,42 @@ void populate_cover_features(void)
 static void scatter_ambient_detail(void)
 {
     int y, x, i;
-    /* Determine density based on dungeon size */
-    int density = (DUNGEON_HGT * DUNGEON_WID) / 100;
+    /* Increase density for a more lived-in feel */
+    int density = (DUNGEON_HGT * DUNGEON_WID) / 50;
 
     for (i = 0; i < density; i++)
     {
         y = rand_int(DUNGEON_HGT);
         x = rand_int(DUNGEON_WID);
 
-        /* Only place on empty, non-room floor tiles */
-        if (cave_naked_bold(y, x) && !(cave_info[y][x] & CAVE_ROOM))
+        /* Target empty floor tiles.
+         * FIX: We removed the check for !(cave_info[y][x] & CAVE_ROOM)
+         * so that fractal hills and cavern floors get detailed too.
+         */
+        if (cave_naked_bold(y, x) && cave_feat[y][x] == FEAT_FLOOR)
         {
             int roll = rand_int(100);
 
-            if (roll < 5) {
+            if (roll < 3) {
                 /* An old, abandoned campsite */
                 cave_feat[y][x] = FEAT_RUBBLE;
-                cave_info[y][x] |= (CAVE_GLOW | CAVE_MARK); /* A lingering spark? */
+                /* Campfires/Embers glow in the dark! */
+                cave_info[y][x] |= (CAVE_GLOW | CAVE_MARK);
             }
-            else if (roll < 15) {
+            else if (roll < 10) {
                 /* Patches of moss or grass */
                 cave_feat[y][x] = FEAT_GRASS;
             }
-            else if (roll < 20) {
+            else if (roll < 13) {
                 /* A lone, mysterious pillar */
                 cave_feat[y][x] = FEAT_STONE_PILLAR;
             }
-            else if (roll < 25) {
-                /* Natural glowing crystals (Breaks up the darkness) */
+            else if (roll < 16) {
+                /* Natural glowing crystals - helps break up the "black void" */
                 cave_feat[y][x] = FEAT_GLOWING_TILE;
                 cave_info[y][x] |= (CAVE_GLOW | CAVE_MARK);
             }
-            else if (roll < 30) {
+            else if (roll < 20) {
                 /* A puddle of water */
                 cave_feat[y][x] = FEAT_SHAL_WATER;
             }

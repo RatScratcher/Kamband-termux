@@ -6476,6 +6476,7 @@ static void cave_gen(void)
 	/* Populate with new features */
 	populate_features();
     populate_cover_features();
+	scatter_ambient_detail();
 
 	/* Do not light floors inside rooms. */
 	/* Floors outside rooms or walls are lit. */

@@ -4948,8 +4948,9 @@ static void build_sector_dark(int y0, int x0)
         for (x = x1; x <= x2; x++) {
             if (!in_bounds(y, x)) continue;
             cave_feat[y][x] = FEAT_WALL_INNER;
-            /* CRITICAL: Ensure NO CAVE_GLOW is set here */
-            cave_info[y][x] &= ~(CAVE_GLOW | CAVE_ROOM);
+            /* FIX: Keep CAVE_ROOM so tunnels don't pave over us */
+            cave_info[y][x] |= (CAVE_ROOM);
+            cave_info[y][x] &= ~(CAVE_GLOW);
         }
     }
 
@@ -6031,8 +6032,19 @@ static void cave_gen(void)
 			else if (sect == SECTOR_DARK)
 			{
 				build_sector_dark(y, x);
-				/* Note: We do NOT mark dun->room_map here if we want tunnels
-				   to potentially pierce it, or we do to keep it isolated. */
+
+				/* FIX: Mark blocks as used so winding tunnels don't gut the maze */
+				dun->room_map[y][x] = TRUE;
+				if (y + 1 < dun->row_rooms) dun->room_map[y + 1][x] = TRUE;
+				if (x + 1 < dun->col_rooms) dun->room_map[y][x + 1] = TRUE;
+				if (y + 1 < dun->row_rooms && x + 1 < dun->col_rooms) dun->room_map[y + 1][x + 1] = TRUE;
+
+				/* Optional: Add center for tunnels to connect TO the maze */
+				if (dun->cent_n < CENT_MAX) {
+					dun->cent[dun->cent_n].y = (y * BLOCK_HGT) + BLOCK_HGT;
+					dun->cent[dun->cent_n].x = (x * BLOCK_WID) + BLOCK_WID;
+					dun->cent_n++;
+				}
 			}
 			else if (sect == SECTOR_PLAZA)
 			{

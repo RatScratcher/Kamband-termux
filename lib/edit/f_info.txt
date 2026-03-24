@@ -744,3 +744,12 @@ G:.:w
 
 N:223:ruin door
 G:+:y
+
+N:164:Hill summit
+G:|:g
+
+N:239:Twisted Brambles
+G:&:g
+
+N:240:ash
+G:.:d

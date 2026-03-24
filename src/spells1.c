@@ -2124,6 +2124,48 @@ static void project_water_spread(int y, int x, int dam, int typ) {
     project_water_spread(y-1, x+1, dam-1, typ);
 }
 
+
+static void project_bramble_spread(int who, int y, int x, int typ) {
+    if (!in_bounds(y, x)) return;
+    if (cave_feat[y][x] != FEAT_BRAMBLES) return;
+    /* Use CAVE_TEMP to avoid loops */
+    if (cave_info[y][x] & CAVE_TEMP) return;
+
+    cave_info[y][x] |= CAVE_TEMP;
+
+    /* Hit grid (destroys bramble into ash) */
+    cave_set_feat(y, x, FEAT_ASH);
+    lite_spot(y, x);
+    project(who, 0, y, x, 50, typ, PROJECT_KILL | PROJECT_ITEM | PROJECT_GRID);
+
+    /* Recurse */
+    project_bramble_spread(who, y+1, x, typ);
+    project_bramble_spread(who, y-1, x, typ);
+    project_bramble_spread(who, y, x+1, typ);
+    project_bramble_spread(who, y, x-1, typ);
+    project_bramble_spread(who, y+1, x+1, typ);
+    project_bramble_spread(who, y-1, x-1, typ);
+    project_bramble_spread(who, y+1, x-1, typ);
+    project_bramble_spread(who, y-1, x+1, typ);
+}
+
+static void project_bramble_clear(int y, int x) {
+    if (!in_bounds(y, x)) return;
+    if (!(cave_info[y][x] & CAVE_TEMP)) return;
+
+    cave_info[y][x] &= ~(CAVE_TEMP);
+
+    /* Recurse */
+    project_bramble_clear(y+1, x);
+    project_bramble_clear(y-1, x);
+    project_bramble_clear(y, x+1);
+    project_bramble_clear(y, x-1);
+    project_bramble_clear(y+1, x+1);
+    project_bramble_clear(y-1, x-1);
+    project_bramble_clear(y+1, x-1);
+    project_bramble_clear(y-1, x+1);
+}
+
 static void project_water_clear(int y, int x) {
     if (!in_bounds(y, x)) return;
     if (cave_feat[y][x] != FEAT_SHAL_WATER && cave_feat[y][x] != FEAT_DEEP_WATER) return;
@@ -2196,6 +2238,13 @@ static bool project_f(int who, int r, int y, int x, int dam, int typ)
 			{
 				cave_set_feat(y, x, FEAT_OIL_BURNING);
 				cave[y][x].fuel = 10 + rand_int(11);
+				obvious = TRUE;
+			}
+			else if (cave_feat[y][x] == FEAT_BRAMBLES)
+			{
+				msg_print("The brambles catch fire!");
+				project_bramble_spread(who, y, x, typ);
+				project_bramble_clear(y, x);
 				obvious = TRUE;
 			}
 			break;

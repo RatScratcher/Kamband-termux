@@ -5563,6 +5563,9 @@ static void build_sector_fractal_hill(int y0, int x0)
     /* Generate the organic heightmap into cave_feat temporarily */
     plasma_recursive(px1, py1, px2, py2, 100, 1);
 
+    /* Pre-calculate bounding box for the hill */
+    int min_hx = px2, max_hx = px1, min_hy = py2, max_hy = py1;
+
     /* 3. Threshold the fractal: High values become plateau, Low values become ground */
     /* Values > 50 are elevated. We convert them to proper features and elevation flags. */
     for (y = py1; y <= py2; y++) {
@@ -5571,6 +5574,11 @@ static void build_sector_fractal_hill(int y0, int x0)
                 set_elevation(y, x, ELEV_HIGH);
                 cave_feat[y][x] = FEAT_HILL_TOP;
                 cave_info[y][x] |= CAVE_GLOW;
+
+                if (x < min_hx) min_hx = x;
+                if (x > max_hx) max_hx = x;
+                if (y < min_hy) min_hy = y;
+                if (y > max_hy) max_hy = y;
             } else {
                 set_elevation(y, x, ELEV_GROUND);
                 cave_feat[y][x] = FEAT_FLOOR;
@@ -5594,6 +5602,73 @@ static void build_sector_fractal_hill(int y0, int x0)
                     if (is_edge) break;
                 }
                 if (is_edge) cave_feat[y][x] = FEAT_CLIFF_UP;
+            }
+        }
+    }
+
+    /* Process Hill Constraints & Brambles */
+    int h_width = max_hx - min_hx + 1;
+    int h_height = max_hy - min_hy + 1;
+
+    if (max_hx >= min_hx && max_hy >= min_hy) {
+        if (h_width > 6 || h_height > 6) {
+            /* Large Hill: Ensure empty space around the hill */
+            for (y = py1; y <= py2; y++) {
+                for (x = px1; x <= px2; x++) {
+                    if (get_elevation(y, x) == ELEV_GROUND) {
+                        bool near_hill = FALSE;
+                        for (int dy = -2; dy <= 2; dy++) {
+                            for (int dx = -2; dx <= 2; dx++) {
+                                int ny = y + dy, nx = x + dx;
+                                if (in_bounds(ny, nx) && get_elevation(ny, nx) >= ELEV_HIGH) {
+                                    near_hill = TRUE;
+                                }
+                            }
+                        }
+                        if (near_hill) {
+                            cave_feat[y][x] = FEAT_FLOOR; /* Clear space around large hill */
+                        }
+                    }
+                }
+            }
+        } else {
+            /* Small Hill: Generate Twisted Brambles in the vicinity */
+            for (y = py1; y <= py2; y++) {
+                for (x = px1; x <= px2; x++) {
+                    if (get_elevation(y, x) == ELEV_GROUND && cave_feat[y][x] == FEAT_FLOOR) {
+                        bool near_hill = FALSE;
+                        for (int dy = -3; dy <= 3; dy++) {
+                            for (int dx = -3; dx <= 3; dx++) {
+                                int ny = y + dy, nx = x + dx;
+                                if (in_bounds(ny, nx) && get_elevation(ny, nx) >= ELEV_HIGH) {
+                                    near_hill = TRUE;
+                                }
+                            }
+                        }
+                        if (near_hill && rand_int(100) < 60) {
+                            cave_feat[y][x] = FEAT_BRAMBLES;
+                        }
+                    }
+                }
+            }
+
+            /* Create clearings inside the brambles */
+            for (int j = 0; j < 5; j++) {
+                int cy = py1 + rand_int(py2 - py1 + 1);
+                int cx = px1 + rand_int(px2 - px1 + 1);
+                if (in_bounds(cy, cx)) {
+                    for (int dy = -1; dy <= 1; dy++) {
+                        for (int dx = -1; dx <= 1; dx++) {
+                            int ny = cy + dy, nx = cx + dx;
+                            if (in_bounds(ny, nx) && cave_feat[ny][nx] == FEAT_BRAMBLES) {
+                                cave_feat[ny][nx] = FEAT_FLOOR;
+                                if (rand_int(100) < 15) {
+                                    place_object(ny, nx, FALSE, FALSE);
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }

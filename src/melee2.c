@@ -4424,6 +4424,12 @@ void process_monsters(void)
 		/* Use up "some" energy */
 		m_ptr->energy -= 100;
 
+		/* Bramble penalty */
+		if (cave_feat[m_ptr->fy][m_ptr->fx] == FEAT_BRAMBLES)
+		{
+			m_ptr->energy -= 50; /* Takes an extra half-turn to act/move in brambles */
+		}
+
 
 		/* Heal monster? XXX XXX XXX */
 

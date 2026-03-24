@@ -4159,6 +4159,10 @@ int get_movement_cost(int y, int x)
 {
     int base_cost = 100; /* Normal */
 
+    /* Brambles slowdown */
+    if (cave_feat[p_ptr->py][p_ptr->px] == FEAT_BRAMBLES) base_cost += 50;
+    if (cave_feat[y][x] == FEAT_BRAMBLES) base_cost += 50;
+
     /* Elevation modifier */
     int elev_cost = elev_movement_cost(p_ptr->py, p_ptr->px, y, x);
 

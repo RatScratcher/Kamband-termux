@@ -3568,6 +3568,11 @@ bool projectable(int y1, int x1, int y2, int x2)
 		if (dist && !cave_floor_bold(y, x))
 			break;
 
+		/* NEW: Never pass through elevation obstructions (Hills/Cliffs) */
+		/* This uses the source (y1, x1) and current step (y, x) */
+		if (dist && elev_blocks_sight(y1, x1, y, x))
+			break;
+
 		/* Check for arrival at "final target" */
 		if ((x == x2) && (y == y2))
 			return (TRUE);

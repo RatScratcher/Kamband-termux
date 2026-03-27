@@ -1212,43 +1212,30 @@ static errr rd_dungeon(void)
 		}
 
 		debug_log("rd_dungeon: start RLE 2 (fire life)");
-		if (sf_patch >= 1)
+		/* FIX: Always read fire life data because save.c always writes it */
+		cells_count = 0;
+		while (cells_count < cells_total)
 		{
-			cells_count = 0;
-			while (cells_count < cells_total)
+			/* Grab RLE info */
+			rd_byte(&count);
+			rd_byte(&tmp8u);
+
+			if (count == 0)
 			{
-				/* Grab RLE info */
-				rd_byte(&count);
-				rd_byte(&tmp8u);
-
-				if (count == 0)
-				{
-					if (sf_error) break;
-					continue;
-				}
-
-				/* Apply the RLE info */
-				for (i = 0; i < count; i++)
-				{
-					if (cells_count < cells_total)
-					{
-						int cur_y = cells_count / DUNGEON_WID;
-						int cur_x = cells_count % DUNGEON_WID;
-
-						cave[cur_y][cur_x].fuel = (u16b)tmp8u;
-						cells_count++;
-					}
-				}
+				if (sf_error) break;
+				continue;
 			}
-		}
-		else
-		{
-			/* Clear the fire life array */
-			for (y = 0; y < DUNGEON_HGT; y++)
+
+			/* Apply the RLE info to fire fuel */
+			for (i = 0; i < count; i++)
 			{
-				for (x = 0; x < DUNGEON_WID; x++)
+				if (cells_count < cells_total)
 				{
-					cave[y][x].fuel = 0;
+					int cur_y = cells_count / DUNGEON_WID;
+					int cur_x = cells_count % DUNGEON_WID;
+
+					cave[cur_y][cur_x].fuel = (u16b)tmp8u;
+					cells_count++;
 				}
 			}
 		}

@@ -3608,6 +3608,11 @@ bool target_clear(monster_type * m_ptr, int y2, int x2)
 		if (dist && !cave_floor_bold(y, x))
 			break;
 
+		/* NEW: Never pass through elevation obstructions (Hills/Cliffs) */
+		/* Ensures pets don't try to fire through solid terrain */
+		if (dist && elev_blocks_sight(y1, x1, y, x))
+			break;
+
 		/* Monster in the way */
 		if ((x != x1 || y != y1) && 
 		    ((cave_m_idx[y][x] > 0 &&

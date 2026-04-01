@@ -3999,7 +3999,7 @@ bool elev_allows_move(int sy, int sx, int dy, int dx, bool flying)
     /* Going up - need assistance or climbable surface */
     int diff = dst_elev - src_elev;
 
-    if (diff >= 2) {
+    if (diff >= 2 || (src_elev == ELEV_LOW && dst_elev == ELEV_GROUND)) {
         int src_feat = cave_feat[sy][sx];
 
         /* Steep climb - need stairs/ramp/ladder (Bi-directional check) */

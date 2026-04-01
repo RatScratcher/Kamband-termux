@@ -2208,6 +2208,18 @@ void move_player(int dir, int jumping)
 		/* Move player */
 		monster_swap(py, px, y, x);
 
+		/* Check for a fall from ground to low elevation */
+		if (get_elevation(py, px) == ELEV_GROUND && get_elevation(y, x) == ELEV_LOW && !p_ptr->flying) {
+            int feat = cave_feat[y][x];
+            int src_feat = cave_feat[py][px];
+            if (feat != FEAT_SLOPE_DOWN && feat != FEAT_RAMP_DOWN &&
+                src_feat != FEAT_SLOPE_DOWN && src_feat != FEAT_RAMP_DOWN) {
+                msg_print("You fall into a pit!");
+                take_hit(damroll(2, 6), "a fall");
+                p_ptr->energy_use = 100;
+            }
+        }
+
 		/* New location */
 		y = py = p_ptr->py;
 		x = px = p_ptr->px;

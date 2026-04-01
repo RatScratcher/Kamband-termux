@@ -4536,14 +4536,20 @@ static void place_gold_small(int y, int x)
 {
 	object_type *i_ptr;
 
-	/* Allocate space for the new object. */
+	/* 1. Get the object slot */
 	i_ptr = new_object();
 
-	/* Set up gold */
-	i_ptr->tval = TV_GOLD;
-	i_ptr->pval = randint(100);
+	/* 2. Use the built-in 'prep' function for N:480 (Copper) */
+	/* This automatically clears 'Ethereal' and sets TVAL/SVAL correctly */
+	object_prep(i_ptr, 480);
 
-	/* Drop the object */
+	/* 3. Set the amount (pval) */
+	i_ptr->pval = 10 + rand_int(50);
+
+	/* 4. Mark as known */
+	i_ptr->ident |= (IDENT_KNOWN);
+
+	/* 5. Drop it */
 	drop_near(i_ptr, FALSE, y, x);
 }
 

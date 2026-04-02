@@ -5000,9 +5000,81 @@ static void build_sector_dark(int y0, int x0)
         }
     }
 
+    /* Helper macro to check if a tile just outside the boundary is valid for access */
+#define IS_VALID_ACCESS(Y, X) \
+    (in_bounds((Y), (X)) && \
+     cave_floor_bold((Y), (X)) && \
+     cave_feat[(Y)][(X)] != FEAT_OIL_BURNING && \
+     cave_feat[(Y)][(X)] != FEAT_ACID && \
+     cave_feat[(Y)][(X)] != FEAT_DEEP_LAVA && \
+     cave_feat[(Y)][(X)] != FEAT_SHAL_LAVA && \
+     cave_feat[(Y)][(X)] != FEAT_DEEP_WATER && \
+     cave_feat[(Y)][(X)] != FEAT_CLIFF_UP && \
+     cave_feat[(Y)][(X)] != FEAT_CLIFF_DOWN)
+
     /* Ensure there are entry/exit points to the rest of the dungeon */
-    cave_feat[y1][x1+1] = FEAT_FLOOR;
-    cave_feat[y2][x2-1] = FEAT_FLOOR;
+    int access_points = 0;
+    bool top_opened = FALSE;
+    bool bottom_opened = FALSE;
+    bool left_opened = FALSE;
+    bool right_opened = FALSE;
+
+    /* Scan top edge */
+    for (x = x1 + 1; x < x2; x++) {
+        if (IS_VALID_ACCESS(y1 - 1, x)) {
+            cave_feat[y1][x] = FEAT_FLOOR;
+            access_points++;
+            top_opened = TRUE;
+            break; /* Just one point per edge */
+        }
+    }
+
+    /* Scan bottom edge */
+    for (x = x2 - 1; x > x1; x--) {
+        if (IS_VALID_ACCESS(y2 + 1, x)) {
+            cave_feat[y2][x] = FEAT_FLOOR;
+            access_points++;
+            bottom_opened = TRUE;
+            break;
+        }
+    }
+
+    /* If we didn't get enough access points, try the sides */
+    if (access_points < 2) {
+        for (y = y1 + 1; y < y2 && access_points < 2; y++) {
+            if (IS_VALID_ACCESS(y, x1 - 1)) {
+                cave_feat[y][x1] = FEAT_FLOOR;
+                access_points++;
+                left_opened = TRUE;
+                break;
+            }
+        }
+    }
+    if (access_points < 2) {
+        for (y = y2 - 1; y > y1 && access_points < 2; y--) {
+            if (IS_VALID_ACCESS(y, x2 + 1)) {
+                cave_feat[y][x2] = FEAT_FLOOR;
+                access_points++;
+                right_opened = TRUE;
+                break;
+            }
+        }
+    }
+
+    /* Fallback: if totally surrounded by walls, at least open something */
+    if (access_points == 0) {
+        cave_feat[y1][x1+1] = FEAT_FLOOR;
+        cave_feat[y2][x2-1] = FEAT_FLOOR;
+    } else if (access_points == 1) {
+        /* Open one more on the opposite side to make a passage if possible */
+        if (top_opened || left_opened) {
+            cave_feat[y2][x2-1] = FEAT_FLOOR;
+        } else {
+            cave_feat[y1][x1+1] = FEAT_FLOOR;
+        }
+    }
+
+#undef IS_VALID_ACCESS
 }
 
 /*

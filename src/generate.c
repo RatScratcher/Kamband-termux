@@ -4949,35 +4949,60 @@ static void build_sector_dark(int y0, int x0)
     int y2 = (y0 + 2) * BLOCK_HGT - 1;
     int x2 = (x0 + 2) * BLOCK_WID - 1;
 
-    /* Fill with walls initially */
+    /* 1. Fill area with Diggable Walls and 'Darkness' flags */
     for (y = y1; y <= y2; y++) {
         for (x = x1; x <= x2; x++) {
             if (!in_bounds(y, x)) continue;
             cave_feat[y][x] = FEAT_WALL_INNER;
-            /* FIX: Keep CAVE_ROOM so tunnels don't pave over us */
+            /* Outer boundary walls are diggable */
+            if (y == y1 || y == y2 || x == x1 || x == x2) {
+                cave_feat[y][x] = FEAT_MAGMA;
+            }
             cave_info[y][x] |= (CAVE_ROOM);
-            cave_info[y][x] &= ~(CAVE_GLOW);
+            cave_info[y][x] &= ~(CAVE_GLOW | CAVE_MARK); /* Dark and Unmapped */
         }
     }
 
-    /* Simple Recursive Backtracker / Hunt-and-Kill implementation */
-    /* (This carves paths every 2 grids to maintain wall-thick boundaries) */
+    /* 2. Maze Carving Logic (Perfect connectivity) */
+    /* Using a simplified loop-based connectivity to avoid stack overflow */
     for (y = y1 + 1; y < y2; y += 2) {
         for (x = x1 + 1; x < x2; x += 2) {
             cave_feat[y][x] = FEAT_FLOOR;
-            if (x > x1 + 1) {
-                if (rand_int(100) < 50) cave_feat[y][x-1] = FEAT_FLOOR;
-                else if (y > y1 + 1) cave_feat[y-1][x] = FEAT_FLOOR;
-            } else if (y > y1 + 1) {
-                cave_feat[y-1][x] = FEAT_FLOOR;
+
+            /* Randomly connect to a neighbor that was already visited */
+            int choices[2], count = 0;
+            if (y > y1 + 1) choices[count++] = 0; /* Up */
+            if (x > x1 + 1) choices[count++] = 1; /* Left */
+
+            if (count > 0) {
+                int dir = choices[rand_int(count)];
+                if (dir == 0) cave_feat[y-1][x] = FEAT_FLOOR;
+                else          cave_feat[y][x-1] = FEAT_FLOOR;
+            }
+        }
+    }
+
+    /* 3. Add Monsters and Items in Dead Ends */
+    for (y = y1 + 1; y < y2; y++) {
+        for (x = x1 + 1; x < x2; x++) {
+            if (cave_feat[y][x] == FEAT_FLOOR) {
+                int walls = 0;
+                if (cave_feat[y-1][x] != FEAT_FLOOR) walls++;
+                if (cave_feat[y+1][x] != FEAT_FLOOR) walls++;
+                if (cave_feat[y][x-1] != FEAT_FLOOR) walls++;
+                if (cave_feat[y][x+1] != FEAT_FLOOR) walls++;
+
+                if (walls == 3) { /* This is a dead end */
+                    if (rand_int(12) == 0) place_object(y, x, FALSE, FALSE);
+                    else if (rand_int(8) == 0) place_monster(y, x, MON_ALLOC_SLEEP);
+                }
             }
         }
     }
 
     /* Ensure there are entry/exit points to the rest of the dungeon */
     cave_feat[y1][x1+1] = FEAT_FLOOR;
-
-  cave_feat[y2][x2-1] = FEAT_FLOOR;
+    cave_feat[y2][x2-1] = FEAT_FLOOR;
 }
 
 /*

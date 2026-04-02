@@ -1202,7 +1202,8 @@ static errr rd_dungeon(void)
 			/* Apply to the map */
 			while (count--)
 			{
-				set_elevation(y, x, (int)tmp8u);
+				/* Cast the byte to a signed char so 255 becomes -1 again */
+				set_elevation(y, x, (int)((signed char)tmp8u));
 				if (++x >= DUNGEON_WID)
 				{
 					x = 0;

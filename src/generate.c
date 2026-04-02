@@ -5485,7 +5485,7 @@ static void build_sector_fractal_pit(int y0, int x0)
     int hazard = rand_int(3);
     for (y = py1 + 1; y <= py2 - 1; y++) {
         for (x = px1 + 1; x <= px2 - 1; x++) {
-            if (get_elevation(y, x) == ELEV_LOW && cave_feat[y][x] == FEAT_PIT) {
+            if (get_elevation(y, x) == ELEV_LOW && (cave_feat[y][x] == pit_feat)) {
                 switch (hazard) {
 					case 0:
                         if (rand_int(100) < 30)

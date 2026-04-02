@@ -691,12 +691,13 @@ void map_info(int y, int x, byte * ap, char *cp)
 	if (cave_floor_bold_los(y, x))
 	{
 		/* Memorized (or visible) floor */
-		if ((cave_info[y][x] & (CAVE_MARK)) ||
+		if (((cave_info[y][x] & (CAVE_MARK)) ||
 			(((cave_info[y][x] & (CAVE_LITE)) ||
 					((cave_info[y][x] & (CAVE_GLOW)) &&
 						(cave_info[y][x] & (CAVE_VIEW)))) &&
 				!p_ptr->blind) ||
-            (vision_pulse && (cave_info[y][x] & CAVE_VIEW)))
+            (vision_pulse && (cave_info[y][x] & CAVE_VIEW))) &&
+            !(cave_sector[y][x] == SECTOR_DARK && !vision_pulse && distance(y, x, p_ptr->py, p_ptr->px) > 1))
 		{
 			/* Access floor */
 			f_ptr = &f_info[feat];
@@ -2504,13 +2505,15 @@ static void update_dark_sector_visibility(void) {
     int py = p_ptr->py;
     int px = p_ptr->px;
 
-    for (int y = py - 5; y <= py + 5; y++) {
-        for (int x = px - 5; x <= px + 5; x++) {
-            if (!in_bounds(y, x)) continue;
-            if (cave_sector[y][x] == SECTOR_DARK) {
-                /* If tile is outside the 3x3 (distance > 1) */
-                if (distance(py, px, y, x) > 1) {
-                    cave_info[y][x] &= ~(CAVE_MARK); /* Hide from map */
+    /* If the player is in the dark maze, forget all dark maze tiles that are out of sight */
+    if (cave_sector[py][px] == SECTOR_DARK) {
+        for (int y = 0; y < DUNGEON_HGT; y++) {
+            for (int x = 0; x < DUNGEON_WID; x++) {
+                if (cave_sector[y][x] == SECTOR_DARK) {
+                    /* If tile is outside the 3x3 (distance > 1) */
+                    if (distance(py, px, y, x) > 1) {
+                        cave_info[y][x] &= ~(CAVE_MARK); /* Hide from map */
+                    }
                 }
             }
         }

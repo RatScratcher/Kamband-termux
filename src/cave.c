@@ -1941,6 +1941,11 @@ void update_lite(void)
 
 	int i, y, x;
 
+	/* Limit torch radius in SECTOR_DARK to 1 */
+	if (cave_sector[py][px] == SECTOR_DARK) {
+		if (r > 1) r = 1;
+	}
+
 
 	/*** Special case ***/
 
@@ -2512,7 +2517,11 @@ static void update_dark_sector_visibility(void) {
                 if (cave_sector[y][x] == SECTOR_DARK) {
                     /* If tile is outside the 3x3 (distance > 1) */
                     if (distance(py, px, y, x) > 1) {
-                        cave_info[y][x] &= ~(CAVE_MARK); /* Hide from map */
+                        /* Check if the mark is actually set, so we can clear and redraw */
+                        if (cave_info[y][x] & (CAVE_MARK)) {
+                            cave_info[y][x] &= ~(CAVE_MARK); /* Hide from map */
+                            lite_spot(y, x); /* Redraw the spot to hide it immediately */
+                        }
                     }
                 }
             }

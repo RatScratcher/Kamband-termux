@@ -640,6 +640,65 @@ G:0:g
 # More floor terrains:
 #
 
+
+#
+# Elevation and climbing features (160-180)
+#
+
+N:160:slope up
+G:^:w
+
+N:161:slope down
+G:v:w
+
+N:162:cliff face
+G:::s
+
+N:163:cliff edge
+G:~:s
+
+N:164:hill summit
+G:^:s
+
+N:165:depression
+G:v:s
+
+N:166:narrow ledge
+G:-:w
+
+N:170:ramp up
+G:<:u
+
+N:171:ramp down
+G:>:u
+
+N:172:stone stairs up
+G:<:w
+
+N:173:stone stairs down
+G:>:w
+
+N:174:wooden ladder up
+G:<:o
+
+N:175:wooden ladder down
+G:>:o
+
+N:176:climbable cliff
+G:::u
+
+N:177:jump point
+G:v:B
+
+N:178:rope up
+G:<:y
+
+N:179:rope down
+G:>:y
+
+N:180:escape pit ladder
+G:<:y
+
 N:192:patch of grass
 G:.:G
 

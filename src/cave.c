@@ -4012,13 +4012,11 @@ bool elev_allows_move(int sy, int sx, int dy, int dx, bool flying)
             feat == FEAT_ROPE_UP || feat == FEAT_ROPE_DOWN ||
             feat == FEAT_CLIMBABLE ||
             feat == FEAT_ESCAPE_PIT ||
-            feat == FEAT_CLIFF_DOWN || feat == FEAT_SLOPE_DOWN ||
             src_feat == FEAT_LADDER_UP || src_feat == FEAT_LADDER_DOWN ||
             src_feat == FEAT_ROPE_UP || src_feat == FEAT_ROPE_DOWN ||
             src_feat == FEAT_STAIRS_UP || src_feat == FEAT_STAIRS_DOWN ||
             src_feat == FEAT_RAMP_UP || src_feat == FEAT_RAMP_DOWN ||
-            src_feat == FEAT_ESCAPE_PIT ||
-            src_feat == FEAT_CLIFF_DOWN || src_feat == FEAT_SLOPE_DOWN) {
+            src_feat == FEAT_ESCAPE_PIT) {
             return TRUE;
         }
 

@@ -3970,7 +3970,7 @@ bool elev_allows_move(int sy, int sx, int dy, int dx, bool flying)
     /* Going down is usually fine (unless too steep) */
     if (dst_elev < src_elev) {
         /* Check for dangerous drop */
-        if (src_elev - dst_elev >= 2) {
+        if (src_elev - dst_elev >= 2 || cave_feat[dy][dx] == FEAT_CLIFF_DOWN || cave_feat[sy][sx] == FEAT_CLIFF_DOWN) {
             int src_feat = cave_feat[sy][sx];
 
             /* Need stairs, ramp, or ladder (Bi-directional check) */

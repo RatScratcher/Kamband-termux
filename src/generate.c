@@ -5527,7 +5527,7 @@ static void build_sector_fractal_pit(int y0, int x0)
                     }
                     if (is_edge) break;
                 }
-                if (is_edge) cave_feat[y][x] = FEAT_SLOPE_DOWN;
+                if (is_edge) cave_feat[y][x] = FEAT_CLIFF_DOWN;
             }
         }
     }
@@ -5546,7 +5546,7 @@ static void build_sector_fractal_pit(int y0, int x0)
         /* Scan toward center to find the edge of the organic pit */
         for (int step = 0; step < BLOCK_HGT; step++) {
             if (!in_bounds(cy, cx)) break;
-            if (cave_feat[cy][cx] == FEAT_SLOPE_DOWN) {
+            if (cave_feat[cy][cx] == FEAT_CLIFF_DOWN) {
                 found = TRUE;
                 break;
             }
@@ -5564,7 +5564,7 @@ static void build_sector_fractal_pit(int y0, int x0)
                     if (!in_bounds(ny, nx)) continue;
                     /* Clear hazards on ground or pit landings */
                     if (get_elevation(ny, nx) == ELEV_GROUND || get_elevation(ny, nx) == ELEV_LOW) {
-                        if (cave_feat[ny][nx] != FEAT_SLOPE_DOWN &&
+                        if (cave_feat[ny][nx] != FEAT_CLIFF_DOWN &&
                             cave_feat[ny][nx] != FEAT_ESCAPE_PIT &&
                             cave_feat[ny][nx] != FEAT_STAIRS_UP) {
                             if (get_elevation(ny, nx) == ELEV_LOW)
@@ -5606,7 +5606,7 @@ static void build_sector_fractal_pit(int y0, int x0)
         for (x = x1 - 1; x <= x2 + 1; x++) {
             if (!in_bounds(y, x)) continue;
             if (cave_feat[y][x] != FEAT_FLOOR &&
-                cave_feat[y][x] != FEAT_SLOPE_DOWN &&
+                cave_feat[y][x] != FEAT_CLIFF_DOWN &&
                 cave_feat[y][x] != FEAT_PIT &&
 				cave_feat[y][x] != FEAT_SHAL_WATER &&
 				cave_feat[y][x] != FEAT_ESCAPE_PIT &&

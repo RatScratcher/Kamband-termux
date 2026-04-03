@@ -5532,46 +5532,58 @@ static void build_sector_fractal_pit(int y0, int x0)
         }
     }
 
-    /* 5. Guaranteed Escape Routes (North, South, East, West) */
-    /* We scan inward from each side to find the first slope tile of the organic shape */
-    int dy_dir[4] = {1, -1, 0, 0};
-    int dx_dir[4] = {0, 0, 1, -1};
-    int start_y[4] = {y1, y2, (y1+y2)/2, (y1+y2)/2};
-    int start_x[4] = {(x1+x2)/2, (x1+x2)/2, x1, x2};
+    /* 5. Guaranteed Escape Routes */
+    /* Collect all cliff edges and pick a few random ones to be escape points */
+    int cliff_y[256];
+    int cliff_x[256];
+    int cliff_count = 0;
 
-    for (i = 0; i < 4; i++) {
-        int cy = start_y[i], cx = start_x[i];
-        bool found = FALSE;
-
-        /* Scan toward center to find the edge of the organic pit */
-        for (int step = 0; step < BLOCK_HGT; step++) {
-            if (!in_bounds(cy, cx)) break;
-            if (cave_feat[cy][cx] == FEAT_CLIFF_DOWN) {
-                found = TRUE;
-                break;
+    for (y = py1; y <= py2; y++) {
+        for (x = px1; x <= px2; x++) {
+            if (cave_feat[y][x] == FEAT_CLIFF_DOWN) {
+                if (cliff_count < 256) {
+                    cliff_y[cliff_count] = y;
+                    cliff_x[cliff_count] = x;
+                    cliff_count++;
+                }
             }
-            cy += dy_dir[i]; cx += dx_dir[i];
         }
+    }
 
-        if (found) {
-            /* Convert slope to escape point */
-            cave_feat[cy][cx] = (rand_int(100) < 50) ? FEAT_ESCAPE_PIT : FEAT_STAIRS_UP;
+    /* Place 2 to 4 escape points if possible */
+    int escapes_to_place = 2 + rand_int(3);
+    if (escapes_to_place > cliff_count) escapes_to_place = cliff_count;
 
-            /* SAFETY PATH LOGIC: Clear 3x3 area around access point */
-            for (int dy = -1; dy <= 1; dy++) {
-                for (int dx = -1; dx <= 1; dx++) {
-                    int ny = cy + dy, nx = cx + dx;
-                    if (!in_bounds(ny, nx)) continue;
-                    /* Clear hazards on ground or pit landings */
-                    if (get_elevation(ny, nx) == ELEV_GROUND || get_elevation(ny, nx) == ELEV_LOW) {
-                        if (cave_feat[ny][nx] != FEAT_CLIFF_DOWN &&
-                            cave_feat[ny][nx] != FEAT_ESCAPE_PIT &&
-                            cave_feat[ny][nx] != FEAT_STAIRS_UP) {
-                            if (get_elevation(ny, nx) == ELEV_LOW)
-                                cave_feat[ny][nx] = FEAT_PIT;
-                            else
-                                cave_feat[ny][nx] = FEAT_FLOOR;
-                        }
+    for (i = 0; i < escapes_to_place; i++) {
+        if (cliff_count <= 0) break;
+
+        /* Pick a random cliff tile */
+        int pick = rand_int(cliff_count);
+        int cy = cliff_y[pick];
+        int cx = cliff_x[pick];
+
+        /* Remove chosen from the list by swapping with last element */
+        cliff_y[pick] = cliff_y[cliff_count - 1];
+        cliff_x[pick] = cliff_x[cliff_count - 1];
+        cliff_count--;
+
+        /* Convert slope to escape point */
+        cave_feat[cy][cx] = (rand_int(100) < 50) ? FEAT_ESCAPE_PIT : FEAT_STAIRS_UP;
+
+        /* SAFETY PATH LOGIC: Clear 3x3 area around access point */
+        for (int dy = -1; dy <= 1; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                int ny = cy + dy, nx = cx + dx;
+                if (!in_bounds(ny, nx)) continue;
+                /* Clear hazards on ground or pit landings */
+                if (get_elevation(ny, nx) == ELEV_GROUND || get_elevation(ny, nx) == ELEV_LOW) {
+                    if (cave_feat[ny][nx] != FEAT_CLIFF_DOWN &&
+                        cave_feat[ny][nx] != FEAT_ESCAPE_PIT &&
+                        cave_feat[ny][nx] != FEAT_STAIRS_UP) {
+                        if (get_elevation(ny, nx) == ELEV_LOW)
+                            cave_feat[ny][nx] = FEAT_PIT;
+                        else
+                            cave_feat[ny][nx] = FEAT_FLOOR;
                     }
                 }
             }

@@ -1929,6 +1929,8 @@ void forget_lite(void)
 	} while (0)
 
 
+static void update_dark_sector_visibility(void);
+
 /*
  * Update the "CAVE_LITE" grids, redrawing as needed.
  */
@@ -2167,6 +2169,9 @@ void update_lite(void)
 
 	/* None left */
 	temp_n = 0;
+
+	/* Apply vision restrictions for SECTOR_DARK */
+	update_dark_sector_visibility();
 }
 
 
@@ -2518,8 +2523,8 @@ static void update_dark_sector_visibility(void) {
                     /* If tile is outside the 3x3 (distance > 1) */
                     if (distance(py, px, y, x) > 1) {
                         /* Check if the mark is actually set, so we can clear and redraw */
-                        if (cave_info[y][x] & (CAVE_MARK)) {
-                            cave_info[y][x] &= ~(CAVE_MARK); /* Hide from map */
+                        if (cave_info[y][x] & (CAVE_MARK | CAVE_LITE | CAVE_VIEW)) {
+                            cave_info[y][x] &= ~(CAVE_MARK | CAVE_LITE | CAVE_VIEW); /* Hide from map */
                             lite_spot(y, x); /* Redraw the spot to hide it immediately */
                         }
                     }

@@ -2213,7 +2213,17 @@ void move_player(int dir, int jumping)
             int feat = cave_feat[y][x];
             int src_feat = cave_feat[py][px];
             if (feat != FEAT_SLOPE_DOWN && feat != FEAT_RAMP_DOWN &&
-                src_feat != FEAT_SLOPE_DOWN && src_feat != FEAT_RAMP_DOWN) {
+                feat != FEAT_RAMP_UP &&
+                feat != FEAT_STAIRS_DOWN && feat != FEAT_STAIRS_UP &&
+                feat != FEAT_LADDER_DOWN && feat != FEAT_LADDER_UP &&
+                feat != FEAT_ROPE_DOWN && feat != FEAT_ROPE_UP &&
+                feat != FEAT_ESCAPE_PIT &&
+                src_feat != FEAT_SLOPE_DOWN && src_feat != FEAT_RAMP_DOWN &&
+                src_feat != FEAT_RAMP_UP &&
+                src_feat != FEAT_STAIRS_DOWN && src_feat != FEAT_STAIRS_UP &&
+                src_feat != FEAT_LADDER_DOWN && src_feat != FEAT_LADDER_UP &&
+                src_feat != FEAT_ROPE_DOWN && src_feat != FEAT_ROPE_UP &&
+                src_feat != FEAT_ESCAPE_PIT) {
                 msg_print("You fall into a pit!");
                 take_hit(damroll(2, 6), "a fall");
                 p_ptr->energy_use = 100;

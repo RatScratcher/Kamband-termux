@@ -5449,8 +5449,8 @@ static void build_sector_fractal_pit(int y0, int x0)
     }
 
     /* 2. Generate fractal depths using the existing plasma algorithm */
-    /* We use a sub-region (inset by 2) to ensure a walking path around the pit */
-    int inset = 2;
+    /* We use a sub-region (inset by 0) to ensure the pit is large enough */
+    int inset = 0;
     int py1 = y1 + inset, px1 = x1 + inset;
     int py2 = y2 - inset, px2 = x2 - inset;
 
@@ -5466,11 +5466,21 @@ static void build_sector_fractal_pit(int y0, int x0)
     /* 3. Hazard Selection */
     int roll = rand_int(100);
     int pit_feat;
+    int floor_feat;
 
-    if (roll < 40)      pit_feat = FEAT_SWAMP;      /* 40% Swamp (Slow) */
-    else if (roll < 70) pit_feat = FEAT_SHAL_WATER; /* 30% Water (Slow) */
-    else if (roll < 85) pit_feat = FEAT_OIL;        /* 15% Oil (Flammable!) */
-    else                pit_feat = FEAT_SHAL_LAVA;  /* 15% Lava (Painful) */
+    if (roll < 40) {
+        pit_feat = FEAT_SWAMP;      /* 40% Swamp (Slow) */
+        floor_feat = FEAT_GRASS;
+    } else if (roll < 70) {
+        pit_feat = FEAT_SHAL_WATER; /* 30% Water (Slow) */
+        floor_feat = (rand_int(100) < 50) ? FEAT_GRASS : FEAT_SHAL_WATER;
+    } else if (roll < 85) {
+        pit_feat = FEAT_OIL;        /* 15% Oil (Flammable!) */
+        floor_feat = (rand_int(100) < 50) ? FEAT_GRASS : FEAT_OIL;
+    } else {
+        pit_feat = FEAT_SHAL_LAVA;  /* 15% Lava (Painful) */
+        floor_feat = FEAT_GRASS;
+    }
 
     /* 4. Threshold and Threshold Path Clearing */
     for (y = py1; y <= py2; y++) {
@@ -5480,7 +5490,7 @@ static void build_sector_fractal_pit(int y0, int x0)
                 cave_feat[y][x] = pit_feat;
             } else {
                 set_elevation(y, x, ELEV_GROUND);
-                cave_feat[y][x] = FEAT_FLOOR;
+                cave_feat[y][x] = floor_feat;
             }
         }
     }
@@ -5491,13 +5501,14 @@ static void build_sector_fractal_pit(int y0, int x0)
 
     /* Ensure we place loot on a valid pit tile near the center */
     if (get_elevation(cy, cx) == ELEV_LOW) {
-        if (pit_feat == FEAT_OIL) {
+        if (pit_feat == FEAT_OIL || pit_feat == FEAT_SHAL_LAVA || pit_feat == FEAT_DEEP_LAVA || pit_feat == FEAT_ACID || pit_feat == FEAT_ICE) {
             /* Boost object level for the high-risk area */
             object_level += 5;
 
             if (rand_int(100) < 50) {
                 /* Big pile of gold */
                 int gold_val = (p_ptr->depth * 100) + randint(500);
+                if (gold_val <= 100) gold_val = 101; /* Ensure gold > 100 */
                 place_gold(cy, cx, gold_val);
             } else {
                 /* Good quality item */
@@ -5578,7 +5589,7 @@ static void build_sector_fractal_pit(int y0, int x0)
         }
     }
 
-    /* 6. Add hazards in pit */
+    /* 6. Add hazards, monsters and items in pit */
     int hazard = rand_int(3);
     for (y = py1 + 1; y <= py2 - 1; y++) {
         for (x = px1 + 1; x <= px2 - 1; x++) {
@@ -5597,6 +5608,14 @@ static void build_sector_fractal_pit(int y0, int x0)
                             place_monster(y, x, MON_ALLOC_SLEEP);
                         break;
                 }
+            } else if (get_elevation(y, x) == ELEV_GROUND && (cave_feat[y][x] == floor_feat)) {
+                /* Place items/monsters on the ground floor of the pit */
+                if (rand_int(100) < 5) {
+                    place_object(y, x, FALSE, FALSE);
+                }
+                if (rand_int(100) < 10) {
+                    place_monster(y, x, MON_ALLOC_SLEEP);
+                }
             }
         }
     }
@@ -5606,6 +5625,8 @@ static void build_sector_fractal_pit(int y0, int x0)
         for (x = x1 - 1; x <= x2 + 1; x++) {
             if (!in_bounds(y, x)) continue;
             if (cave_feat[y][x] != FEAT_FLOOR &&
+                cave_feat[y][x] != FEAT_GRASS &&
+                cave_feat[y][x] != FEAT_OIL &&
                 cave_feat[y][x] != FEAT_CLIFF_DOWN &&
                 cave_feat[y][x] != FEAT_PIT &&
 				cave_feat[y][x] != FEAT_SHAL_WATER &&

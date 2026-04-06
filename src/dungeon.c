@@ -781,8 +781,8 @@ static void check_player_environment(void)
 static void process_environment(void)
 {
 	int y, x, i;
-	int ddy_burning[4] = {1, -1, 0, 0};
-	int ddx_burning[4] = {0, 0, 1, -1};
+	int ddy_burning[8] = {1, -1, 0, 0, 1, 1, -1, -1};
+	int ddx_burning[8] = {0, 0, 1, -1, 1, -1, 1, -1};
 
 	/* Pass 1: Clear CAVE_TEMP for burning oil */
 	for (y = 0; y < DUNGEON_HGT; y++) {
@@ -807,7 +807,7 @@ static void process_environment(void)
 
 					/* Spread */
 					if (cave[y][x].fuel > 5) {
-						for (i = 0; i < 4; i++) {
+						for (i = 0; i < 8; i++) {
 							int ny = y + ddy_burning[i];
 							int nx = x + ddx_burning[i];
 							if (in_bounds(ny, nx) && cave_feat[ny][nx] == FEAT_OIL) {

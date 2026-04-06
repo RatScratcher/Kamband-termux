@@ -5427,6 +5427,157 @@ static void build_sector_hill(int y0, int x0)
 /*
  * Build an organic, fractal-based pit sector with guaranteed escape routes.
  */
+
+/*
+ * Utility to generate an organic heightmap and apply a threshold.
+ * Assigns the calculated center of mass to *center_y, *center_x.
+ */
+static void generate_fractal_shape(int y1, int x1, int y2, int x2,
+                                   int threshold, int target_elev, int target_feat,
+                                   int *center_y, int *center_x)
+{
+    int y, x;
+    int py1 = y1 + 2, px1 = x1 + 2;
+    int py2 = y2 - 2, px2 = x2 - 2;
+    long total_y = 0, total_x = 0;
+    int count = 0;
+
+    /* Initialize corners with random seeds */
+    cave_feat[py1][px1] = rand_int(100);
+    cave_feat[py1][px2] = rand_int(100);
+    cave_feat[py2][px1] = rand_int(100);
+    cave_feat[py2][px2] = rand_int(100);
+
+    /* Increase roughness (from 1 to 2-4) to make shapes more jagged */
+    plasma_recursive(px1, py1, px2, py2, 100, rand_range(2, 4));
+
+    for (y = py1; y <= py2; y++) {
+        for (x = px1; x <= px2; x++) {
+            /* ADD JITTER: Add a random offset to the height check to break straight lines */
+            int jitter = rand_int(11) - 5;
+
+            if (cave_feat[y][x] + jitter > threshold) {
+                set_elevation(y, x, target_elev);
+                cave_feat[y][x] = target_feat;
+                total_y += y;
+                total_x += x;
+                count++;
+            } else {
+                set_elevation(y, x, ELEV_GROUND);
+                /* Use FEAT_GRASS for non-shape tiles to break up blocky wall boundaries. */
+                cave_feat[y][x] = FEAT_GRASS;
+            }
+        }
+    }
+
+    if (count > 0) {
+        *center_y = total_y / count;
+        *center_x = total_x / count;
+    } else {
+        *center_y = (y1 + y2) / 2;
+        *center_x = (x1 + x2) / 2;
+    }
+}
+
+/*
+ * Utility to place border cliffs and guaranteed access points
+ */
+static void apply_sector_borders_and_access(int y1, int x1, int y2, int x2,
+                                            int elev_check, int edge_feat, int access_feat1, int access_feat2)
+{
+    int y, x, i;
+
+    /* 1. Identify Edges for Cliffs */
+    for (y = y1; y <= y2; y++) {
+        for (x = x1; x <= x2; x++) {
+            if (get_elevation(y, x) == elev_check) {
+                bool is_edge = FALSE;
+                for (int dy = -1; dy <= 1; dy++) {
+                    for (int dx = -1; dx <= 1; dx++) {
+                        int ny = y + dy, nx = x + dx;
+                        if (in_bounds(ny, nx) && get_elevation(ny, nx) == ELEV_GROUND) {
+                            is_edge = TRUE; break;
+                        }
+                    }
+                    if (is_edge) break;
+                }
+                if (is_edge) cave_feat[y][x] = edge_feat;
+            }
+        }
+    }
+
+    /* 2. Place Access Points (N, S, E, W) */
+    int dy_dir[4] = {1, -1, 0, 0};
+    int dx_dir[4] = {0, 0, 1, -1};
+    int start_y[4] = {y1, y2, (y1+y2)/2, (y1+y2)/2};
+    int start_x[4] = {(x1+x2)/2, (x1+x2)/2, x1, x2};
+
+    int access_y[4];
+    int access_x[4];
+    int found_count = 0;
+
+    for (i = 0; i < 4; i++) {
+        int cy = start_y[i], cx = start_x[i];
+        bool found = FALSE;
+        for (int step = 0; step < BLOCK_HGT; step++) {
+            if (!in_bounds(cy, cx)) break;
+            if (cave_feat[cy][cx] == edge_feat) {
+                access_y[found_count] = cy;
+                access_x[found_count] = cx;
+                found_count++;
+                break;
+            }
+            cy += dy_dir[i]; cx += dx_dir[i];
+        }
+    }
+
+    /* Convert 1 to 4 edges to access points */
+    if (found_count > 0) {
+        int to_convert = rand_range(1, found_count);
+
+        /* Shuffle the found access points */
+        for (i = 0; i < found_count; i++) {
+            int swap_idx = rand_int(found_count);
+            int temp_y = access_y[i];
+            int temp_x = access_x[i];
+            access_y[i] = access_y[swap_idx];
+            access_x[i] = access_x[swap_idx];
+            access_y[swap_idx] = temp_y;
+            access_x[swap_idx] = temp_x;
+        }
+
+        for (i = 0; i < to_convert; i++) {
+            int cy = access_y[i];
+            int cx = access_x[i];
+            cave_feat[cy][cx] = (rand_int(100) < 50) ? access_feat1 : access_feat2;
+
+            /* SAFETY PATH LOGIC: Clear 3x3 area around access point */
+            for (int dy = -1; dy <= 1; dy++) {
+                for (int dx = -1; dx <= 1; dx++) {
+                    int ny = cy + dy, nx = cx + dx;
+                    if (!in_bounds(ny, nx)) continue;
+
+                    /* Clear hazards on ground or plateau landings */
+                    if (get_elevation(ny, nx) == ELEV_GROUND || get_elevation(ny, nx) == elev_check) {
+                        if (cave_feat[ny][nx] != edge_feat &&
+                            cave_feat[ny][nx] != access_feat1 &&
+                            cave_feat[ny][nx] != access_feat2) {
+
+                            /* Maintain floor type depending on elevation */
+                            if (get_elevation(ny, nx) == ELEV_LOW)
+                                cave_feat[ny][nx] = FEAT_PIT; /* Pit landing */
+                            else if (get_elevation(ny, nx) == ELEV_HIGH)
+                                cave_feat[ny][nx] = FEAT_HILL_TOP; /* Hill landing */
+                            else
+                                cave_feat[ny][nx] = FEAT_FLOOR; /* Ground landing */
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 static void build_sector_fractal_pit(int y0, int x0)
 {
     int y, x, i;
@@ -5448,22 +5599,15 @@ static void build_sector_fractal_pit(int y0, int x0)
         }
     }
 
-    /* 2. Generate fractal depths using the existing plasma algorithm */
-    /* We use a sub-region (inset by 0) to ensure the pit is large enough */
-    int inset = 0;
-    int py1 = y1 + inset, px1 = x1 + inset;
-    int py2 = y2 - inset, px2 = x2 - inset;
+    int cy, cx;
 
-    /* Initialize corners for the plasma fractal */
-    cave_feat[py1][px1] = rand_int(100);
-    cave_feat[py1][px2] = rand_int(100);
-    cave_feat[py2][px1] = rand_int(100);
-    cave_feat[py2][px2] = rand_int(100);
+    /* 2. Generate organic heightmap with jitter to break straight lines */
+    generate_fractal_shape(y1, x1, y2, x2, 55, ELEV_LOW, FEAT_PIT, &cy, &cx);
 
-    /* Generate the organic heightmap into cave_feat temporarily */
-    plasma_recursive(px1, py1, px2, py2, 100, 1);
+    /* 3. Apply pit-specific borders (Cliffs DOWN, Escape Pit/Stairs UP) */
+    apply_sector_borders_and_access(y1, x1, y2, x2, ELEV_LOW, FEAT_CLIFF_DOWN, FEAT_ESCAPE_PIT, FEAT_STAIRS_UP);
 
-    /* 3. Hazard Selection */
+    /* 4. Hazard Selection for the interior */
     int roll = rand_int(100);
     int pit_feat;
     int floor_feat;
@@ -5482,23 +5626,22 @@ static void build_sector_fractal_pit(int y0, int x0)
         floor_feat = FEAT_GRASS;
     }
 
-    /* 4. Threshold and Threshold Path Clearing */
-    for (y = py1; y <= py2; y++) {
-        for (x = px1; x <= px2; x++) {
-            if (cave_feat[y][x] > 55) {
-                set_elevation(y, x, ELEV_LOW);
+    /* 5. Scatter hazards inside the low area */
+    for (y = y1 + 2; y <= y2 - 2; y++) {
+        for (x = x1 + 2; x <= x2 - 2; x++) {
+            if (get_elevation(y, x) == ELEV_LOW) {
                 cave_feat[y][x] = pit_feat;
-            } else {
-                set_elevation(y, x, ELEV_GROUND);
-                cave_feat[y][x] = floor_feat;
+            } else if (get_elevation(y, x) == ELEV_GROUND) {
+                /* We already set grass/floor in the generator utility, but we can override based on hazard */
+                /* Only replace generic non-shape ground, leaving grass intact if it was set */
+                if (cave_feat[y][x] == FEAT_FLOOR || cave_feat[y][x] == FEAT_GRASS) {
+                     cave_feat[y][x] = floor_feat;
+                }
             }
         }
     }
 
-    /* 5. Place the "Incentive" (Loot) at the center of mass */
-    int cy = (py1 + py2) / 2;
-    int cx = (px1 + px2) / 2;
-
+    /* 6. Place the "Incentive" (Loot) at the center of mass */
     /* Ensure we place loot on a valid pit tile near the center */
     if (get_elevation(cy, cx) == ELEV_LOW) {
         if (pit_feat == FEAT_OIL || pit_feat == FEAT_SHAL_LAVA || pit_feat == FEAT_DEEP_LAVA || pit_feat == FEAT_ACID || pit_feat == FEAT_ICE) {
@@ -5522,77 +5665,10 @@ static void build_sector_fractal_pit(int y0, int x0)
         }
     }
 
-    /* 6. Cliffs and Access Points */
-    /* 4. Place Slopes at the boundaries of the fractal shape */
-    for (y = py1; y <= py2; y++) {
-        for (x = px1; x <= px2; x++) {
-            if (get_elevation(y, x) == ELEV_LOW) {
-                bool is_edge = FALSE;
-                for (int dy = -1; dy <= 1; dy++) {
-                    for (int dx = -1; dx <= 1; dx++) {
-                        int ny = y + dy, nx = x + dx;
-                        if (in_bounds(ny, nx) && get_elevation(ny, nx) == ELEV_GROUND) {
-                            is_edge = TRUE;
-                            break;
-                        }
-                    }
-                    if (is_edge) break;
-                }
-                if (is_edge) cave_feat[y][x] = FEAT_CLIFF_DOWN;
-            }
-        }
-    }
-
-    /* 5. Guaranteed Escape Routes (North, South, East, West) */
-    /* We scan inward from each side to find the first slope tile of the organic shape */
-    int dy_dir[4] = {1, -1, 0, 0};
-    int dx_dir[4] = {0, 0, 1, -1};
-    int start_y[4] = {y1, y2, (y1+y2)/2, (y1+y2)/2};
-    int start_x[4] = {(x1+x2)/2, (x1+x2)/2, x1, x2};
-
-    for (i = 0; i < 4; i++) {
-        int cy = start_y[i], cx = start_x[i];
-        bool found = FALSE;
-
-        /* Scan toward center to find the edge of the organic pit */
-        for (int step = 0; step < BLOCK_HGT; step++) {
-            if (!in_bounds(cy, cx)) break;
-            if (cave_feat[cy][cx] == FEAT_CLIFF_DOWN) {
-                found = TRUE;
-                break;
-            }
-            cy += dy_dir[i]; cx += dx_dir[i];
-        }
-
-        if (found) {
-            /* Convert slope to escape point */
-            cave_feat[cy][cx] = (rand_int(100) < 50) ? FEAT_ESCAPE_PIT : FEAT_STAIRS_UP;
-
-            /* SAFETY PATH LOGIC: Clear 3x3 area around access point */
-            for (int dy = -1; dy <= 1; dy++) {
-                for (int dx = -1; dx <= 1; dx++) {
-                    int ny = cy + dy, nx = cx + dx;
-                    if (!in_bounds(ny, nx)) continue;
-                    /* Clear hazards on ground or pit landings */
-                    if (get_elevation(ny, nx) == ELEV_GROUND || get_elevation(ny, nx) == ELEV_LOW) {
-                        if (cave_feat[ny][nx] != FEAT_CLIFF_DOWN &&
-                            cave_feat[ny][nx] != FEAT_ESCAPE_PIT &&
-                            cave_feat[ny][nx] != FEAT_STAIRS_UP) {
-                            if (get_elevation(ny, nx) == ELEV_LOW)
-                                cave_feat[ny][nx] = FEAT_PIT;
-                            else
-                                cave_feat[ny][nx] = FEAT_FLOOR;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    /* 6. Add hazards, monsters and items in pit */
+    /* 7. Add hazards, monsters and items in pit */
     int hazard = rand_int(3);
-    for (y = py1 + 1; y <= py2 - 1; y++) {
-        for (x = px1 + 1; x <= px2 - 1; x++) {
+    for (y = y1 + 3; y <= y2 - 3; y++) {
+        for (x = x1 + 3; x <= x2 - 3; x++) {
             if (get_elevation(y, x) == ELEV_LOW && (cave_feat[y][x] == pit_feat)) {
                 switch (hazard) {
 					case 0:
@@ -5651,7 +5727,6 @@ static void build_sector_fractal_pit(int y0, int x0)
     }
 }
 
-
 /*
  * Build an organic, fractal-based plateau sector with guaranteed accessibility.
  */
@@ -5663,6 +5738,9 @@ static void build_sector_fractal_hill(int y0, int x0)
     int y2 = (y0 + 2) * BLOCK_HGT - 1;
     int x2 = (x0 + 2) * BLOCK_WID - 1;
 
+    if (y2 >= DUNGEON_HGT) y2 = DUNGEON_HGT - 1;
+    if (x2 >= DUNGEON_WID) x2 = DUNGEON_WID - 1;
+
     /* 1. Initialize the area as flat ground floor */
     for (y = y1; y <= y2; y++) {
         for (x = x1; x <= x2; x++) {
@@ -5673,94 +5751,44 @@ static void build_sector_fractal_hill(int y0, int x0)
         }
     }
 
-    /* 2. Generate fractal heights using the existing plasma algorithm */
-    /* We use a sub-region (inset by 2) to ensure a walking path around the hill */
-    int inset = 2;
-    int py1 = y1 + inset, px1 = x1 + inset;
-    int py2 = y2 - inset, px2 = x2 - inset;
+    int cy, cx;
 
-    /* Initialize corners for the plasma fractal */
-    cave_feat[py1][px1] = rand_int(100);
-    cave_feat[py1][px2] = rand_int(100);
-    cave_feat[py2][px1] = rand_int(100);
-    cave_feat[py2][px2] = rand_int(100);
+    /* 2. Generate organic heightmap with different threshold than pits */
+    generate_fractal_shape(y1, x1, y2, x2, 60, ELEV_HIGH, FEAT_HILL_TOP, &cy, &cx);
 
-    /* Generate the organic heightmap into cave_feat temporarily */
-    plasma_recursive(px1, py1, px2, py2, 100, 1);
+    /* 3. Apply hill-specific borders (Cliffs UP, Stairs UP) */
+    apply_sector_borders_and_access(y1, x1, y2, x2, ELEV_HIGH, FEAT_CLIFF_UP, FEAT_STAIRS_UP, FEAT_LADDER_UP);
 
-    /* 3. Threshold the fractal: High values become plateau, Low values become ground */
-    /* Values > 50 are elevated. We convert them to proper features and elevation flags. */
-    for (y = py1; y <= py2; y++) {
-        for (x = px1; x <= px2; x++) {
-            if (cave_feat[y][x] > 55) { /* Threshold for "organic" plateau */
-                set_elevation(y, x, ELEV_HIGH);
-                cave_feat[y][x] = FEAT_HILL_TOP;
-                cave_info[y][x] |= CAVE_GLOW;
-            } else {
-                set_elevation(y, x, ELEV_GROUND);
-                cave_feat[y][x] = FEAT_FLOOR;
-            }
+    /* 4. Optional: Add a few high-ground defenders at the center of mass */
+    if (get_elevation(cy, cx) == ELEV_HIGH) {
+        if (rand_int(100) < 50) {
+            place_monster(cy, cx, MON_ALLOC_SLEEP);
         }
     }
 
-    /* 4. Place Cliffs at the boundaries of the fractal shape */
-    for (y = py1; y <= py2; y++) {
-        for (x = px1; x <= px2; x++) {
-            if (get_elevation(y, x) == ELEV_HIGH) {
-                bool is_edge = FALSE;
-                for (int dy = -1; dy <= 1; dy++) {
-                    for (int dx = -1; dx <= 1; dx++) {
-                        int ny = y + dy, nx = x + dx;
-                        if (in_bounds(ny, nx) && get_elevation(ny, nx) == ELEV_GROUND) {
-                            is_edge = TRUE;
-                            break;
+    /* Outer walls */
+    for (y = y1 - 1; y <= y2 + 1; y++) {
+        for (x = x1 - 1; x <= x2 + 1; x++) {
+            if (!in_bounds(y, x)) continue;
+            if (cave_feat[y][x] != FEAT_FLOOR &&
+                cave_feat[y][x] != FEAT_GRASS &&
+                cave_feat[y][x] != FEAT_CLIFF_UP &&
+                cave_feat[y][x] != FEAT_HILL_TOP &&
+				cave_feat[y][x] != FEAT_LADDER_UP &&
+				cave_feat[y][x] != FEAT_STAIRS_UP &&
+				cave_feat[y][x] != FEAT_RAMP_UP) {
+                bool next_to_floor = FALSE;
+                int dy, dx;
+                for (dy = -1; dy <= 1; dy++) {
+                    for (dx = -1; dx <= 1; dx++) {
+                        if (in_bounds(y+dy, x+dx) &&
+                            get_elevation(y+dy, x+dx) <= ELEV_GROUND) {
+                            next_to_floor = TRUE;
                         }
                     }
-                    if (is_edge) break;
                 }
-                if (is_edge) cave_feat[y][x] = FEAT_CLIFF_UP;
-            }
-        }
-    }
-
-    /* 5. Guaranteed Access Points (North, South, East, West) */
-    /* We scan inward from each side to find the first cliff tile of the organic shape */
-    int dy_dir[4] = {1, -1, 0, 0};
-    int dx_dir[4] = {0, 0, 1, -1};
-    int start_y[4] = {y1, y2, (y1+y2)/2, (y1+y2)/2};
-    int start_x[4] = {(x1+x2)/2, (x1+x2)/2, x1, x2};
-
-    for (i = 0; i < 4; i++) {
-        int cy = start_y[i], cx = start_x[i];
-        bool found = FALSE;
-
-        /* Scan toward center to find the edge of the organic plateau */
-        for (int step = 0; step < BLOCK_HGT; step++) {
-            if (!in_bounds(cy, cx)) break;
-            if (cave_feat[cy][cx] == FEAT_CLIFF_UP) {
-                found = TRUE;
-                break;
-            }
-            cy += dy_dir[i]; cx += dx_dir[i];
-        }
-
-        if (found) {
-            /* Convert cliff to access point */
-            cave_feat[cy][cx] = (rand_int(100) < 50) ? FEAT_LADDER_UP : FEAT_STAIRS_UP;
-
-            /* SAFETY PATH LOGIC: Clear 3x3 area around access point */
-            for (int dy = -1; dy <= 1; dy++) {
-                for (int dx = -1; dx <= 1; dx++) {
-                    int ny = cy + dy, nx = cx + dx;
-                    if (!in_bounds(ny, nx)) continue;
-                    /* Clear hazards (lava/acid) on ground or plateau landings */
-                    if (get_elevation(ny, nx) == ELEV_GROUND || get_elevation(ny, nx) == ELEV_HIGH) {
-                        if (cave_feat[ny][nx] != FEAT_CLIFF_UP &&
-                            cave_feat[ny][nx] != FEAT_LADDER_UP &&
-                            cave_feat[ny][nx] != FEAT_STAIRS_UP) {
-                            cave_feat[ny][nx] = FEAT_FLOOR;
-                        }
-                    }
+                if (next_to_floor) {
+                    cave_feat[y][x] = FEAT_WALL_OUTER;
                 }
             }
         }

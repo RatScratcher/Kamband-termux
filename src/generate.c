@@ -5451,12 +5451,27 @@ static void generate_fractal_shape(int y1, int x1, int y2, int x2,
     /* Increase roughness (from 1 to 2-4) to make shapes more jagged */
     plasma_recursive(px1, py1, px2, py2, 100, rand_range(2, 4));
 
+    int cy = (py1 + py2) / 2;
+    int cx = (px1 + px2) / 2;
+    int max_dist_y = (py2 - py1) / 2;
+    int max_dist_x = (px2 - px1) / 2;
+
     for (y = py1; y <= py2; y++) {
         for (x = px1; x <= px2; x++) {
+            /* Apply distance falloff so edges taper to zero */
+            long dy = (y - cy) * 100 / (max_dist_y > 0 ? max_dist_y : 1);
+            long dx = (x - cx) * 100 / (max_dist_x > 0 ? max_dist_x : 1);
+            long dist = dy * dy + dx * dx;
+
+            long factor = 10000 - dist;
+            if (factor < 0) factor = 0;
+
+            int val = (cave_feat[y][x] * factor) / 10000;
+
             /* ADD JITTER: Add a random offset to the height check to break straight lines */
             int jitter = rand_int(11) - 5;
 
-            if (cave_feat[y][x] + jitter > threshold) {
+            if (val + jitter > threshold) {
                 set_elevation(y, x, target_elev);
                 cave_feat[y][x] = target_feat;
                 total_y += y;

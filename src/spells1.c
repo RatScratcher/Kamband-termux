@@ -2177,6 +2177,7 @@ static bool project_f(int who, int r, int y, int x, int dam, int typ)
 			{
 				cave_set_feat(y, x, FEAT_OIL_BURNING);
 				cave[y][x].fuel = 10 + rand_int(11);
+				cave_info[y][x] |= CAVE_TEMP;
 				msg_print("The oil erupts into flames!");
 				lite_spot(y, x);
 				obvious = TRUE;
@@ -2196,6 +2197,7 @@ static bool project_f(int who, int r, int y, int x, int dam, int typ)
 			{
 				cave_set_feat(y, x, FEAT_OIL_BURNING);
 				cave[y][x].fuel = 10 + rand_int(11);
+				cave_info[y][x] |= CAVE_TEMP;
 				obvious = TRUE;
 			}
 			break;
@@ -2249,6 +2251,7 @@ static bool project_f(int who, int r, int y, int x, int dam, int typ)
 			{
 				cave_set_feat(y, x, FEAT_OIL_BURNING);
 				cave[y][x].fuel = 10 + rand_int(11);
+				cave_info[y][x] |= CAVE_TEMP;
 				obvious = TRUE;
 			}
 			if ((cave_feat[y][x] == FEAT_ICE || cave_feat[y][x] == FEAT_WALL_ICE) && !(cave_info[y][x] & CAVE_TEMP)) {
@@ -3358,6 +3361,7 @@ static bool project_o(int who, int r, int y, int x, int dam, int typ)
 				{
 					cave_set_feat(y, x, FEAT_OIL_BURNING);
 					cave[y][x].fuel = 10 + rand_int(11);
+					cave_info[y][x] |= CAVE_TEMP;
 					obvious = TRUE;
 				}
 

@@ -5645,7 +5645,9 @@ static void build_sector_fractal_pit(int y0, int x0)
     for (y = y1 + 2; y <= y2 - 2; y++) {
         for (x = x1 + 2; x <= x2 - 2; x++) {
             if (get_elevation(y, x) == ELEV_LOW) {
-                cave_feat[y][x] = pit_feat;
+                if (cave_feat[y][x] == FEAT_PIT) {
+                    cave_feat[y][x] = pit_feat;
+                }
             } else if (get_elevation(y, x) == ELEV_GROUND) {
                 /* We already set grass/floor in the generator utility, but we can override based on hazard */
                 /* Only replace generic non-shape ground, leaving grass intact if it was set */

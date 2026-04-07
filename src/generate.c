@@ -4767,6 +4767,9 @@ static void stamp_organic_feature(int y, int x, int rad, int threshold, int feat
 
             if (!in_bounds(ty, tx)) continue;
 
+            /* COLLISION DETECTION: Don't stamp a hill on top of an existing pit feature */
+            if (get_elevation(ty, tx) != ELEV_GROUND) continue;
+
             /* Calculate a distance-based falloff so the fractal
                tapers off naturally at the edges of the stamp */
             int dist = distance(y, x, ty, tx);
@@ -4935,6 +4938,40 @@ static void stamp_organic_feature(int y, int x, int rad, int threshold, int feat
 static void ensure_connectivity(int y1, int x1, int y2, int x2);
 
 /*
+ * Tidy up single tiles.
+ */
+static void clean_isolated_features(int y1, int x1, int y2, int x2)
+{
+    int y, x, dy, dx;
+    for (y = y1; y <= y2; y++) {
+        for (x = x1; x <= x2; x++) {
+            int current_elev = get_elevation(y, x);
+
+            /* Only check non-ground tiles (Hills/Pits) */
+            if (current_elev == ELEV_GROUND) continue;
+
+            int neighbors = 0;
+            for (dy = -1; dy <= 1; dy++) {
+                for (dx = -1; dx <= 1; dx++) {
+                    if (dy == 0 && dx == 0) continue;
+                    if (get_elevation(y + dy, x + dx) == current_elev) {
+                        neighbors++;
+                    }
+                }
+            }
+
+            /* If a feature has fewer than 2 same-type neighbors, it's too small.
+               Revert it to floor to maintain the 3-tile minimum rule. */
+            if (neighbors < 2) {
+                cave_feat[y][x] = FEAT_FLOOR;
+                set_elevation(y, x, ELEV_GROUND);
+                cave_info[y][x] &= ~(CAVE_GLOW); /* Remove hill glow */
+            }
+        }
+    }
+}
+
+/*
  * Build a Populated Sector: Stamping organic features to fill empty space.
  */
 static void build_sector_populated(int y0, int x0)
@@ -4996,6 +5033,9 @@ static void build_sector_populated(int y0, int x0)
             else cave_feat[ty][tx] = FEAT_TALL_GRASS;
         }
     }
+
+    /* 3.5 Tidy up single tiles */
+    clean_isolated_features(y1, x1, y2, x2);
 
     /* 4. Ensure Connectivity */
     ensure_connectivity(y1, x1, y2, x2);

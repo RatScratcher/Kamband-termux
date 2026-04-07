@@ -4848,11 +4848,11 @@ static void stamp_organic_feature(int y, int x, int rad, int threshold, int feat
                                 place_monster(ty, tx, MON_ALLOC_SLEEP);
                             break;
                     }
-                } else if (get_elevation(ty, tx) == ELEV_GROUND) {
-                    if (rand_int(100) < 5) {
+                } else if (get_elevation(ty, tx) == ELEV_GROUND && cave_feat[ty][tx] == FEAT_FLOOR && cave_naked_bold(ty, tx)) {
+                    if (rand_int(100) < 1) { /* Reduced from 5% */
                         place_object(ty, tx, FALSE, FALSE);
                     }
-                    if (rand_int(100) < 10) {
+                    if (rand_int(100) < 2) { /* Reduced from 10% */
                         place_monster(ty, tx, MON_ALLOC_SLEEP);
                     }
                 }

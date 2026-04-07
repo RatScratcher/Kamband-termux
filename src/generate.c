@@ -4641,6 +4641,107 @@ static void place_traps_near_chests(int chance)
 /*
  * Build a Cavern Sector using Plasma Fractal
  */
+
+/*
+ * Stays within a specified radius to create a standalone feature.
+ * This can be called multiple times within one sector.
+ */
+static void stamp_organic_feature(int y, int x, int rad, int threshold, int feat, int elev)
+{
+    int dy, dx;
+
+    /* We only process the bounding box of the feature */
+    for (dy = -rad; dy <= rad; dy++) {
+        for (dx = -rad; dx <= rad; dx++) {
+            int ty = y + dy;
+            int tx = x + dx;
+
+            if (!in_bounds(ty, tx)) continue;
+
+            /* Calculate a distance-based falloff so the fractal
+               tapers off naturally at the edges of the stamp */
+            int dist = distance(y, x, ty, tx);
+            if (dist > rad) continue;
+
+            /* Add some plasma noise for cragginess */
+            int noise = rand_int(40);
+            if (noise + (rad - dist) * 10 > threshold) {
+                cave_feat[ty][tx] = feat;
+                set_elevation(ty, tx, elev);
+            }
+        }
+    }
+}
+
+static void ensure_connectivity(int y1, int x1, int y2, int x2);
+
+/*
+ * Build a Populated Sector: Stamping organic features to fill empty space.
+ */
+static void build_sector_populated(int y0, int x0)
+{
+    int y1 = y0 * BLOCK_HGT;
+    int x1 = x0 * BLOCK_WID;
+    int y2 = (y0 + 2) * BLOCK_HGT - 1;
+    int x2 = (x0 + 2) * BLOCK_WID - 1;
+    int y, x, i;
+
+    /* Safety */
+    if (y2 >= DUNGEON_HGT) y2 = DUNGEON_HGT - 1;
+    if (x2 >= DUNGEON_WID) x2 = DUNGEON_WID - 1;
+
+    /* 1. Preliminary: Fill the sector with ground and floor */
+    for (y = y1; y <= y2; y++) {
+        for (x = x1; x <= x2; x++) {
+            if (!in_bounds(y, x)) continue;
+            set_elevation(y, x, ELEV_GROUND);
+            cave_feat[y][x] = FEAT_FLOOR;
+            cave_info[y][x] |= CAVE_ROOM;
+        }
+    }
+
+    /* 2. Primary Terrain: stamp tactical hills, pits, etc. */
+    /* Random number of stamps, e.g., 1 to 4 */
+    int num_stamps = rand_range(1, 4);
+    for (i = 0; i < num_stamps; i++) {
+        int stamp_type = rand_int(3);
+        int ty = rand_range(y1 + 4, y2 - 4);
+        int tx = rand_range(x1 + 4, x2 - 4);
+        int rad = rand_range(3, 5);
+        int threshold = 50;
+
+        if (stamp_type == 0) {
+            stamp_organic_feature(ty, tx, rad, threshold, FEAT_HILL_TOP, ELEV_HIGH);
+        } else if (stamp_type == 1) {
+            stamp_organic_feature(ty, tx, rad, threshold, FEAT_PIT, ELEV_LOW);
+        } else {
+            /* Maybe another type of hill or something */
+            stamp_organic_feature(ty, tx, rad, threshold, FEAT_ROCKY_HILL, ELEV_HIGH);
+        }
+    }
+
+    /* 3. Tactical Debris & Atmospheric Detail: Filling the 'Empty' space */
+    int num_debris = rand_range(3, 8);
+    for (i = 0; i < num_debris; i++) {
+        int ty = rand_range(y1 + 2, y2 - 2);
+        int tx = rand_range(x1 + 2, x2 - 2);
+
+        /* Only place if it's currently empty floor */
+        if (in_bounds(ty, tx) && cave_naked_bold(ty, tx) && cave_feat[ty][tx] == FEAT_FLOOR) {
+            int roll = rand_int(100);
+            if (roll < 20) cave_feat[ty][tx] = FEAT_STONE_PILLAR;
+            else if (roll < 40) cave_feat[ty][tx] = FEAT_RUBBLE;
+            else if (roll < 60) cave_feat[ty][tx] = FEAT_TREES;
+            else if (roll < 80) cave_feat[ty][tx] = FEAT_GRASS;
+            else if (roll < 90) cave_feat[ty][tx] = FEAT_BOULDER;
+            else cave_feat[ty][tx] = FEAT_TALL_GRASS;
+        }
+    }
+
+    /* 4. Ensure Connectivity */
+    ensure_connectivity(y1, x1, y2, x2);
+}
+
 static void build_sector_cavern(int y0, int x0)
 {
 	int y1 = y0 * BLOCK_HGT;
@@ -6129,108 +6230,56 @@ static void cave_gen(void)
 		for (x = 0; x < dun->col_rooms; x += 2)
 		{
 			int sect = cave_sector[y][x];
-			if (sect == SECTOR_CAVERN)
-			{
-				build_sector_cavern(y, x);
-				/* Mark blocks as used */
-				dun->room_map[y][x] = TRUE;
-				if (y + 1 < dun->row_rooms) dun->room_map[y + 1][x] = TRUE;
-				if (x + 1 < dun->col_rooms) dun->room_map[y][x + 1] = TRUE;
-				if (y + 1 < dun->row_rooms && x + 1 < dun->col_rooms) dun->room_map[y + 1][x + 1] = TRUE;
+			if (sect == SECTOR_SHIFTING)
+				{
+					build_sector_shifting_maze(y, x);
+					/* Mark blocks as used */
+					dun->room_map[y][x] = TRUE;
+					if (y + 1 < dun->row_rooms) dun->room_map[y + 1][x] = TRUE;
+					if (x + 1 < dun->col_rooms) dun->room_map[y][x + 1] = TRUE;
+					if (y + 1 < dun->row_rooms && x + 1 < dun->col_rooms) dun->room_map[y + 1][x + 1] = TRUE;
 
-				/* Add center for tunnels */
-				if (dun->cent_n < CENT_MAX) {
-					dun->cent[dun->cent_n].y = (y * BLOCK_HGT) + BLOCK_HGT;
-					dun->cent[dun->cent_n].x = (x * BLOCK_WID) + BLOCK_WID;
-					dun->cent_n++;
+					/* Add center for tunnels */
+					if (dun->cent_n < CENT_MAX) {
+						dun->cent[dun->cent_n].y = (y * BLOCK_HGT) + BLOCK_HGT;
+						dun->cent[dun->cent_n].x = (x * BLOCK_WID) + BLOCK_WID;
+						dun->cent_n++;
+					}
 				}
-			}
-			else if (sect == SECTOR_HILL)
-			{
-					/* Now using the fractal implementation for more organic plateaus */
-					build_sector_fractal_hill(y, x);
+				else if (sect == SECTOR_DARK)
+				{
+					build_sector_dark(y, x);
 
-				/* Mark blocks as used */
-				dun->room_map[y][x] = TRUE;
-				if (y + 1 < dun->row_rooms) dun->room_map[y + 1][x] = TRUE;
-				if (x + 1 < dun->col_rooms) dun->room_map[y][x + 1] = TRUE;
-				if (y + 1 < dun->row_rooms && x + 1 < dun->col_rooms) dun->room_map[y + 1][x + 1] = TRUE;
+					/* FIX: Mark blocks as used so winding tunnels don't gut the maze */
+					dun->room_map[y][x] = TRUE;
+					if (y + 1 < dun->row_rooms) dun->room_map[y + 1][x] = TRUE;
+					if (x + 1 < dun->col_rooms) dun->room_map[y][x + 1] = TRUE;
+					if (y + 1 < dun->row_rooms && x + 1 < dun->col_rooms) dun->room_map[y + 1][x + 1] = TRUE;
 
-				/* Add center for tunnels */
-				if (dun->cent_n < CENT_MAX) {
-					dun->cent[dun->cent_n].y = (y * BLOCK_HGT) + BLOCK_HGT;
-					dun->cent[dun->cent_n].x = (x * BLOCK_WID) + BLOCK_WID;
-					dun->cent_n++;
+					/* Optional: Add center for tunnels to connect TO the maze */
+					if (dun->cent_n < CENT_MAX) {
+						dun->cent[dun->cent_n].y = (y * BLOCK_HGT) + BLOCK_HGT;
+						dun->cent[dun->cent_n].x = (x * BLOCK_WID) + BLOCK_WID;
+						dun->cent_n++;
+					}
 				}
-			}
-			else if (sect == SECTOR_PIT)
-			{
-				/* Now using the fractal implementation for organic, slowing pits */
-				build_sector_fractal_pit(y, x);
+				else if (sect == SECTOR_CAVERN || sect == SECTOR_HILL || sect == SECTOR_PIT || sect == SECTOR_PLAZA || sect == SECTOR_RUINS)
+				{
+					build_sector_populated(y, x);
 
-				/* Mark blocks as used */
-				dun->room_map[y][x] = TRUE;
-				if (y + 1 < dun->row_rooms) dun->room_map[y + 1][x] = TRUE;
-				if (x + 1 < dun->col_rooms) dun->room_map[y][x + 1] = TRUE;
-				if (y + 1 < dun->row_rooms && x + 1 < dun->col_rooms) dun->room_map[y + 1][x + 1] = TRUE;
+					/* Mark blocks as used */
+					dun->room_map[y][x] = TRUE;
+					if (y + 1 < dun->row_rooms) dun->room_map[y + 1][x] = TRUE;
+					if (x + 1 < dun->col_rooms) dun->room_map[y][x + 1] = TRUE;
+					if (y + 1 < dun->row_rooms && x + 1 < dun->col_rooms) dun->room_map[y + 1][x + 1] = TRUE;
 
-				/* Add center for tunnels */
-				if (dun->cent_n < CENT_MAX) {
-					dun->cent[dun->cent_n].y = (y * BLOCK_HGT) + BLOCK_HGT;
-					dun->cent[dun->cent_n].x = (x * BLOCK_WID) + BLOCK_WID;
-					dun->cent_n++;
+					/* Add center for tunnels */
+					if (dun->cent_n < CENT_MAX) {
+						dun->cent[dun->cent_n].y = (y * BLOCK_HGT) + BLOCK_HGT;
+						dun->cent[dun->cent_n].x = (x * BLOCK_WID) + BLOCK_WID;
+						dun->cent_n++;
+					}
 				}
-			}
-				/* SECTOR_CLIFF block has been removed as build_sector_fractal_hill handles cliff generation */
-			else if (sect == SECTOR_SHIFTING)
-			{
-				build_sector_shifting_maze(y, x);
-				/* Mark blocks as used */
-				dun->room_map[y][x] = TRUE;
-				if (y + 1 < dun->row_rooms) dun->room_map[y + 1][x] = TRUE;
-				if (x + 1 < dun->col_rooms) dun->room_map[y][x + 1] = TRUE;
-				if (y + 1 < dun->row_rooms && x + 1 < dun->col_rooms) dun->room_map[y + 1][x + 1] = TRUE;
-
-				/* Add center for tunnels */
-				if (dun->cent_n < CENT_MAX) {
-					dun->cent[dun->cent_n].y = (y * BLOCK_HGT) + BLOCK_HGT;
-					dun->cent[dun->cent_n].x = (x * BLOCK_WID) + BLOCK_WID;
-					dun->cent_n++;
-				}
-			}
-			else if (sect == SECTOR_DARK)
-			{
-				build_sector_dark(y, x);
-
-				/* FIX: Mark blocks as used so winding tunnels don't gut the maze */
-				dun->room_map[y][x] = TRUE;
-				if (y + 1 < dun->row_rooms) dun->room_map[y + 1][x] = TRUE;
-				if (x + 1 < dun->col_rooms) dun->room_map[y][x + 1] = TRUE;
-				if (y + 1 < dun->row_rooms && x + 1 < dun->col_rooms) dun->room_map[y + 1][x + 1] = TRUE;
-
-				/* Optional: Add center for tunnels to connect TO the maze */
-				if (dun->cent_n < CENT_MAX) {
-					dun->cent[dun->cent_n].y = (y * BLOCK_HGT) + BLOCK_HGT;
-					dun->cent[dun->cent_n].x = (x * BLOCK_WID) + BLOCK_WID;
-					dun->cent_n++;
-				}
-			}
-			else if (sect == SECTOR_PLAZA)
-			{
-				build_sector_plaza(y, x);
-				/* Mark blocks as used */
-				dun->room_map[y][x] = TRUE;
-				if (y + 1 < dun->row_rooms) dun->room_map[y + 1][x] = TRUE;
-				if (x + 1 < dun->col_rooms) dun->room_map[y][x + 1] = TRUE;
-				if (y + 1 < dun->row_rooms && x + 1 < dun->col_rooms) dun->room_map[y + 1][x + 1] = TRUE;
-
-				/* Add center for tunnels */
-				if (dun->cent_n < CENT_MAX) {
-					dun->cent[dun->cent_n].y = (y * BLOCK_HGT) + BLOCK_HGT;
-					dun->cent[dun->cent_n].x = (x * BLOCK_WID) + BLOCK_WID;
-					dun->cent_n++;
-				}
-			}
 		}
 	}
 

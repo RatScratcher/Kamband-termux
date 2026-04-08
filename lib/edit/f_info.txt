@@ -667,16 +667,16 @@ N:166:narrow ledge
 G:-:w
 
 N:170:ramp up
-G:<:u
-
-N:171:ramp down
-G:>:u
-
-N:172:stone stairs up
 G:<:R
 
-N:173:stone stairs down
+N:171:ramp down
 G:>:R
+
+N:172:stone stairs up
+G:<:w
+
+N:173:stone stairs down
+G:>:w
 
 N:174:wooden ladder up
 G:<:R

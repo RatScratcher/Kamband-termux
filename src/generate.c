@@ -4760,9 +4760,10 @@ static void apply_sector_borders_and_access(int y1, int x1, int y2, int x2,
         }
     }
 
-    /* Convert 1 to 4 edges to access points */
+    /* Convert 1 to 2 edges to access points */
     if (found_count > 0) {
-        int to_convert = 1;
+        /* Limit to 1 or 2 access points per feature max */
+        int to_convert = rand_range(1, (found_count > 2 ? 2 : found_count));
 
         /* Shuffle the found access points */
         for (i = 0; i < found_count; i++) {

@@ -4762,7 +4762,7 @@ static void apply_sector_borders_and_access(int y1, int x1, int y2, int x2,
 
     /* Convert 1 to 4 edges to access points */
     if (found_count > 0) {
-        int to_convert = rand_range(1, found_count);
+        int to_convert = 1;
 
         /* Shuffle the found access points */
         for (i = 0; i < found_count; i++) {
@@ -4938,20 +4938,24 @@ static void build_sector_populated(int y0, int x0)
                         if (rand_int(100) < 15) place_trap(y, x);
                         break;
                     case 2:
-                        if (rand_int(100) < 20) place_monster(y, x, MON_ALLOC_SLEEP);
+                        /* Disabled aggressive placement to avoid exceeding MAX_M_IDX */
+                        /* if (rand_int(100) < 20) place_monster(y, x, MON_ALLOC_SLEEP); */
                         break;
                 }
 
                 /* Special central loot for hazardous pits */
                 if (pit_feat != FEAT_PIT && rand_int(100) < 5) {
-                    place_object(y, x, FALSE, FALSE);
+                    /* Disabled aggressive placement to avoid exceeding MAX_O_IDX */
+                    /* place_object(y, x, FALSE, FALSE); */
                 }
             } else if (current_elev == ELEV_GROUND && cave_feat[y][x] == FEAT_FLOOR && cave_naked_bold(y, x)) {
-                if (rand_int(100) < 1) place_object(y, x, FALSE, FALSE);
-                if (rand_int(100) < 2) place_monster(y, x, MON_ALLOC_SLEEP);
+                /* Disabled aggressive placement to avoid exceeding generation limits */
+                /* if (rand_int(100) < 1) place_object(y, x, FALSE, FALSE); */
+                /* if (rand_int(100) < 2) place_monster(y, x, MON_ALLOC_SLEEP); */
             } else if (current_elev == ELEV_HIGH && (cave_feat[y][x] == FEAT_HILL_TOP || cave_feat[y][x] == FEAT_ROCKY_HILL)) {
                 /* Defenders on the hill surface */
-                if (rand_int(100) < 5) place_monster(y, x, MON_ALLOC_SLEEP);
+                /* Disabled aggressive placement */
+                /* if (rand_int(100) < 5) place_monster(y, x, MON_ALLOC_SLEEP); */
             }
         }
     }

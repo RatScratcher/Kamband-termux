@@ -12,6 +12,17 @@
 #include "pursuit.h"
 #include <math.h>
 
+/* Stamp structure for building organic features */
+typedef struct {
+    int feat;          /* The terrain feature (FEAT_HILL, FEAT_PIT, etc.) */
+    int elev;          /* Elevation level (ELEV_HIGH, ELEV_LOW, etc.) */
+    int radius;        /* How far the stamp reaches */
+    int threshold;     /* 0-100: Base probability of a tile spawning */
+    int roughness;     /* How much the edges "jitter" (0 = perfect circle) */
+    bool overwrite;    /* If FALSE, won't stamp over other special features */
+    bool circular;     /* TRUE for blobs, FALSE for square brushes */
+} stamp_type;
+
 static int sind(int angle)
 {
     return (int)(sin((double)angle * 3.14159265 / 128.0) * 256.0);
@@ -20,6 +31,54 @@ static int sind(int angle)
 static int cosd(int angle)
 {
     return (int)(cos((double)angle * 3.14159265 / 128.0) * 256.0);
+}
+
+/*
+ * The universal stamp function drops features into the dungeon level.
+ */
+static void universal_stamp(int y0, int x0, stamp_type s)
+{
+    int dy, dx;
+
+    for (dy = -s.radius; dy <= s.radius; dy++)
+    {
+        for (dx = -s.radius; dx <= s.radius; dx++)
+        {
+            int y = y0 + dy;
+            int x = x0 + dx;
+
+            if (!in_bounds(y, x)) continue;
+
+            /* 1. Shape Check */
+            if (s.circular)
+            {
+                if (distance(y0, x0, y, x) > s.radius) continue;
+            }
+
+            /* 2. Collision Check: Don't stomp on existing non-floor features unless allowed */
+            if (!s.overwrite && get_elevation(y, x) != ELEV_GROUND) continue;
+
+            /* 3. The Organic Math: Probability + Noise */
+            /* We reduce the chance of spawning as we get further from the center */
+            int dist = distance(y0, x0, y, x);
+            int falloff = (s.radius - dist) * 10;
+            int noise = rand_int(s.roughness + 1);
+
+            /* If the threshold + noise + falloff is greater than rand_int(100), spawn the tile */
+            /* The user actually intended `s.threshold` to act as probability base, where higher threshold = higher spawn chance.
+             * Let's fix the logic so the base spawn chance is s.threshold (0-100), enhanced by noise, reduced by falloff.
+             */
+            if ((rand_int(100) < (s.threshold + noise - (dist * 10))) || (s.threshold >= 100))
+            {
+                cave_feat[y][x] = s.feat;
+                set_elevation(y, x, s.elev);
+
+                /* Visual Flare: Hills glow, pits are dark */
+                if (s.elev == ELEV_HIGH) cave_info[y][x] |= (CAVE_GLOW | CAVE_MARK);
+                else if (s.elev == ELEV_LOW) cave_info[y][x] &= ~CAVE_GLOW;
+            }
+        }
+    }
 }
 
 /*
@@ -4746,194 +4805,6 @@ static void apply_sector_borders_and_access(int y1, int x1, int y2, int x2,
  * Stays within a specified radius to create a standalone feature.
  * This can be called multiple times within one sector.
  */
-static void stamp_organic_feature(int y, int x, int rad, int threshold, int feat, int elev)
-{
-    int dy, dx;
-    int y1 = y - rad;
-    int x1 = x - rad;
-    int y2 = y + rad;
-    int x2 = x + rad;
-
-    if (y1 < 1) y1 = 1;
-    if (x1 < 1) x1 = 1;
-    if (y2 >= DUNGEON_HGT - 1) y2 = DUNGEON_HGT - 2;
-    if (x2 >= DUNGEON_WID - 1) x2 = DUNGEON_WID - 2;
-
-    /* We only process the bounding box of the feature */
-    for (dy = -rad; dy <= rad; dy++) {
-        for (dx = -rad; dx <= rad; dx++) {
-            int ty = y + dy;
-            int tx = x + dx;
-
-            if (!in_bounds(ty, tx)) continue;
-
-            /* COLLISION DETECTION: Don't stamp a hill on top of an existing pit feature */
-            if (get_elevation(ty, tx) != ELEV_GROUND) continue;
-
-            /* Calculate a distance-based falloff so the fractal
-               tapers off naturally at the edges of the stamp */
-            int dist = distance(y, x, ty, tx);
-            if (dist > rad) continue;
-
-            /* Add some plasma noise for cragginess */
-            int noise = rand_int(40);
-            if (noise + (rad - dist) * 10 > threshold) {
-                cave_feat[ty][tx] = feat;
-                set_elevation(ty, tx, elev);
-            }
-        }
-    }
-
-    /* Apply borders and access based on elevation */
-    if (elev == ELEV_LOW) {
-        apply_sector_borders_and_access(y1, x1, y2, x2, ELEV_LOW, FEAT_CLIFF_DOWN, FEAT_ESCAPE_PIT, FEAT_STAIRS_UP);
-
-        /* Scatter hazards, items, and monsters in the pit */
-        int roll = rand_int(100);
-        int pit_feat;
-        if (roll < 40) {
-            pit_feat = FEAT_SWAMP;
-        } else if (roll < 70) {
-            pit_feat = FEAT_SHAL_WATER;
-        } else if (roll < 85) {
-            pit_feat = FEAT_OIL;
-        } else {
-            pit_feat = FEAT_SHAL_LAVA;
-        }
-
-        /* Update pit feature */
-        for (dy = -rad; dy <= rad; dy++) {
-            for (dx = -rad; dx <= rad; dx++) {
-                int ty = y + dy;
-                int tx = x + dx;
-                if (!in_bounds(ty, tx)) continue;
-                if (get_elevation(ty, tx) == ELEV_LOW && cave_feat[ty][tx] == FEAT_PIT) {
-                    cave_feat[ty][tx] = pit_feat;
-                }
-            }
-        }
-
-        /* Place Loot at the center of the pit if valid */
-        if (get_elevation(y, x) == ELEV_LOW) {
-            if (pit_feat == FEAT_OIL || pit_feat == FEAT_SHAL_LAVA || pit_feat == FEAT_DEEP_LAVA || pit_feat == FEAT_ACID || pit_feat == FEAT_ICE) {
-                object_level += 5;
-                if (rand_int(100) < 50) {
-                    int gold_val = (p_ptr->depth * 100) + randint(500);
-                    if (gold_val <= 100) gold_val = 101;
-                    place_gold(y, x, gold_val);
-                } else {
-                    place_object(y, x, TRUE, FALSE);
-                }
-                object_level -= 5;
-                cave_info[y][x] |= (CAVE_GLOW | CAVE_MARK);
-            }
-        }
-
-        /* Add hazards, monsters and items */
-        int hazard = rand_int(3);
-        for (dy = -rad; dy <= rad; dy++) {
-            for (dx = -rad; dx <= rad; dx++) {
-                int ty = y + dy;
-                int tx = x + dx;
-                if (!in_bounds(ty, tx)) continue;
-                if (get_elevation(ty, tx) == ELEV_LOW && (cave_feat[ty][tx] == pit_feat)) {
-                    switch (hazard) {
-                        case 0:
-                            if (rand_int(100) < 30)
-                                cave_feat[ty][tx] = FEAT_SHAL_WATER;
-                            break;
-                        case 1:
-                            if (rand_int(100) < 15)
-                                place_trap(ty, tx);
-                            break;
-                        case 2:
-                            if (rand_int(100) < 20)
-                                place_monster(ty, tx, MON_ALLOC_SLEEP);
-                            break;
-                    }
-                } else if (get_elevation(ty, tx) == ELEV_GROUND && cave_feat[ty][tx] == FEAT_FLOOR && cave_naked_bold(ty, tx)) {
-                    if (rand_int(100) < 1) { /* Reduced from 5% */
-                        place_object(ty, tx, FALSE, FALSE);
-                    }
-                    if (rand_int(100) < 2) { /* Reduced from 10% */
-                        place_monster(ty, tx, MON_ALLOC_SLEEP);
-                    }
-                }
-            }
-        }
-
-        /* Add outer walls */
-        for (dy = -rad - 1; dy <= rad + 1; dy++) {
-            for (dx = -rad - 1; dx <= rad + 1; dx++) {
-                int ty = y + dy;
-                int tx = x + dx;
-                if (!in_bounds(ty, tx)) continue;
-                if (cave_feat[ty][tx] != FEAT_FLOOR &&
-                    cave_feat[ty][tx] != FEAT_GRASS &&
-                    cave_feat[ty][tx] != FEAT_OIL &&
-                    cave_feat[ty][tx] != FEAT_CLIFF_DOWN &&
-                    cave_feat[ty][tx] != FEAT_PIT &&
-                    cave_feat[ty][tx] != FEAT_SHAL_WATER &&
-                    cave_feat[ty][tx] != FEAT_ESCAPE_PIT &&
-                    cave_feat[ty][tx] != FEAT_STAIRS_UP &&
-                    cave_feat[ty][tx] != FEAT_RAMP_UP) {
-                    bool next_to_floor = FALSE;
-                    int dyy, dxx;
-                    for (dyy = -1; dyy <= 1; dyy++) {
-                        for (dxx = -1; dxx <= 1; dxx++) {
-                            if (in_bounds(ty+dyy, tx+dxx) &&
-                                get_elevation(ty+dyy, tx+dxx) <= ELEV_GROUND) {
-                                next_to_floor = TRUE;
-                            }
-                        }
-                    }
-                    if (next_to_floor) {
-                        cave_feat[ty][tx] = FEAT_WALL_OUTER;
-                    }
-                }
-            }
-        }
-    } else if (elev == ELEV_HIGH) {
-        apply_sector_borders_and_access(y1, x1, y2, x2, ELEV_HIGH, FEAT_CLIFF_UP, FEAT_STAIRS_UP, FEAT_LADDER_UP);
-
-        /* Defenders at the center of the hill */
-        if (get_elevation(y, x) == ELEV_HIGH) {
-            if (rand_int(100) < 50) {
-                place_monster(y, x, MON_ALLOC_SLEEP);
-            }
-        }
-
-        /* Add outer walls */
-        for (dy = -rad - 1; dy <= rad + 1; dy++) {
-            for (dx = -rad - 1; dx <= rad + 1; dx++) {
-                int ty = y + dy;
-                int tx = x + dx;
-                if (!in_bounds(ty, tx)) continue;
-                if (cave_feat[ty][tx] != FEAT_FLOOR &&
-                    cave_feat[ty][tx] != FEAT_GRASS &&
-                    cave_feat[ty][tx] != FEAT_CLIFF_UP &&
-                    cave_feat[ty][tx] != FEAT_HILL_TOP &&
-                    cave_feat[ty][tx] != FEAT_LADDER_UP &&
-                    cave_feat[ty][tx] != FEAT_STAIRS_UP &&
-                    cave_feat[ty][tx] != FEAT_RAMP_UP) {
-                    bool next_to_floor = FALSE;
-                    int dyy, dxx;
-                    for (dyy = -1; dyy <= 1; dyy++) {
-                        for (dxx = -1; dxx <= 1; dxx++) {
-                            if (in_bounds(ty+dyy, tx+dxx) &&
-                                get_elevation(ty+dyy, tx+dxx) <= ELEV_GROUND) {
-                                next_to_floor = TRUE;
-                            }
-                        }
-                    }
-                    if (next_to_floor) {
-                        cave_feat[ty][tx] = FEAT_WALL_OUTER;
-                    }
-                }
-            }
-        }
-    }
-}
 
 static void ensure_connectivity(int y1, int x1, int y2, int x2);
 
@@ -5000,19 +4871,115 @@ static void build_sector_populated(int y0, int x0)
     /* Random number of stamps, e.g., 1 to 4 */
     int num_stamps = rand_range(1, 4);
     for (i = 0; i < num_stamps; i++) {
-        int stamp_type = rand_int(3);
+        int s_type = rand_int(3);
         int ty = rand_range(y1 + 4, y2 - 4);
         int tx = rand_range(x1 + 4, x2 - 4);
         int rad = rand_range(3, 8);
         int threshold = 50;
 
-        if (stamp_type == 0) {
-            stamp_organic_feature(ty, tx, rad, threshold, FEAT_HILL_TOP, ELEV_HIGH);
-        } else if (stamp_type == 1) {
-            stamp_organic_feature(ty, tx, rad, threshold, FEAT_PIT, ELEV_LOW);
+        stamp_type st;
+        st.radius = rad;
+        st.threshold = threshold;
+        st.roughness = 20;
+        st.overwrite = FALSE;
+        st.circular = TRUE;
+
+        if (s_type == 0) {
+            st.feat = FEAT_HILL_TOP;
+            st.elev = ELEV_HIGH;
+            universal_stamp(ty, tx, st);
+            apply_sector_borders_and_access(y1, x1, y2, x2, ELEV_HIGH, FEAT_CLIFF_UP, FEAT_STAIRS_UP, FEAT_LADDER_UP);
+        } else if (s_type == 1) {
+            st.feat = FEAT_PIT;
+            st.elev = ELEV_LOW;
+            universal_stamp(ty, tx, st);
+            apply_sector_borders_and_access(y1, x1, y2, x2, ELEV_LOW, FEAT_CLIFF_DOWN, FEAT_ESCAPE_PIT, FEAT_RAMP_UP);
         } else {
-            /* Maybe another type of hill or something */
-            stamp_organic_feature(ty, tx, rad, threshold, FEAT_ROCKY_HILL, ELEV_HIGH);
+            st.feat = FEAT_ROCKY_HILL;
+            st.elev = ELEV_HIGH;
+            universal_stamp(ty, tx, st);
+            apply_sector_borders_and_access(y1, x1, y2, x2, ELEV_HIGH, FEAT_CLIFF_UP, FEAT_STAIRS_UP, FEAT_LADDER_UP);
+        }
+    }
+
+    /* 2.5 Secondary Pass: Monsters, Items, Hazards, and Walls */
+    /* Pit types: 0=normal, 1=swamp, 2=oil, 3=shallow water, 4=lava */
+    int pit_type = rand_int(5);
+    int pit_feat = FEAT_PIT;
+    if (pit_type == 1) pit_feat = FEAT_DIRT;
+    if (pit_type == 2) pit_feat = FEAT_OIL;
+    if (pit_type == 3) pit_feat = FEAT_SHAL_WATER;
+    if (pit_type == 4) pit_feat = FEAT_SHAL_LAVA;
+
+    for (y = y1; y <= y2; y++) {
+        for (x = x1; x <= x2; x++) {
+            if (!in_bounds(y, x)) continue;
+
+            int current_elev = get_elevation(y, x);
+
+            /* Transform Pit Features */
+            if (current_elev == ELEV_LOW && cave_feat[y][x] == FEAT_PIT) {
+                cave_feat[y][x] = pit_feat;
+
+                /* Hazards, Monsters, Items in Pits */
+                int hazard = rand_int(3);
+                switch (hazard) {
+                    case 0:
+                        if (rand_int(100) < 30 && pit_feat == FEAT_PIT) cave_feat[y][x] = FEAT_SHAL_WATER;
+                        break;
+                    case 1:
+                        if (rand_int(100) < 15) place_trap(y, x);
+                        break;
+                    case 2:
+                        if (rand_int(100) < 20) place_monster(y, x, MON_ALLOC_SLEEP);
+                        break;
+                }
+
+                /* Special central loot for hazardous pits */
+                if (pit_feat != FEAT_PIT && rand_int(100) < 5) {
+                    place_object(y, x, FALSE, FALSE);
+                }
+            } else if (current_elev == ELEV_GROUND && cave_feat[y][x] == FEAT_FLOOR && cave_naked_bold(y, x)) {
+                if (rand_int(100) < 1) place_object(y, x, FALSE, FALSE);
+                if (rand_int(100) < 2) place_monster(y, x, MON_ALLOC_SLEEP);
+            } else if (current_elev == ELEV_HIGH && (cave_feat[y][x] == FEAT_HILL_TOP || cave_feat[y][x] == FEAT_ROCKY_HILL)) {
+                /* Defenders on the hill surface */
+                if (rand_int(100) < 5) place_monster(y, x, MON_ALLOC_SLEEP);
+            }
+        }
+    }
+
+    /* Add Outer Walls */
+    for (y = y1; y <= y2; y++) {
+        for (x = x1; x <= x2; x++) {
+            if (!in_bounds(y, x)) continue;
+
+            if (cave_feat[y][x] != FEAT_FLOOR &&
+                cave_feat[y][x] != FEAT_GRASS &&
+                cave_feat[y][x] != FEAT_OIL &&
+                cave_feat[y][x] != FEAT_CLIFF_DOWN &&
+                cave_feat[y][x] != FEAT_CLIFF_UP &&
+                cave_feat[y][x] != FEAT_PIT &&
+                cave_feat[y][x] != FEAT_HILL_TOP &&
+                cave_feat[y][x] != FEAT_ROCKY_HILL &&
+                cave_feat[y][x] != FEAT_SHAL_WATER &&
+                cave_feat[y][x] != FEAT_ESCAPE_PIT &&
+                cave_feat[y][x] != FEAT_LADDER_UP &&
+                cave_feat[y][x] != FEAT_STAIRS_UP &&
+                cave_feat[y][x] != FEAT_RAMP_UP) {
+
+                bool next_to_floor = FALSE;
+                for (int dyy = -1; dyy <= 1; dyy++) {
+                    for (int dxx = -1; dxx <= 1; dxx++) {
+                        if (in_bounds(y+dyy, x+dxx) && get_elevation(y+dyy, x+dxx) <= ELEV_GROUND) {
+                            next_to_floor = TRUE;
+                        }
+                    }
+                }
+                if (next_to_floor) {
+                    cave_feat[y][x] = FEAT_WALL_OUTER;
+                }
+            }
         }
     }
 
@@ -5047,7 +5014,7 @@ static void build_sector_cavern(int y0, int x0)
 	int x1 = x0 * BLOCK_WID;
 	int y2 = (y0 + 2) * BLOCK_HGT;
 	int x2 = (x0 + 2) * BLOCK_WID;
-	int x, y;
+	int x, y, i;
 
 	/* Safety */
 	if (y2 >= DUNGEON_HGT) y2 = DUNGEON_HGT - 1;
@@ -5078,6 +5045,23 @@ static void build_sector_cavern(int y0, int x0)
 			}
 		}
 	}
+
+    /* Add stalagmites / natural pillars using stamps */
+    stamp_type pillar_stamp;
+    pillar_stamp.feat = FEAT_WALL_INNER;
+    pillar_stamp.elev = ELEV_GROUND;
+    pillar_stamp.radius = 1;
+    pillar_stamp.threshold = 40;
+    pillar_stamp.roughness = 20;
+    pillar_stamp.overwrite = FALSE;
+    pillar_stamp.circular = TRUE;
+
+    int num_pillars = rand_range(3, 8);
+    for (i = 0; i < num_pillars; i++) {
+        int ty = rand_range(y1 + 2, y2 - 2);
+        int tx = rand_range(x1 + 2, x2 - 2);
+        universal_stamp(ty, tx, pillar_stamp);
+    }
 }
 
 /*
@@ -5255,17 +5239,37 @@ static void build_sector_plaza(int y0, int x0)
 		}
 	}
 
+    /* Add details using stamps (rubble/grass) */
+    stamp_type detail_stamp;
+    detail_stamp.elev = ELEV_GROUND;
+    detail_stamp.radius = 2;
+    detail_stamp.threshold = 30;
+    detail_stamp.roughness = 40;
+    detail_stamp.overwrite = FALSE;
+    detail_stamp.circular = TRUE;
+
+    for (i = 0; i < 4; i++) {
+        detail_stamp.feat = (rand_int(2) == 0) ? FEAT_RUBBLE : FEAT_GRASS;
+        int ty = rand_range(y1 + 3, y2 - 3);
+        int tx = rand_range(x1 + 3, x2 - 3);
+        universal_stamp(ty, tx, detail_stamp);
+    }
+
 	/* Force Random Bridges (to ensure multiplicity) */
+    stamp_type bridge_stamp;
+    bridge_stamp.feat = FEAT_FLOOR;
+    bridge_stamp.elev = ELEV_GROUND;
+    bridge_stamp.radius = 1;
+    bridge_stamp.threshold = 100; /* 100% chance */
+    bridge_stamp.roughness = 0;
+    bridge_stamp.overwrite = TRUE;
+    bridge_stamp.circular = FALSE;
+
 	for (i = 0; i < 2; i++)
 	{
 		int by = rand_range(y1 + 2, y2 - 2);
 		int bx = rand_range(x1 + 2, x2 - 2);
-		/* Simple 3x3 patch of floor */
-		int dy, dx;
-		for (dy = -1; dy <= 1; dy++)
-			for (dx = -1; dx <= 1; dx++)
-				if (in_bounds(by+dy, bx+dx))
-					cave_feat[by+dy][bx+dx] = FEAT_FLOOR;
+        universal_stamp(by, bx, bridge_stamp);
 	}
 
 	/* Ensure Connectivity */
@@ -5289,40 +5293,30 @@ static void build_sector_shifting_maze(int y0, int x0)
     int cy = (y1 + y2) / 2;
     int cx = (x1 + x2) / 2;
 
-    /* Initialize with high-density noise to make it feel cramped */
+    /* Fill the sector with floor first */
     for (y = y1; y <= y2; y++) {
         for (x = x1; x <= x2; x++) {
             if (!in_bounds(y, x)) continue;
-            int dist = distance(cy, cx, y, x);
-            int wall_chance = 45 + (dist * 3);
-            cave_feat[y][x] = (rand_int(100) < wall_chance) ? FEAT_WALL_EXTRA : FEAT_FLOOR;
-            /* Mark as room to prevent standard tunnel interference */
+            cave_feat[y][x] = FEAT_FLOOR;
             cave_info[y][x] |= CAVE_ROOM;
         }
     }
 
-    /* CA iterations to create organic pathways */
-    for (i = 0; i < 5; i++) {
-        bool next_grid[33][33];
-        int h = y2 - y1 + 1;
-        int w = x2 - x1 + 1;
-        for (y = 0; y < h; y++) {
-            for (x = 0; x < w; x++) {
-                int walls = 0;
-                for (int dy = -1; dy <= 1; dy++) {
-                    for (int dx = -1; dx <= 1; dx++) {
-                        int ny = y1 + y + dy, nx = x1 + x + dx;
-                        if (!in_bounds(ny, nx) || cave_feat[ny][nx] == FEAT_WALL_EXTRA) walls++;
-                    }
-                }
-                next_grid[y][x] = (cave_feat[y1+y][x1+x] == FEAT_WALL_EXTRA) ? (walls >= 4) : (walls >= 5);
-            }
-        }
-        for (y = 0; y < h; y++) {
-            for (x = 0; x < w; x++) {
-                cave_feat[y1+y][x1+x] = next_grid[y][x] ? FEAT_WALL_EXTRA : FEAT_FLOOR;
-            }
-        }
+    /* Build organic walls using overlapping blob stamps */
+    stamp_type wall_stamp;
+    wall_stamp.feat = FEAT_WALL_EXTRA;
+    wall_stamp.elev = ELEV_GROUND;
+    wall_stamp.radius = 3;
+    wall_stamp.threshold = 40;
+    wall_stamp.roughness = 30;
+    wall_stamp.overwrite = TRUE;
+    wall_stamp.circular = TRUE;
+
+    int num_stamps = rand_range(10, 20);
+    for (i = 0; i < num_stamps; i++) {
+        int ty = rand_range(y1 + 3, y2 - 3);
+        int tx = rand_range(x1 + 3, x2 - 3);
+        universal_stamp(ty, tx, wall_stamp);
     }
 
     ensure_connectivity(y1, x1, y2, x2);
@@ -5343,7 +5337,7 @@ static void build_sector_shifting_maze(int y0, int x0)
  */
 static void build_sector_dark(int y0, int x0)
 {
-    int y, x;
+    int y, x, i;
     int y1 = y0 * BLOCK_HGT;
     int x1 = x0 * BLOCK_WID;
     int y2 = (y0 + 2) * BLOCK_HGT - 1;
@@ -5363,42 +5357,57 @@ static void build_sector_dark(int y0, int x0)
         }
     }
 
-    /* 2. Maze Carving Logic (Perfect connectivity) */
-    /* Using a simplified loop-based connectivity to avoid stack overflow */
-    for (y = y1 + 1; y < y2; y += 2) {
-        for (x = x1 + 1; x < x2; x += 2) {
-            cave_feat[y][x] = FEAT_FLOOR;
+    /* 2. Carve Maze using square universal stamps of floor */
+    stamp_type floor_stamp;
+    floor_stamp.feat = FEAT_FLOOR;
+    floor_stamp.elev = ELEV_GROUND;
+    floor_stamp.radius = 2;
+    floor_stamp.threshold = 90; /* high chance to stamp floor */
+    floor_stamp.roughness = 20;
+    floor_stamp.overwrite = TRUE;
+    floor_stamp.circular = FALSE; /* Square brush */
 
-            /* Randomly connect to a neighbor that was already visited */
-            int choices[2], count = 0;
-            if (y > y1 + 1) choices[count++] = 0; /* Up */
-            if (x > x1 + 1) choices[count++] = 1; /* Left */
+    int num_stamps = rand_range(15, 25);
+    for (i = 0; i < num_stamps; i++) {
+        int ty = rand_range(y1 + 2, y2 - 2);
+        int tx = rand_range(x1 + 2, x2 - 2);
+        universal_stamp(ty, tx, floor_stamp);
+    }
 
-            if (count > 0) {
-                int dir = choices[rand_int(count)];
-                if (dir == 0) cave_feat[y-1][x] = FEAT_FLOOR;
-                else          cave_feat[y][x-1] = FEAT_FLOOR;
+    /* Ensure outer walls remain solid except at access points */
+    for (y = y1; y <= y2; y++) {
+        for (x = x1; x <= x2; x++) {
+            if (!in_bounds(y, x)) continue;
+            if (y == y1 || y == y2 || x == x1 || x == x2) {
+                cave_feat[y][x] = FEAT_MAGMA;
             }
         }
     }
 
-    /* 3. Add Monsters and Items in Dead Ends */
+    /* 3. Add Monsters and Items in stamped areas */
     for (y = y1 + 1; y < y2; y++) {
         for (x = x1 + 1; x < x2; x++) {
             if (cave_feat[y][x] == FEAT_FLOOR) {
-                int walls = 0;
-                if (cave_feat[y-1][x] != FEAT_FLOOR) walls++;
-                if (cave_feat[y+1][x] != FEAT_FLOOR) walls++;
-                if (cave_feat[y][x-1] != FEAT_FLOOR) walls++;
-                if (cave_feat[y][x+1] != FEAT_FLOOR) walls++;
+                /* Random debris */
+                if (rand_int(100) < 5) cave_feat[y][x] = FEAT_RUBBLE;
 
-                if (walls == 3) { /* This is a dead end */
+                int walls = 0;
+                if (cave_feat[y-1][x] != FEAT_FLOOR && cave_feat[y-1][x] != FEAT_RUBBLE) walls++;
+                if (cave_feat[y+1][x] != FEAT_FLOOR && cave_feat[y+1][x] != FEAT_RUBBLE) walls++;
+                if (cave_feat[y][x-1] != FEAT_FLOOR && cave_feat[y][x-1] != FEAT_RUBBLE) walls++;
+                if (cave_feat[y][x+1] != FEAT_FLOOR && cave_feat[y][x+1] != FEAT_RUBBLE) walls++;
+
+                if (walls >= 3) { /* Dead end or tight corner */
                     if (rand_int(12) == 0) place_object(y, x, FALSE, FALSE);
                     else if (rand_int(8) == 0) place_monster(y, x, MON_ALLOC_SLEEP);
+                } else {
+                    if (rand_int(100) < 2) place_monster(y, x, MON_ALLOC_SLEEP);
                 }
             }
         }
     }
+
+    ensure_connectivity(y1, x1, y2, x2);
 
     /* Helper macro to check if a tile just outside the boundary is valid for access */
 #define IS_VALID_ACCESS(Y, X) \

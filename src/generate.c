@@ -68,7 +68,7 @@ static void universal_stamp(int y0, int x0, stamp_type s)
             /* The user actually intended `s.threshold` to act as probability base, where higher threshold = higher spawn chance.
              * Let's fix the logic so the base spawn chance is s.threshold (0-100), enhanced by noise, reduced by falloff.
              */
-            if ((rand_int(100) < (s.threshold + noise - (dist * 10))) || (s.threshold >= 100))
+            if ((rand_int(100) < (s.threshold + noise - falloff)) || (s.threshold >= 100))
             {
                 cave_feat[y][x] = s.feat;
                 set_elevation(y, x, s.elev);
@@ -4906,7 +4906,7 @@ static void build_sector_populated(int y0, int x0)
     /* Pit types: 0=normal, 1=swamp, 2=oil, 3=shallow water, 4=lava */
     int pit_type = rand_int(5);
     int pit_feat = FEAT_PIT;
-    if (pit_type == 1) pit_feat = FEAT_DIRT;
+    if (pit_type == 1) pit_feat = FEAT_SWAMP;
     if (pit_type == 2) pit_feat = FEAT_OIL;
     if (pit_type == 3) pit_feat = FEAT_SHAL_WATER;
     if (pit_type == 4) pit_feat = FEAT_SHAL_LAVA;

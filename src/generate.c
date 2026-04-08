@@ -754,7 +754,14 @@ static void alloc_stairs(int feat, int num, int walls, bool force_room)
 
 			/* Require fewer walls */
 			if (walls)
+			{
 				walls--;
+			}
+			else
+			{
+				/* Failed to find a spot even with 0 walls required. Bail out to avoid infinite loop. */
+				break;
+			}
 		}
 	}
 }
@@ -4906,7 +4913,7 @@ static void build_sector_populated(int y0, int x0)
     /* Pit types: 0=normal, 1=swamp, 2=oil, 3=shallow water, 4=lava */
     int pit_type = rand_int(5);
     int pit_feat = FEAT_PIT;
-    if (pit_type == 1) pit_feat = FEAT_DIRT;
+    if (pit_type == 1) pit_feat = FEAT_SWAMP;
     if (pit_type == 2) pit_feat = FEAT_OIL;
     if (pit_type == 3) pit_feat = FEAT_SHAL_WATER;
     if (pit_type == 4) pit_feat = FEAT_SHAL_LAVA;
@@ -6404,10 +6411,10 @@ static void cave_gen(void)
 	}
 
 	/* Place 3 or 4 down stairs near some walls */
-	alloc_stairs(FEAT_MORE, rand_range(100, 120), 3, (level_bg == FEAT_FOG || level_bg == FEAT_CHAOS_FOG));
+	alloc_stairs(FEAT_MORE, rand_range(3, 4), 3, (level_bg == FEAT_FOG || level_bg == FEAT_CHAOS_FOG));
 
 	/* Place 1 or 2 up stairs near some walls */
-	alloc_stairs(FEAT_LESS, rand_range(40, 60), 3, (level_bg == FEAT_FOG || level_bg == FEAT_CHAOS_FOG));
+	alloc_stairs(FEAT_LESS, rand_range(1, 2), 3, (level_bg == FEAT_FOG || level_bg == FEAT_CHAOS_FOG));
 
 	/* Find level start (up stairs) to seed loot generation logic */
 	{

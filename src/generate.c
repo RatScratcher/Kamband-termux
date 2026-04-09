@@ -440,9 +440,21 @@ static void new_player_spot(void)
 		y = rand_range(1, DUNGEON_HGT - 2);
 		x = rand_range(1, DUNGEON_WID - 2);
 
-		/* Must be a "naked" floor grid */
+		/* Must be a "naked" floor grid, or a natural feature (grass, trees, mud, swamp) that is empty of monsters and items */
 		if (!cave_naked_bold(y, x))
-			continue;
+		{
+			if (cave_m_idx[y][x] == 0 && cave_o_idx[y][x] == 0 &&
+			    (cave_feat[y][x] == FEAT_GRASS || cave_feat[y][x] == FEAT_TREES ||
+			     cave_feat[y][x] == FEAT_SWAMP || cave_feat[y][x] == FEAT_MUD ||
+			     cave_feat[y][x] == FEAT_SHAL_WATER || cave_feat[y][x] == FEAT_HILL_TOP))
+			{
+				/* Accept natural features */
+			}
+			else
+			{
+				continue;
+			}
+		}
 
 		/* Refuse to start on anti-teleport grids */
 		if (cave_info[y][x] & (CAVE_ICKY))
@@ -471,9 +483,21 @@ static void old_player_spot(void)
 		d++;
 		scatter(&y, &x, p_ptr->py, p_ptr->px, d / 5, 0);
 
-		/* Must be a "naked" floor grid */
+		/* Must be a "naked" floor grid, or a natural feature */
 		if (!cave_naked_bold(y, x))
-			continue;
+		{
+			if (cave_m_idx[y][x] == 0 && cave_o_idx[y][x] == 0 &&
+			    (cave_feat[y][x] == FEAT_GRASS || cave_feat[y][x] == FEAT_TREES ||
+			     cave_feat[y][x] == FEAT_SWAMP || cave_feat[y][x] == FEAT_MUD ||
+			     cave_feat[y][x] == FEAT_SHAL_WATER || cave_feat[y][x] == FEAT_HILL_TOP))
+			{
+				/* Accept natural features */
+			}
+			else
+			{
+				continue;
+			}
+		}
 
 		/* Refuse to start on anti-teleport grids */
 		if (cave_info[y][x] & (CAVE_ICKY))
@@ -4995,7 +5019,7 @@ static void build_sector_populated(int y0, int x0)
     }
 
     /* 3. Tactical Debris & Atmospheric Detail: Filling the 'Empty' space */
-    int num_debris = rand_range(3, 8);
+    int num_debris = rand_range(1, 4);
     for (i = 0; i < num_debris; i++) {
         int ty = rand_range(y1 + 2, y2 - 2);
         int tx = rand_range(x1 + 2, x2 - 2);

@@ -1,0 +1,31 @@
+--- src/generate.c
++++ src/generate.c
+@@ -4916,19 +4916,24 @@
+         st.overwrite = FALSE;
+         st.circular = TRUE;
+
++        int sy1 = (ty - rad - 2 < y1) ? y1 : ty - rad - 2;
++        int sx1 = (tx - rad - 2 < x1) ? x1 : tx - rad - 2;
++        int sy2 = (ty + rad + 2 > y2) ? y2 : ty + rad + 2;
++        int sx2 = (tx + rad + 2 > x2) ? x2 : tx + rad + 2;
++
+         if (s_type == 0) {
+             st.feat = FEAT_HILL_TOP;
+             st.elev = ELEV_HIGH;
+             universal_stamp(ty, tx, st);
+-            apply_sector_borders_and_access(y1, x1, y2, x2, ELEV_HIGH, FEAT_CLIFF_UP, FEAT_STAIRS_UP, FEAT_LADDER_UP);
++            apply_sector_borders_and_access(sy1, sx1, sy2, sx2, ELEV_HIGH, FEAT_CLIFF_UP, FEAT_STAIRS_UP, FEAT_LADDER_UP);
+         } else if (s_type == 1) {
+             st.feat = FEAT_PIT;
+             st.elev = ELEV_LOW;
+             universal_stamp(ty, tx, st);
+-            apply_sector_borders_and_access(y1, x1, y2, x2, ELEV_LOW, FEAT_CLIFF_DOWN, FEAT_ESCAPE_PIT, FEAT_RAMP_UP);
++            apply_sector_borders_and_access(sy1, sx1, sy2, sx2, ELEV_LOW, FEAT_CLIFF_DOWN, FEAT_ESCAPE_PIT, FEAT_RAMP_UP);
+         } else {
+             st.feat = FEAT_ROCKY_HILL;
+             st.elev = ELEV_HIGH;
+             universal_stamp(ty, tx, st);
+-            apply_sector_borders_and_access(y1, x1, y2, x2, ELEV_HIGH, FEAT_CLIFF_UP, FEAT_STAIRS_UP, FEAT_LADDER_UP);
++            apply_sector_borders_and_access(sy1, sx1, sy2, sx2, ELEV_HIGH, FEAT_CLIFF_UP, FEAT_STAIRS_UP, FEAT_LADDER_UP);
+         }
+     }

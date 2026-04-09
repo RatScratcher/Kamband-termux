@@ -946,8 +946,8 @@ static void build_streamer2(int feat, int killwall)
 	poolchance = randint(10);
 
 	/* Hack -- Choose starting point */
-	y = rand_spread(DUNGEON_HGT / 2, 10);
-	x = rand_spread(DUNGEON_WID / 2, 15);
+	y = rand_range(1, DUNGEON_HGT - 2);
+	x = rand_range(1, DUNGEON_WID - 2);
 
 	if (poolchance > 2)
 	{
@@ -6064,13 +6064,12 @@ static void cave_gen(void)
 				int sect_type = SECTOR_RUINS;
 			int roll = rand_int(100);
 
-				/* Redistributed probabilities: SECTOR_CLIFF merged into SECTOR_HILL */
+				/* Redistributed probabilities */
 				if (roll < 15) sect_type = SECTOR_PLAZA;
-				else if (roll < 25) sect_type = SECTOR_RUINS;
-				else if (roll < 35) sect_type = SECTOR_DARK;  /* Now the True Dark Maze */
-				else if (roll < 38) sect_type = SECTOR_SHIFTING; /* Rare: 3% chance */
-				/* Hill probability now covers the old cliff range for more fractal terrain */
-				else if (roll < 70 + (p_ptr->depth / 8)) sect_type = SECTOR_HILL;
+				else if (roll < 30) sect_type = SECTOR_RUINS;
+				else if (roll < 45) sect_type = SECTOR_DARK;
+				else if (roll < 55) sect_type = SECTOR_SHIFTING;
+				else if (roll < 70) sect_type = SECTOR_HILL;
 				else if (roll < 80) sect_type = SECTOR_PIT;
 				else sect_type = SECTOR_CAVERN;
 

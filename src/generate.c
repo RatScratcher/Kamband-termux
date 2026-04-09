@@ -5448,8 +5448,6 @@ static void build_sector_dark(int y0, int x0)
         }
     }
 
-    ensure_connectivity(y1, x1, y2, x2);
-
     /* Helper macro to check if a tile just outside the boundary is valid for access */
 #define IS_VALID_ACCESS(Y, X) \
     (in_bounds((Y), (X)) && \
@@ -5525,6 +5523,8 @@ static void build_sector_dark(int y0, int x0)
     }
 
 #undef IS_VALID_ACCESS
+
+    ensure_connectivity(y1, x1, y2, x2);
 }
 
 /*

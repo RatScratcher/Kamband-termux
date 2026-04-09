@@ -2702,8 +2702,8 @@ static void build_vault(int yval, int xval, vault_type* v_ptr) {
 	    y = yval - (ymax / 2) + dy;
 
 
-	    /* 
-	     * Place some monsters/objects. 
+	    /*
+	     * Place some monsters/objects.
 	     */
 	    if (datum != ' ' && datum != '-') {
 
@@ -2791,7 +2791,7 @@ static void build_vault(int yval, int xval, vault_type* v_ptr) {
 		/* [Arena] Monster */
 	      case '&':
 		if (town_symb) {
-		  place_monster_aux(y, x, 
+		  place_monster_aux(y, x,
 				    arena_monsters[p_ptr->which_arena]
 				    [p_ptr->arena_number[p_ptr->which_arena]],
 				    MON_ALLOC_ARENA | MON_ALLOC_JUST_ONE);
@@ -2836,7 +2836,7 @@ static void build_vault(int yval, int xval, vault_type* v_ptr) {
 		  place_monster(y, x, mode);
 		  monster_level = p_ptr->depth;
 		}
-		
+
 		if (rand_int(100) < 50) {
 		  object_level = p_ptr->depth + 7;
 		  place_object(y, x, FALSE, FALSE);
@@ -4207,7 +4207,7 @@ static void lite_up_town(bool daytime)
 				cave_info[y][x] |= (CAVE_GLOW);
 
 				/* Wiz-lite if appropriate. */
-				if (wiz_lite_town && 
+				if (wiz_lite_town &&
 				    p_ptr->wild_x == 0 && p_ptr->wild_y == 0)
 				{
 					/* Memorize the grid */
@@ -4278,8 +4278,8 @@ static void terrain_gen(void) {
   }
 
   /* Hack -- implement scrolly terrains. */
-  if (!hook_vault_place_player && 
-      ((p_ptr->py <= 2 || p_ptr->py >= DUNGEON_HGT - 3) || 
+  if (!hook_vault_place_player &&
+      ((p_ptr->py <= 2 || p_ptr->py >= DUNGEON_HGT - 3) ||
        (p_ptr->px <= 2 || p_ptr->px >= DUNGEON_WID - 3))) {
 
     /* Scroll up. */
@@ -4307,7 +4307,7 @@ static void terrain_gen(void) {
 
 
   /* Initialize the four corners.
-   * The corners are generated as permanent separately from the 
+   * The corners are generated as permanent separately from the
    * contents. This means that the wilderness is fairly "tileable".
    *
    * Again, the contents of the code below were taken arbitrarily,
@@ -4333,7 +4333,7 @@ static void terrain_gen(void) {
 
 #define HASH_CORNERS(X, Y) (((X) - (Y)) ^ (((X) + seed_wild) & (Y)))
 #define HASH_LEVEL(X, Y)   (((Y) - (X)) ^ ((Y) & ((X) + seed_wild)))
-  
+
   Rand_value = HASH_CORNERS(p_ptr->wild_x, p_ptr->wild_y);
   cave_feat[1][1] = rand_int(table_size);
 
@@ -4347,7 +4347,7 @@ static void terrain_gen(void) {
   cave_feat[DUNGEON_HGT - 2][DUNGEON_WID - 2] = rand_int(table_size);
 
 
-  /* Terrain levels are always ``permanent''. 
+  /* Terrain levels are always ``permanent''.
    * Note the random bit shuffling to make a unique seed.
    * There's no real rationale behind this. Anyone know a good hashing
    * function for pairs of numbers? */
@@ -4584,16 +4584,16 @@ static void terrain_gen(void) {
   }
 
   /* Put some objects in rooms */
-  alloc_object(ALLOC_SET_ROOM, ALLOC_TYP_OBJECT, 
+  alloc_object(ALLOC_SET_ROOM, ALLOC_TYP_OBJECT,
 	       randnor(DUN_AMT_ROOM, 3));
 
   /* Put some altars */
-  alloc_object(ALLOC_SET_ROOM, ALLOC_TYP_ALTAR, 
+  alloc_object(ALLOC_SET_ROOM, ALLOC_TYP_ALTAR,
 	       randnor(DUN_AMT_ALTAR, 3));
 
   /* Put some objects/gold in the dungeon */
 
-  alloc_object(ALLOC_SET_ROOM, ALLOC_TYP_OBJECT, 
+  alloc_object(ALLOC_SET_ROOM, ALLOC_TYP_OBJECT,
 	       randnor(DUN_AMT_ITEM, 3));
 
   Rand_quick = quick_prev;
@@ -4916,26 +4916,21 @@ static void build_sector_populated(int y0, int x0)
         st.overwrite = FALSE;
         st.circular = TRUE;
 
-        int sy1 = (ty - rad - 2 < y1) ? y1 : ty - rad - 2;
-        int sx1 = (tx - rad - 2 < x1) ? x1 : tx - rad - 2;
-        int sy2 = (ty + rad + 2 > y2) ? y2 : ty + rad + 2;
-        int sx2 = (tx + rad + 2 > x2) ? x2 : tx + rad + 2;
-
         if (s_type == 0) {
             st.feat = FEAT_HILL_TOP;
             st.elev = ELEV_HIGH;
             universal_stamp(ty, tx, st);
-            apply_sector_borders_and_access(sy1, sx1, sy2, sx2, ELEV_HIGH, FEAT_CLIFF_UP, FEAT_STAIRS_UP, FEAT_LADDER_UP);
+            apply_sector_borders_and_access(y1, x1, y2, x2, ELEV_HIGH, FEAT_CLIFF_UP, FEAT_STAIRS_UP, FEAT_LADDER_UP);
         } else if (s_type == 1) {
             st.feat = FEAT_PIT;
             st.elev = ELEV_LOW;
             universal_stamp(ty, tx, st);
-            apply_sector_borders_and_access(sy1, sx1, sy2, sx2, ELEV_LOW, FEAT_CLIFF_DOWN, FEAT_ESCAPE_PIT, FEAT_RAMP_UP);
+            apply_sector_borders_and_access(y1, x1, y2, x2, ELEV_LOW, FEAT_CLIFF_DOWN, FEAT_ESCAPE_PIT, FEAT_RAMP_UP);
         } else {
             st.feat = FEAT_ROCKY_HILL;
             st.elev = ELEV_HIGH;
             universal_stamp(ty, tx, st);
-            apply_sector_borders_and_access(sy1, sx1, sy2, sx2, ELEV_HIGH, FEAT_CLIFF_UP, FEAT_STAIRS_UP, FEAT_LADDER_UP);
+            apply_sector_borders_and_access(y1, x1, y2, x2, ELEV_HIGH, FEAT_CLIFF_UP, FEAT_STAIRS_UP, FEAT_LADDER_UP);
         }
     }
 

@@ -981,21 +981,22 @@ static void build_streamer2(int feat, int killwall)
 						if (in_bounds(cy, cx) && !(cave_info[cy][cx] & CAVE_ICKY))
 						{
 							bool valid = TRUE;
-							if (feat == FEAT_ACID)
+
+							/* Streams can overwrite plain walls but not permanent walls, doors, stairs, or access points */
+							if (cave_feat[cy][cx] >= FEAT_PERM_EXTRA || cave_feat[cy][cx] == FEAT_LESS || cave_feat[cy][cx] == FEAT_MORE || (cave_feat[cy][cx] >= FEAT_DOOR_HEAD && cave_feat[cy][cx] <= FEAT_DOOR_TAIL) || (cave_feat[cy][cx] >= FEAT_SLOPE_UP && cave_feat[cy][cx] <= FEAT_ESCAPE_PIT))
 							{
-								/* Acid eats through standard walls, but not permanent walls or stairs/doors */
-								if (cave_feat[cy][cx] >= FEAT_PERM_EXTRA || cave_feat[cy][cx] == FEAT_LESS || cave_feat[cy][cx] == FEAT_MORE || (cave_feat[cy][cx] >= FEAT_DOOR_HEAD && cave_feat[cy][cx] <= FEAT_DOOR_TAIL))
-									valid = FALSE;
+								valid = FALSE;
 							}
-							else if (killwall == 0)
+
+							/* Streams cannot cut through True Dark Mazes */
+							if (valid)
 							{
-								if (cave_feat[cy][cx] >= FEAT_MAGMA || cave_feat[cy][cx] == FEAT_LESS || cave_feat[cy][cx] == FEAT_MORE)
+								int s_y = cy / BLOCK_HGT;
+								int s_x = cx / BLOCK_WID;
+								if (s_y >= 0 && s_y < MAX_ROOMS_ROW && s_x >= 0 && s_x < MAX_ROOMS_COL && cave_sector[s_y][s_x] == SECTOR_DARK)
+								{
 									valid = FALSE;
-							}
-							else
-							{
-								if (cave_feat[cy][cx] >= FEAT_PERM_EXTRA || cave_feat[cy][cx] == FEAT_LESS || cave_feat[cy][cx] == FEAT_MORE)
-									valid = FALSE;
+								}
 							}
 
 							if (valid)
@@ -1050,8 +1051,7 @@ static void build_streamer2(int feat, int killwall)
 			life--;
 		}
 	}
-	else if ((feat == FEAT_DEEP_WATER) || (feat == FEAT_DEEP_LAVA) ||
-		(feat == FEAT_CHAOS_FOG))
+	else if (feat != FEAT_CHAOS_FOG)
 	{ /* create pool */
 		poolsize = 5 + randint(10);
 		mid = poolsize / 2;

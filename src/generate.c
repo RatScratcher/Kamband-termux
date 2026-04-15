@@ -3840,13 +3840,26 @@ static bool room_build(int y0, int x0, int typ)
 	if ((x1 < 0) || (x2 >= dun->col_rooms))
 		return (FALSE);
 
-	/* Verify open space */
+	/* Verify open space and sector permissions */
 	for (y = y1; y <= y2; y++)
 	{
 		for (x = x1; x <= x2; x++)
 		{
 			if (dun->room_map[y][x])
 				return (FALSE);
+
+			/*
+			 * Density Check:
+			 * In a 400x400 world, we don't want standard rooms to overwrite
+			 * the organic macro-terrain (Hill, Pit, Cavern, Plaza).
+			 * Only allow vaults (typ >= 7) or themed rooms (typ == 9)
+			 * to overwrite these sectors.
+			 */
+			int sect = cave_sector[y][x];
+			if (sect == SECTOR_HILL || sect == SECTOR_PIT || sect == SECTOR_CAVERN || sect == SECTOR_PLAZA)
+			{
+				if (typ < 7 && typ != 9) return (FALSE);
+			}
 		}
 	}
 
@@ -5947,7 +5960,7 @@ static void cave_gen(void)
 	dun_data dun_body;
 
 	byte level_bg = FEAT_WALL_EXTRA;
-	s16b dun_rooms = DUN_ROOMS;
+	s16b dun_rooms = DUN_ROOMS * 3;
 
 	/* Global data */
 	dun = &dun_body;
@@ -6127,15 +6140,11 @@ static void cave_gen(void)
 						dun->cent_n++;
 					}
 				}
-				else if (sect == SECTOR_CAVERN || sect == SECTOR_HILL || sect == SECTOR_PIT || sect == SECTOR_PLAZA || sect == SECTOR_RUINS)
+				else if (sect == SECTOR_CAVERN || sect == SECTOR_HILL || sect == SECTOR_PIT || sect == SECTOR_PLAZA)
 				{
 					build_sector_populated(y, x);
 
-					/* Mark blocks as used */
-					dun->room_map[y][x] = TRUE;
-					if (y + 1 < dun->row_rooms) dun->room_map[y + 1][x] = TRUE;
-					if (x + 1 < dun->col_rooms) dun->room_map[y][x + 1] = TRUE;
-					if (y + 1 < dun->row_rooms && x + 1 < dun->col_rooms) dun->room_map[y + 1][x + 1] = TRUE;
+					/* Do not mark blocks as used, allow rooms to be stamped over them */
 
 					/* Add center for tunnels */
 					if (dun->cent_n < CENT_MAX) {
@@ -6154,8 +6163,8 @@ static void cave_gen(void)
 		y = rand_int(dun->row_rooms);
 		x = rand_int(dun->col_rooms);
 
-		/* Only build in RUINS sectors */
-		if (cave_sector[y][x] != SECTOR_RUINS) continue;
+		/* Skip DARK and SHIFTING completely */
+		if (cave_sector[y][x] == SECTOR_DARK || cave_sector[y][x] == SECTOR_SHIFTING) continue;
 
 		/* Align dungeon rooms */
 		if (dungeon_align)
@@ -6261,7 +6270,28 @@ static void cave_gen(void)
 
 		/* Attempt a trivial room */
 		if (room_build(y, x, 1))
+		{
+			/* If we successfully built a simple room in RUINS, try to cluster a neighborhood */
+			if (cave_sector[y][x] == SECTOR_RUINS)
+			{
+				int cy, cx;
+				for (cy = y - 1; cy <= y + 1; cy++)
+				{
+					for (cx = x - 1; cx <= x + 1; cx++)
+					{
+						if (cy >= 0 && cy < dun->row_rooms && cx >= 0 && cx < dun->col_rooms)
+						{
+							if (cy == y && cx == x) continue;
+							if (rand_int(100) < 50) /* 50% chance to spawn an adjacent room */
+							{
+								room_build(cy, cx, 1);
+							}
+						}
+					}
+				}
+			}
 			continue;
+		}
 	}
 
 	/* Special boundary walls -- Top */

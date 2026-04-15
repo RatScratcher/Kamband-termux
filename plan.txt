@@ -1,0 +1,4 @@
+1. We need to update room_build to allow rooms to spawn outside of SECTOR_RUINS, but with restrictions (only vaults and theme rooms can overwrite HILL/PIT).
+2. We need to modify the order of generation in cave_gen. Currently, all sectors mark their blocks as used (dun->room_map = TRUE). We need to change this so that most sectors (except maybe RUINS or specific ones) do not mark them as used *yet*, allowing room_build to stamp rooms on top. Alternatively, the user request says: "These don't mark dun->room_map[y][x] = TRUE yet, allowing rooms to 'stamp' over them."
+3. In cave_gen, remove the line "if (cave_sector[y][x] != SECTOR_RUINS) continue;" inside the room building loop, or adjust it to be like the requested logic.
+4. The user has provided specific logic. I should implement it precisely.

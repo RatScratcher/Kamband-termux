@@ -785,7 +785,7 @@ static void alloc_stairs(int feat, int num, int walls, bool force_room)
 			else
 			{
 				/* Failed to find a spot even with 0 walls required. Bail out to avoid infinite loop. */
-				break;
+				return;
 			}
 		}
 	}
@@ -6474,11 +6474,11 @@ static void cave_gen(void)
 		if (rand_int(100) < 60) build_streamer2(FEAT_ACID, 0);
 	}
 
-	/* Place 3 or 4 down stairs near some walls */
-	alloc_stairs(FEAT_MORE, rand_range(3, 4), 3, (level_bg == FEAT_FOG || level_bg == FEAT_CHAOS_FOG));
+	/* Place ~135 down stairs near some walls (approx 1 per screen) */
+	alloc_stairs(FEAT_MORE, rand_range(135, 140), 3, (level_bg == FEAT_FOG || level_bg == FEAT_CHAOS_FOG));
 
-	/* Place 1 or 2 up stairs near some walls */
-	alloc_stairs(FEAT_LESS, rand_range(1, 2), 3, (level_bg == FEAT_FOG || level_bg == FEAT_CHAOS_FOG));
+	/* Place ~135 up stairs near some walls (approx 1 per screen) */
+	alloc_stairs(FEAT_LESS, rand_range(135, 140), 3, (level_bg == FEAT_FOG || level_bg == FEAT_CHAOS_FOG));
 
 	/* Find level start (up stairs) to seed loot generation logic */
 	{

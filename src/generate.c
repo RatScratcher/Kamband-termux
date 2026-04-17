@@ -944,13 +944,13 @@ static void build_streamer2(int feat, int killwall)
 	int poolchance;
 	int poolsize;
 
-	poolchance = randint(10);
+	poolchance = rand_int(100);
 
 	/* Hack -- Choose starting point */
 	y = rand_range(1, DUNGEON_HGT - 2);
 	x = rand_range(1, DUNGEON_WID - 2);
 
-	if (poolchance > 2)
+	if (poolchance >= 5) /* 95% chance to be a streamer (poolchance < 5 is 5% lake) */
 	{
 		/* Agent-based Drunkard's Walk */
 		int life = 500 + randint(1000);
@@ -961,9 +961,25 @@ static void build_streamer2(int feat, int killwall)
 		if (bx >= MAX_ROOMS_COL) bx = MAX_ROOMS_COL - 1;
 		int current_sector = cave_sector[by][bx];
 
+		int steps_between_blobs = rand_range(2, 10);
+		int blob_length_remaining = 0;
+		int current_blob_radius = 0;
+
 			while (life > 0)
 			{
-				bool is_blob = (life % 5 == 0);
+				if (blob_length_remaining > 0) {
+					blob_length_remaining--;
+				} else {
+					steps_between_blobs--;
+					if (steps_between_blobs <= 0) {
+						blob_length_remaining = rand_range(2, 10);
+						steps_between_blobs = rand_range(2, 10);
+						current_blob_radius = rand_range(2, 5) / 2;
+					} else {
+						current_blob_radius = 0;
+					}
+				}
+				bool is_blob = (current_blob_radius > 0);
 				bool placed_island = FALSE;
 
 				if (is_blob && rand_int(100) < 25)
@@ -971,9 +987,9 @@ static void build_streamer2(int feat, int killwall)
 					placed_island = TRUE;
 				}
 
-				for (int dy = (is_blob ? -1 : 0); dy <= (is_blob ? 1 : 0); dy++)
+				for (int dy = -current_blob_radius; dy <= current_blob_radius; dy++)
 				{
-					for (int dx = (is_blob ? -1 : 0); dx <= (is_blob ? 1 : 0); dx++)
+					for (int dx = -current_blob_radius; dx <= current_blob_radius; dx++)
 					{
 						int cy = y + dy;
 						int cx = x + dx;
@@ -6234,12 +6250,12 @@ static void cave_gen(void)
 
 				/* Redistributed probabilities */
 				if (roll < 15) sect_type = SECTOR_PLAZA;
-				else if (roll < 30) sect_type = SECTOR_RUINS;
-				else if (roll < 45) sect_type = SECTOR_DARK;
-				else if (roll < 55) sect_type = SECTOR_SHIFTING;
-				else if (roll < 70) sect_type = SECTOR_HILL;
-				else if (roll < 80) sect_type = SECTOR_PIT;
-				else sect_type = SECTOR_CAVERN;
+				else if (roll < 40) sect_type = SECTOR_RUINS;      /* +10% Ruins (25%) */
+				else if (roll < 55) sect_type = SECTOR_DARK;       /* 15% Dark */
+				else if (roll < 65) sect_type = SECTOR_SHIFTING;   /* 10% Shifting */
+				else if (roll < 75) sect_type = SECTOR_HILL;       /* 10% Hill */
+				else if (roll < 80) sect_type = SECTOR_PIT;        /* 5% Pit */
+				else sect_type = SECTOR_CAVERN;                    /* 20% Cavern */
 
 			/* Assign to 2x2 block */
 			cave_sector[y][x] = sect_type;
@@ -6467,11 +6483,13 @@ static void cave_gen(void)
 		}
 	}
 
-	for (i = 0; i < 3; i++)
+	for (i = 0; i < 6; i++)
 	{
-		if (rand_int(100) < 60) build_streamer2(FEAT_OIL, 0);
-		if (rand_int(100) < 60) build_streamer2(FEAT_ICE, 0);
-		if (rand_int(100) < 60) build_streamer2(FEAT_ACID, 0);
+		if (rand_int(100) < 70) build_streamer2(FEAT_OIL, 0);
+		if (rand_int(100) < 70) build_streamer2(FEAT_ICE, 0);
+		if (rand_int(100) < 70) build_streamer2(FEAT_ACID, 0);
+		if (rand_int(100) < 30) build_streamer2(FEAT_SHAL_WATER, 0);
+		if (rand_int(100) < 30) build_streamer2(FEAT_SHAL_LAVA, 0);
 	}
 
 	/* Place ~135 down stairs near some walls (approx 1 per screen) */

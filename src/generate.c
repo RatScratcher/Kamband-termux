@@ -953,7 +953,7 @@ static void build_streamer2(int feat, int killwall)
 	if (poolchance > 2)
 	{
 		/* Agent-based Drunkard's Walk */
-		int life = 50 + randint(150);
+		int life = 500 + randint(1000);
 
 		int by = y / BLOCK_HGT;
 		int bx = x / BLOCK_WID;
@@ -1040,6 +1040,7 @@ static void build_streamer2(int feat, int killwall)
 					else
 					{
 						/* Try another direction next turn */
+						continue;
 					}
 				}
 				else
@@ -6441,30 +6442,27 @@ static void cave_gen(void)
 	if ((p_ptr->depth <= 2) && (randint(20) > 15))
 		for (i = 0; i < randint(DUN_STR_QUA); i++)
 			build_streamer2(FEAT_TREES, 1);
-	if ((p_ptr->depth <= 19) && (randint(20) > 15))
-	{
-		for (i = 0; i < randint(DUN_STR_QUA - 1); i++)
+	/* Pass 1: Water (Shallow and Deep) */
+	for (i = 0; i < 2; i++) {
+		if (p_ptr->depth <= 19 && rand_int(100) < 40) {
 			build_streamer2(FEAT_SHAL_WATER, 0);
-		if (randint(20) > 15)
-		{
-			for (i = 0; i < randint(DUN_STR_QUA); i++)
-				build_streamer2(FEAT_DEEP_WATER, 1);
+			/* 25% chance to add a deep vein alongside the shallow */
+			if (rand_int(100) < 25) build_streamer2(FEAT_DEEP_WATER, 1);
 		}
 	}
-	else if ((p_ptr->depth > 19) && (randint(20) > 15))
-	{
-		for (i = 0; i < randint(DUN_STR_QUA); i++)
+
+	/* Pass 2: Lava (Shallow and Deep) */
+	for (i = 0; i < 2; i++) {
+		if (p_ptr->depth > 19 && rand_int(100) < 40) {
 			build_streamer2(FEAT_SHAL_LAVA, 0);
-		if (randint(20) > 15)
-		{
-			for (i = 0; i < randint(DUN_STR_QUA - 1); i++)
-				build_streamer2(FEAT_DEEP_LAVA, 1);
+			/* 25% chance for a deep lava vein */
+			if (rand_int(100) < 25) build_streamer2(FEAT_DEEP_LAVA, 1);
 		}
 	}
-	else if (randint(10) > 7)
-	{
-		for (i = 0; i < randint(DUN_STR_QUA); i++)
-		{
+
+	/* Pass 3: Chaos Fog */
+	for (i = 0; i < 2; i++) {
+		if (rand_int(100) < 30) {
 			build_streamer2(FEAT_CHAOS_FOG, 1);
 		}
 	}

@@ -69,7 +69,7 @@ static void universal_stamp(int y0, int x0, stamp_type s)
             /* The user actually intended `s.threshold` to act as probability base, where higher threshold = higher spawn chance.
              * Let's fix the logic so the base spawn chance is s.threshold (0-100), enhanced by noise, reduced by falloff.
              */
-            if ((rand_int(100) < (s.threshold + noise - (dist * 10))) || (s.threshold >= 100))
+            if ((rand_int(100) < (s.threshold + noise - (dist * 5))) || (s.threshold >= 100))
             {
                 cave_feat[y][x] = s.feat;
                 set_elevation(y, x, s.elev);
@@ -1028,10 +1028,10 @@ static void build_streamer2(int feat, int killwall)
 				if (nbx >= MAX_ROOMS_COL) nbx = MAX_ROOMS_COL - 1;
 				int next_sector = cave_sector[nby][nbx];
 
-				/* Sector overflow check (10% chance to overflow, 90% to stay within sector) */
+				/* Sector overflow check (40% chance to overflow, 60% to stay within sector) */
 				if (next_sector != current_sector)
 				{
-					if (rand_int(100) < 10)
+					if (rand_int(100) < 40)
 					{
 						current_sector = next_sector; /* Overflow allowed, update sector */
 						y = ny;
@@ -4901,7 +4901,6 @@ static void build_sector_populated(int y0, int x0)
             if (cave_info[y][x] & CAVE_ROOM) continue; /* Protect existing rooms */
             set_elevation(y, x, ELEV_GROUND);
             cave_feat[y][x] = FEAT_FLOOR;
-            cave_info[y][x] |= CAVE_ROOM;
         }
     }
 
@@ -5053,6 +5052,16 @@ static void build_sector_populated(int y0, int x0)
 
     /* 4. Ensure Connectivity */
     ensure_connectivity(y1, x1, y2, x2);
+
+    /* 5. Mark the wilderness as a room so monsters spawn and lights work */
+    for (y = y1; y <= y2; y++) {
+        for (x = x1; x <= x2; x++) {
+            if (!in_bounds(y, x)) continue;
+            if (cave_feat[y][x] != FEAT_WALL_EXTRA) {
+                cave_info[y][x] |= CAVE_ROOM;
+            }
+        }
+    }
 }
 
 static void build_sector_cavern(int y0, int x0)
@@ -6460,19 +6469,11 @@ static void cave_gen(void)
 		}
 	}
 
-	if (randint(10) > 7)
+	for (i = 0; i < 3; i++)
 	{
-		build_streamer2(FEAT_OIL, 0);
-	}
-
-	if (randint(10) > 7)
-	{
-		build_streamer2(FEAT_ICE, 0);
-	}
-
-	if (randint(10) > 7)
-	{
-		build_streamer2(FEAT_ACID, 0);
+		if (rand_int(100) < 60) build_streamer2(FEAT_OIL, 0);
+		if (rand_int(100) < 60) build_streamer2(FEAT_ICE, 0);
+		if (rand_int(100) < 60) build_streamer2(FEAT_ACID, 0);
 	}
 
 	/* Place 3 or 4 down stairs near some walls */

@@ -57,6 +57,7 @@ static void universal_stamp(int y0, int x0, stamp_type s)
 
             /* 2. Collision Check: Don't stomp on existing non-floor features unless allowed */
             if (!s.overwrite && get_elevation(y, x) != ELEV_GROUND) continue;
+            if (!s.overwrite && (cave_info[y][x] & CAVE_ROOM)) continue;
 
             /* 3. The Organic Math: Probability + Noise */
             /* We reduce the chance of spawning as we get further from the center */
@@ -68,7 +69,7 @@ static void universal_stamp(int y0, int x0, stamp_type s)
             /* The user actually intended `s.threshold` to act as probability base, where higher threshold = higher spawn chance.
              * Let's fix the logic so the base spawn chance is s.threshold (0-100), enhanced by noise, reduced by falloff.
              */
-            if ((rand_int(100) < (s.threshold + noise - (dist * 10))) || (s.threshold >= 100))
+            if ((rand_int(100) < (s.threshold + noise - (dist * 5))) || (s.threshold >= 100))
             {
                 cave_feat[y][x] = s.feat;
                 set_elevation(y, x, s.elev);
@@ -784,7 +785,7 @@ static void alloc_stairs(int feat, int num, int walls, bool force_room)
 			else
 			{
 				/* Failed to find a spot even with 0 walls required. Bail out to avoid infinite loop. */
-				break;
+				return;
 			}
 		}
 	}
@@ -943,16 +944,16 @@ static void build_streamer2(int feat, int killwall)
 	int poolchance;
 	int poolsize;
 
-	poolchance = randint(10);
+	poolchance = rand_int(100);
 
 	/* Hack -- Choose starting point */
-	y = rand_spread(DUNGEON_HGT / 2, 10);
-	x = rand_spread(DUNGEON_WID / 2, 15);
+	y = rand_range(1, DUNGEON_HGT - 2);
+	x = rand_range(1, DUNGEON_WID - 2);
 
-	if (poolchance > 2)
+	if (poolchance >= 5) /* 95% chance to be a streamer (poolchance < 5 is 5% lake) */
 	{
 		/* Agent-based Drunkard's Walk */
-		int life = 50 + randint(150);
+		int life = 500 + randint(1000);
 
 		int by = y / BLOCK_HGT;
 		int bx = x / BLOCK_WID;
@@ -960,9 +961,25 @@ static void build_streamer2(int feat, int killwall)
 		if (bx >= MAX_ROOMS_COL) bx = MAX_ROOMS_COL - 1;
 		int current_sector = cave_sector[by][bx];
 
+		int steps_between_blobs = rand_range(2, 10);
+		int blob_length_remaining = 0;
+		int current_blob_radius = 0;
+
 			while (life > 0)
 			{
-				bool is_blob = (life % 5 == 0);
+				if (blob_length_remaining > 0) {
+					blob_length_remaining--;
+				} else {
+					steps_between_blobs--;
+					if (steps_between_blobs <= 0) {
+						blob_length_remaining = rand_range(2, 10);
+						steps_between_blobs = rand_range(2, 10) + blob_length_remaining;
+						current_blob_radius = rand_range(2, 5) / 2;
+					} else {
+						current_blob_radius = 0;
+					}
+				}
+				bool is_blob = (current_blob_radius > 0);
 				bool placed_island = FALSE;
 
 				if (is_blob && rand_int(100) < 25)
@@ -970,9 +987,9 @@ static void build_streamer2(int feat, int killwall)
 					placed_island = TRUE;
 				}
 
-				for (int dy = (is_blob ? -1 : 0); dy <= (is_blob ? 1 : 0); dy++)
+				for (int dy = -current_blob_radius; dy <= current_blob_radius; dy++)
 				{
-					for (int dx = (is_blob ? -1 : 0); dx <= (is_blob ? 1 : 0); dx++)
+					for (int dx = -current_blob_radius; dx <= current_blob_radius; dx++)
 					{
 						int cy = y + dy;
 						int cx = x + dx;
@@ -981,21 +998,22 @@ static void build_streamer2(int feat, int killwall)
 						if (in_bounds(cy, cx) && !(cave_info[cy][cx] & CAVE_ICKY))
 						{
 							bool valid = TRUE;
-							if (feat == FEAT_ACID)
+
+							/* Streams can overwrite plain walls but not permanent walls, doors, stairs, or access points */
+							if (cave_feat[cy][cx] >= FEAT_PERM_EXTRA || cave_feat[cy][cx] == FEAT_LESS || cave_feat[cy][cx] == FEAT_MORE || (cave_feat[cy][cx] >= FEAT_DOOR_HEAD && cave_feat[cy][cx] <= FEAT_DOOR_TAIL) || (cave_feat[cy][cx] >= FEAT_SLOPE_UP && cave_feat[cy][cx] <= FEAT_ESCAPE_PIT))
 							{
-								/* Acid eats through standard walls, but not permanent walls or stairs/doors */
-								if (cave_feat[cy][cx] >= FEAT_PERM_EXTRA || cave_feat[cy][cx] == FEAT_LESS || cave_feat[cy][cx] == FEAT_MORE || (cave_feat[cy][cx] >= FEAT_DOOR_HEAD && cave_feat[cy][cx] <= FEAT_DOOR_TAIL))
-									valid = FALSE;
+								valid = FALSE;
 							}
-							else if (killwall == 0)
+
+							/* Streams cannot cut through True Dark Mazes */
+							if (valid)
 							{
-								if (cave_feat[cy][cx] >= FEAT_MAGMA || cave_feat[cy][cx] == FEAT_LESS || cave_feat[cy][cx] == FEAT_MORE)
+								int s_y = cy / BLOCK_HGT;
+								int s_x = cx / BLOCK_WID;
+								if (s_y >= 0 && s_y < MAX_ROOMS_ROW && s_x >= 0 && s_x < MAX_ROOMS_COL && cave_sector[s_y][s_x] == SECTOR_DARK)
+								{
 									valid = FALSE;
-							}
-							else
-							{
-								if (cave_feat[cy][cx] >= FEAT_PERM_EXTRA || cave_feat[cy][cx] == FEAT_LESS || cave_feat[cy][cx] == FEAT_MORE)
-									valid = FALSE;
+								}
 							}
 
 							if (valid)
@@ -1026,10 +1044,10 @@ static void build_streamer2(int feat, int killwall)
 				if (nbx >= MAX_ROOMS_COL) nbx = MAX_ROOMS_COL - 1;
 				int next_sector = cave_sector[nby][nbx];
 
-				/* Sector overflow check (10% chance to overflow, 90% to stay within sector) */
+				/* Sector overflow check (40% chance to overflow, 60% to stay within sector) */
 				if (next_sector != current_sector)
 				{
-					if (rand_int(100) < 10)
+					if (rand_int(100) < 40)
 					{
 						current_sector = next_sector; /* Overflow allowed, update sector */
 						y = ny;
@@ -1038,6 +1056,7 @@ static void build_streamer2(int feat, int killwall)
 					else
 					{
 						/* Try another direction next turn */
+						continue;
 					}
 				}
 				else
@@ -1050,8 +1069,7 @@ static void build_streamer2(int feat, int killwall)
 			life--;
 		}
 	}
-	else if ((feat == FEAT_DEEP_WATER) || (feat == FEAT_DEEP_LAVA) ||
-		(feat == FEAT_CHAOS_FOG))
+	else if (feat != FEAT_CHAOS_FOG)
 	{ /* create pool */
 		poolsize = 5 + randint(10);
 		mid = poolsize / 2;
@@ -1094,6 +1112,10 @@ static void build_streamer2(int feat, int killwall)
 				if (cave_feat[ty][tx] == FEAT_LESS)
 					continue;
 				if (cave_feat[ty][tx] == FEAT_MORE)
+					continue;
+				if (cave_feat[ty][tx] >= FEAT_DOOR_HEAD && cave_feat[ty][tx] <= FEAT_DOOR_TAIL)
+					continue;
+				if (cave_feat[ty][tx] >= FEAT_SLOPE_UP && cave_feat[ty][tx] <= FEAT_ESCAPE_PIT)
 					continue;
 				/* Clear previous contents, add proper vein type */
 				cave_feat[ty][tx] = feat;
@@ -3840,7 +3862,7 @@ static bool room_build(int y0, int x0, int typ)
 	if ((x1 < 0) || (x2 >= dun->col_rooms))
 		return (FALSE);
 
-	/* Verify open space */
+	/* Verify open space and sector permissions */
 	for (y = y1; y <= y2; y++)
 	{
 		for (x = x1; x <= x2; x++)
@@ -4893,9 +4915,9 @@ static void build_sector_populated(int y0, int x0)
     for (y = y1; y <= y2; y++) {
         for (x = x1; x <= x2; x++) {
             if (!in_bounds(y, x)) continue;
+            if (cave_info[y][x] & CAVE_ROOM) continue; /* Protect existing rooms */
             set_elevation(y, x, ELEV_GROUND);
             cave_feat[y][x] = FEAT_FLOOR;
-            cave_info[y][x] |= CAVE_ROOM;
         }
     }
 
@@ -4906,7 +4928,7 @@ static void build_sector_populated(int y0, int x0)
         int s_type = rand_int(3);
         int ty = rand_range(y1 + 4, y2 - 4);
         int tx = rand_range(x1 + 4, x2 - 4);
-        int rad = rand_range(3, 8);
+        int rad = rand_range(8, 15);
         int threshold = 50;
 
         stamp_type st;
@@ -4916,21 +4938,26 @@ static void build_sector_populated(int y0, int x0)
         st.overwrite = FALSE;
         st.circular = TRUE;
 
+        int sy1 = (ty - rad - 2 < y1) ? y1 : ty - rad - 2;
+        int sx1 = (tx - rad - 2 < x1) ? x1 : tx - rad - 2;
+        int sy2 = (ty + rad + 2 > y2) ? y2 : ty + rad + 2;
+        int sx2 = (tx + rad + 2 > x2) ? x2 : tx + rad + 2;
+
         if (s_type == 0) {
             st.feat = FEAT_HILL_TOP;
             st.elev = ELEV_HIGH;
             universal_stamp(ty, tx, st);
-            apply_sector_borders_and_access(y1, x1, y2, x2, ELEV_HIGH, FEAT_CLIFF_UP, FEAT_STAIRS_UP, FEAT_LADDER_UP);
+            apply_sector_borders_and_access(sy1, sx1, sy2, sx2, ELEV_HIGH, FEAT_CLIFF_UP, FEAT_STAIRS_UP, FEAT_LADDER_UP);
         } else if (s_type == 1) {
             st.feat = FEAT_PIT;
             st.elev = ELEV_LOW;
             universal_stamp(ty, tx, st);
-            apply_sector_borders_and_access(y1, x1, y2, x2, ELEV_LOW, FEAT_CLIFF_DOWN, FEAT_ESCAPE_PIT, FEAT_RAMP_UP);
+            apply_sector_borders_and_access(sy1, sx1, sy2, sx2, ELEV_LOW, FEAT_CLIFF_DOWN, FEAT_ESCAPE_PIT, FEAT_RAMP_UP);
         } else {
             st.feat = FEAT_ROCKY_HILL;
             st.elev = ELEV_HIGH;
             universal_stamp(ty, tx, st);
-            apply_sector_borders_and_access(y1, x1, y2, x2, ELEV_HIGH, FEAT_CLIFF_UP, FEAT_STAIRS_UP, FEAT_LADDER_UP);
+            apply_sector_borders_and_access(sy1, sx1, sy2, sx2, ELEV_HIGH, FEAT_CLIFF_UP, FEAT_STAIRS_UP, FEAT_LADDER_UP);
         }
     }
 
@@ -5042,6 +5069,16 @@ static void build_sector_populated(int y0, int x0)
 
     /* 4. Ensure Connectivity */
     ensure_connectivity(y1, x1, y2, x2);
+
+    /* 5. Mark the wilderness as a room so monsters spawn and lights work */
+    for (y = y1; y <= y2; y++) {
+        for (x = x1; x <= x2; x++) {
+            if (!in_bounds(y, x)) continue;
+            if (cave_feat[y][x] != FEAT_WALL_EXTRA) {
+                cave_info[y][x] |= CAVE_ROOM;
+            }
+        }
+    }
 }
 
 static void build_sector_cavern(int y0, int x0)
@@ -5329,10 +5366,11 @@ static void build_sector_shifting_maze(int y0, int x0)
     int cy = (y1 + y2) / 2;
     int cx = (x1 + x2) / 2;
 
-    /* Fill the sector with floor first */
+    /* Fill the sector with floor first, protecting existing rooms */
     for (y = y1; y <= y2; y++) {
         for (x = x1; x <= x2; x++) {
             if (!in_bounds(y, x)) continue;
+            if (cave_info[y][x] & CAVE_ROOM) continue;
             cave_feat[y][x] = FEAT_FLOOR;
             cave_info[y][x] |= CAVE_ROOM;
         }
@@ -5383,6 +5421,7 @@ static void build_sector_dark(int y0, int x0)
     for (y = y1; y <= y2; y++) {
         for (x = x1; x <= x2; x++) {
             if (!in_bounds(y, x)) continue;
+            if (cave_info[y][x] & CAVE_ROOM) continue; /* Protect existing rooms */
             cave_feat[y][x] = FEAT_WALL_INNER;
             /* Outer boundary walls are diggable */
             if (y == y1 || y == y2 || x == x1 || x == x2) {
@@ -5442,8 +5481,6 @@ static void build_sector_dark(int y0, int x0)
             }
         }
     }
-
-    ensure_connectivity(y1, x1, y2, x2);
 
     /* Helper macro to check if a tile just outside the boundary is valid for access */
 #define IS_VALID_ACCESS(Y, X) \
@@ -5520,6 +5557,8 @@ static void build_sector_dark(int y0, int x0)
     }
 
 #undef IS_VALID_ACCESS
+
+    ensure_connectivity(y1, x1, y2, x2);
 }
 
 /*
@@ -5942,7 +5981,7 @@ static void cave_gen(void)
 	dun_data dun_body;
 
 	byte level_bg = FEAT_WALL_EXTRA;
-	s16b dun_rooms = DUN_ROOMS;
+	s16b dun_rooms = DUN_ROOMS * 3;
 
 	/* Global data */
 	dun = &dun_body;
@@ -6051,95 +6090,12 @@ static void cave_gen(void)
 	/* Initialize Elevation */
 	init_elevation();
 
-	/* Initialize Sector Map */
-	for (y = 0; y < dun->row_rooms; y += 2)
+	/* Initialize Sector Map to RUINS by default */
+	for (y = 0; y < dun->row_rooms; y++)
 	{
-		for (x = 0; x < dun->col_rooms; x += 2)
+		for (x = 0; x < dun->col_rooms; x++)
 		{
-				int sect_type = SECTOR_RUINS;
-			int roll = rand_int(100);
-
-				/* Redistributed probabilities: SECTOR_CLIFF merged into SECTOR_HILL */
-				if (roll < 15) sect_type = SECTOR_PLAZA;
-				else if (roll < 25) sect_type = SECTOR_RUINS;
-				else if (roll < 35) sect_type = SECTOR_DARK;  /* Now the True Dark Maze */
-				else if (roll < 38) sect_type = SECTOR_SHIFTING; /* Rare: 3% chance */
-				/* Hill probability now covers the old cliff range for more fractal terrain */
-				else if (roll < 70 + (p_ptr->depth / 8)) sect_type = SECTOR_HILL;
-				else if (roll < 80) sect_type = SECTOR_PIT;
-				else sect_type = SECTOR_CAVERN;
-
-			/* Assign to 2x2 block */
-			cave_sector[y][x] = sect_type;
-			if (y + 1 < dun->row_rooms) cave_sector[y+1][x] = sect_type;
-			if (x + 1 < dun->col_rooms) cave_sector[y][x+1] = sect_type;
-			if (y + 1 < dun->row_rooms && x + 1 < dun->col_rooms) cave_sector[y+1][x+1] = sect_type;
-		}
-	}
-
-	/* No "crowded" rooms yet */
-	dun->crowded = FALSE;
-
-
-	/* No rooms yet */
-	dun->cent_n = 0;
-
-	/* Build Special Sectors (Caverns and Plazas) */
-	for (y = 0; y < dun->row_rooms; y += 2)
-	{
-		for (x = 0; x < dun->col_rooms; x += 2)
-		{
-			int sect = cave_sector[y][x];
-			if (sect == SECTOR_SHIFTING)
-				{
-					build_sector_shifting_maze(y, x);
-					/* Mark blocks as used */
-					dun->room_map[y][x] = TRUE;
-					if (y + 1 < dun->row_rooms) dun->room_map[y + 1][x] = TRUE;
-					if (x + 1 < dun->col_rooms) dun->room_map[y][x + 1] = TRUE;
-					if (y + 1 < dun->row_rooms && x + 1 < dun->col_rooms) dun->room_map[y + 1][x + 1] = TRUE;
-
-					/* Add center for tunnels */
-					if (dun->cent_n < CENT_MAX) {
-						dun->cent[dun->cent_n].y = (y * BLOCK_HGT) + BLOCK_HGT;
-						dun->cent[dun->cent_n].x = (x * BLOCK_WID) + BLOCK_WID;
-						dun->cent_n++;
-					}
-				}
-				else if (sect == SECTOR_DARK)
-				{
-					build_sector_dark(y, x);
-
-					/* FIX: Mark blocks as used so winding tunnels don't gut the maze */
-					dun->room_map[y][x] = TRUE;
-					if (y + 1 < dun->row_rooms) dun->room_map[y + 1][x] = TRUE;
-					if (x + 1 < dun->col_rooms) dun->room_map[y][x + 1] = TRUE;
-					if (y + 1 < dun->row_rooms && x + 1 < dun->col_rooms) dun->room_map[y + 1][x + 1] = TRUE;
-
-					/* Optional: Add center for tunnels to connect TO the maze */
-					if (dun->cent_n < CENT_MAX) {
-						dun->cent[dun->cent_n].y = (y * BLOCK_HGT) + BLOCK_HGT;
-						dun->cent[dun->cent_n].x = (x * BLOCK_WID) + BLOCK_WID;
-						dun->cent_n++;
-					}
-				}
-				else if (sect == SECTOR_CAVERN || sect == SECTOR_HILL || sect == SECTOR_PIT || sect == SECTOR_PLAZA || sect == SECTOR_RUINS)
-				{
-					build_sector_populated(y, x);
-
-					/* Mark blocks as used */
-					dun->room_map[y][x] = TRUE;
-					if (y + 1 < dun->row_rooms) dun->room_map[y + 1][x] = TRUE;
-					if (x + 1 < dun->col_rooms) dun->room_map[y][x + 1] = TRUE;
-					if (y + 1 < dun->row_rooms && x + 1 < dun->col_rooms) dun->room_map[y + 1][x + 1] = TRUE;
-
-					/* Add center for tunnels */
-					if (dun->cent_n < CENT_MAX) {
-						dun->cent[dun->cent_n].y = (y * BLOCK_HGT) + BLOCK_HGT;
-						dun->cent[dun->cent_n].x = (x * BLOCK_WID) + BLOCK_WID;
-						dun->cent_n++;
-					}
-				}
+			cave_sector[y][x] = SECTOR_RUINS;
 		}
 	}
 
@@ -6149,9 +6105,6 @@ static void cave_gen(void)
 		/* Pick a block for the room */
 		y = rand_int(dun->row_rooms);
 		x = rand_int(dun->col_rooms);
-
-		/* Only build in RUINS sectors */
-		if (cave_sector[y][x] != SECTOR_RUINS) continue;
 
 		/* Align dungeon rooms */
 		if (dungeon_align)
@@ -6257,7 +6210,121 @@ static void cave_gen(void)
 
 		/* Attempt a trivial room */
 		if (room_build(y, x, 1))
+		{
+			/* If we successfully built a simple room in RUINS, try to cluster a neighborhood */
+			if (cave_sector[y][x] == SECTOR_RUINS)
+			{
+				int cy, cx;
+				for (cy = y - 1; cy <= y + 1; cy++)
+				{
+					for (cx = x - 1; cx <= x + 1; cx++)
+					{
+						if (cy >= 0 && cy < dun->row_rooms && cx >= 0 && cx < dun->col_rooms)
+						{
+							if (cy == y && cx == x) continue;
+							if (rand_int(100) < 50) /* 50% chance to spawn an adjacent room */
+							{
+								room_build(cy, cx, 1);
+							}
+						}
+					}
+				}
+			}
 			continue;
+		}
+	}
+
+
+	/* Destroy the level if necessary */
+	if (destroyed)
+		destroy_level();
+
+
+	/* Initialize Sector Map */
+	for (y = 0; y < dun->row_rooms; y += 2)
+	{
+		for (x = 0; x < dun->col_rooms; x += 2)
+		{
+				int sect_type = SECTOR_RUINS;
+			int roll = rand_int(100);
+
+				/* Redistributed probabilities */
+				if (roll < 15) sect_type = SECTOR_PLAZA;
+				else if (roll < 40) sect_type = SECTOR_RUINS;      /* +10% Ruins (25%) */
+				else if (roll < 55) sect_type = SECTOR_DARK;       /* 15% Dark */
+				else if (roll < 65) sect_type = SECTOR_SHIFTING;   /* 10% Shifting */
+				else if (roll < 75) sect_type = SECTOR_HILL;       /* 10% Hill */
+				else if (roll < 80) sect_type = SECTOR_PIT;        /* 5% Pit */
+				else sect_type = SECTOR_CAVERN;                    /* 20% Cavern */
+
+			/* Assign to 2x2 block */
+			cave_sector[y][x] = sect_type;
+			if (y + 1 < dun->row_rooms) cave_sector[y+1][x] = sect_type;
+			if (x + 1 < dun->col_rooms) cave_sector[y][x+1] = sect_type;
+			if (y + 1 < dun->row_rooms && x + 1 < dun->col_rooms) cave_sector[y+1][x+1] = sect_type;
+		}
+	}
+
+	/* No "crowded" rooms yet */
+	dun->crowded = FALSE;
+
+
+	/* No rooms yet */
+	dun->cent_n = 0;
+
+	/* Build Special Sectors (Caverns and Plazas) */
+	for (y = 0; y < dun->row_rooms; y += 2)
+	{
+		for (x = 0; x < dun->col_rooms; x += 2)
+		{
+			int sect = cave_sector[y][x];
+			if (sect == SECTOR_SHIFTING)
+				{
+					build_sector_shifting_maze(y, x);
+					/* Mark blocks as used */
+					dun->room_map[y][x] = TRUE;
+					if (y + 1 < dun->row_rooms) dun->room_map[y + 1][x] = TRUE;
+					if (x + 1 < dun->col_rooms) dun->room_map[y][x + 1] = TRUE;
+					if (y + 1 < dun->row_rooms && x + 1 < dun->col_rooms) dun->room_map[y + 1][x + 1] = TRUE;
+
+					/* Add center for tunnels */
+					if (dun->cent_n < CENT_MAX) {
+						dun->cent[dun->cent_n].y = (y * BLOCK_HGT) + BLOCK_HGT;
+						dun->cent[dun->cent_n].x = (x * BLOCK_WID) + BLOCK_WID;
+						dun->cent_n++;
+					}
+				}
+				else if (sect == SECTOR_DARK)
+				{
+					build_sector_dark(y, x);
+
+					/* FIX: Mark blocks as used so winding tunnels don't gut the maze */
+					dun->room_map[y][x] = TRUE;
+					if (y + 1 < dun->row_rooms) dun->room_map[y + 1][x] = TRUE;
+					if (x + 1 < dun->col_rooms) dun->room_map[y][x + 1] = TRUE;
+					if (y + 1 < dun->row_rooms && x + 1 < dun->col_rooms) dun->room_map[y + 1][x + 1] = TRUE;
+
+					/* Optional: Add center for tunnels to connect TO the maze */
+					if (dun->cent_n < CENT_MAX) {
+						dun->cent[dun->cent_n].y = (y * BLOCK_HGT) + BLOCK_HGT;
+						dun->cent[dun->cent_n].x = (x * BLOCK_WID) + BLOCK_WID;
+						dun->cent_n++;
+					}
+				}
+				else if (sect == SECTOR_CAVERN || sect == SECTOR_HILL || sect == SECTOR_PIT || sect == SECTOR_PLAZA)
+				{
+					build_sector_populated(y, x);
+
+					/* Do not mark blocks as used, allow rooms to be stamped over them */
+
+					/* Add center for tunnels */
+					if (dun->cent_n < CENT_MAX) {
+						dun->cent[dun->cent_n].y = (y * BLOCK_HGT) + BLOCK_HGT;
+						dun->cent[dun->cent_n].x = (x * BLOCK_WID) + BLOCK_WID;
+						dun->cent_n++;
+					}
+				}
+		}
 	}
 
 	/* Special boundary walls -- Top */
@@ -6387,63 +6454,49 @@ static void cave_gen(void)
 			build_streamer(FEAT_QUARTZ, DUN_STR_QC, 32 + randint(32));
 		}
 	}
-
-	/* Destroy the level if necessary */
-	if (destroyed)
-		destroy_level();
-
 	/* Add streamers of trees, water, or lava -KMW- */
 	if ((p_ptr->depth <= 2) && (randint(20) > 15))
 		for (i = 0; i < randint(DUN_STR_QUA); i++)
 			build_streamer2(FEAT_TREES, 1);
-	if ((p_ptr->depth <= 19) && (randint(20) > 15))
-	{
-		for (i = 0; i < randint(DUN_STR_QUA - 1); i++)
+	/* Pass 1: Water (Shallow and Deep) */
+	for (i = 0; i < 2; i++) {
+		if (p_ptr->depth <= 19 && rand_int(100) < 40) {
 			build_streamer2(FEAT_SHAL_WATER, 0);
-		if (randint(20) > 15)
-		{
-			for (i = 0; i < randint(DUN_STR_QUA); i++)
-				build_streamer2(FEAT_DEEP_WATER, 1);
+			/* 25% chance to add a deep vein alongside the shallow */
+			if (rand_int(100) < 25) build_streamer2(FEAT_DEEP_WATER, 1);
 		}
 	}
-	else if ((p_ptr->depth > 19) && (randint(20) > 15))
-	{
-		for (i = 0; i < randint(DUN_STR_QUA); i++)
+
+	/* Pass 2: Lava (Shallow and Deep) */
+	for (i = 0; i < 2; i++) {
+		if (p_ptr->depth > 19 && rand_int(100) < 40) {
 			build_streamer2(FEAT_SHAL_LAVA, 0);
-		if (randint(20) > 15)
-		{
-			for (i = 0; i < randint(DUN_STR_QUA - 1); i++)
-				build_streamer2(FEAT_DEEP_LAVA, 1);
+			/* 25% chance for a deep lava vein */
+			if (rand_int(100) < 25) build_streamer2(FEAT_DEEP_LAVA, 1);
 		}
 	}
-	else if (randint(10) > 7)
-	{
-		for (i = 0; i < randint(DUN_STR_QUA); i++)
-		{
+
+	/* Pass 3: Chaos Fog */
+	for (i = 0; i < 2; i++) {
+		if (rand_int(100) < 30) {
 			build_streamer2(FEAT_CHAOS_FOG, 1);
 		}
 	}
 
-	if (randint(10) > 7)
+	for (i = 0; i < 6; i++)
 	{
-		build_streamer2(FEAT_OIL, 0);
+		if (rand_int(100) < 70) build_streamer2(FEAT_OIL, 0);
+		if (rand_int(100) < 70) build_streamer2(FEAT_ICE, 0);
+		if (rand_int(100) < 70) build_streamer2(FEAT_ACID, 0);
+		if (rand_int(100) < 30) build_streamer2(FEAT_SHAL_WATER, 0);
+		if (rand_int(100) < 30) build_streamer2(FEAT_SHAL_LAVA, 0);
 	}
 
-	if (randint(10) > 7)
-	{
-		build_streamer2(FEAT_ICE, 0);
-	}
+	/* Place ~135 down stairs near some walls (approx 1 per screen) */
+	alloc_stairs(FEAT_MORE, rand_range(135, 140), 3, (level_bg == FEAT_FOG || level_bg == FEAT_CHAOS_FOG));
 
-	if (randint(10) > 7)
-	{
-		build_streamer2(FEAT_ACID, 0);
-	}
-
-	/* Place 3 or 4 down stairs near some walls */
-	alloc_stairs(FEAT_MORE, rand_range(3, 4), 3, (level_bg == FEAT_FOG || level_bg == FEAT_CHAOS_FOG));
-
-	/* Place 1 or 2 up stairs near some walls */
-	alloc_stairs(FEAT_LESS, rand_range(1, 2), 3, (level_bg == FEAT_FOG || level_bg == FEAT_CHAOS_FOG));
+	/* Place ~135 up stairs near some walls (approx 1 per screen) */
+	alloc_stairs(FEAT_LESS, rand_range(135, 140), 3, (level_bg == FEAT_FOG || level_bg == FEAT_CHAOS_FOG));
 
 	/* Find level start (up stairs) to seed loot generation logic */
 	{

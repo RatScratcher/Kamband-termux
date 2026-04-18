@@ -1359,8 +1359,8 @@ bool monster_check_cliff_move(int m_idx, int ny, int nx)
 
 	/* Check for access points (Ladders, Stairs, Ramps) */
 	int feat = cave_feat[ny][nx];
-	bool has_access = (feat == FEAT_LADDER_UP || feat == FEAT_STAIRS_UP ||
-	                   feat == FEAT_RAMP_UP || feat == FEAT_ESCAPE_PIT);
+	bool has_access = (feat == FEAT_LADDER || feat == FEAT_STAIRS ||
+	                   feat == FEAT_RAMP || feat == FEAT_ESCAPE_PIT);
 
 	/* Rule 1: Moving UP is impossible without access */
 	if (new_elev > old_elev && !has_access)

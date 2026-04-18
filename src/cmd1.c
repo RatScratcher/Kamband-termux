@@ -2210,26 +2210,24 @@ void move_player(int dir, int jumping)
 
 		/* Check for a fall from ground to low elevation */
 		/* Skip if player moved here intentionally (jumping handled in do_elevated_move) */
-		if (!jumping && get_elevation(py, px) == ELEV_GROUND && get_elevation(y, x) == ELEV_LOW && !p_ptr->flying) {
-            int feat = cave_feat[y][x];
-            int src_feat = cave_feat[py][px];
-            if (feat != FEAT_SLOPE_DOWN && feat != FEAT_RAMP_DOWN &&
-                feat != FEAT_RAMP_UP &&
-                feat != FEAT_STAIRS_DOWN && feat != FEAT_STAIRS_UP &&
-                feat != FEAT_LADDER_DOWN && feat != FEAT_LADDER_UP &&
-                feat != FEAT_ROPE_DOWN && feat != FEAT_ROPE_UP &&
-                feat != FEAT_ESCAPE_PIT &&
-                src_feat != FEAT_SLOPE_DOWN && src_feat != FEAT_RAMP_DOWN &&
-                src_feat != FEAT_RAMP_UP &&
-                src_feat != FEAT_STAIRS_DOWN && src_feat != FEAT_STAIRS_UP &&
-                src_feat != FEAT_LADDER_DOWN && src_feat != FEAT_LADDER_UP &&
-                src_feat != FEAT_ROPE_DOWN && src_feat != FEAT_ROPE_UP &&
-                src_feat != FEAT_ESCAPE_PIT) {
-                msg_print("You fall into a pit!");
-                take_hit(damroll(2, 6), "a fall");
-                p_ptr->energy_use = 100;
-            }
-        }
+		if (!jumping && !p_ptr->flying)
+		{
+		    int src_elev = get_elevation(py, px);
+		    int dest_elev = get_elevation(y, x);
+		    int feat = cave_feat[y][x];
+
+		    /* If changing elevation, check if the tile is a 'Safe Transit' feature */
+		    bool is_safe_transit = (feat == FEAT_RAMP || feat == FEAT_LADDER ||
+		                            feat == FEAT_STAIRS || feat == FEAT_ROPE ||
+		                            feat == FEAT_SLOPE || feat == FEAT_ESCAPE_PIT);
+
+		    if (src_elev != dest_elev && !is_safe_transit)
+		    {
+		        if (dest_elev < src_elev) {
+		             if (!get_check("Jump down? (Dangerous Fall) ")) return;
+		        }
+		    }
+		}
 
 		/* New location */
 		y = py = p_ptr->py;

@@ -398,10 +398,10 @@ bool make_attack_normal(int m_idx)
 			int pf = cave_feat[p_ptr->py][p_ptr->px];
 
 			/* Reference the access features from our fractal generation */
-			if (mf == FEAT_LADDER_UP || mf == FEAT_STAIRS_UP ||
-			    mf == FEAT_RAMP_UP || mf == FEAT_ESCAPE_PIT ||
-			    pf == FEAT_LADDER_UP || pf == FEAT_STAIRS_UP ||
-			    pf == FEAT_RAMP_UP || pf == FEAT_ESCAPE_PIT)
+			if (mf == FEAT_LADDER || mf == FEAT_STAIRS ||
+			    mf == FEAT_RAMP || mf == FEAT_ESCAPE_PIT ||
+			    pf == FEAT_LADDER || pf == FEAT_STAIRS ||
+			    pf == FEAT_RAMP || pf == FEAT_ESCAPE_PIT)
 			{
 				can_reach = TRUE;
 			}

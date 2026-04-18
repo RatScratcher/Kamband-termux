@@ -1000,7 +1000,7 @@ static void build_streamer2(int feat, int killwall)
 							bool valid = TRUE;
 
 							/* Streams can overwrite plain walls but not permanent walls, doors, stairs, or access points */
-							if (cave_feat[cy][cx] >= FEAT_PERM_EXTRA || cave_feat[cy][cx] == FEAT_LESS || cave_feat[cy][cx] == FEAT_MORE || (cave_feat[cy][cx] >= FEAT_DOOR_HEAD && cave_feat[cy][cx] <= FEAT_DOOR_TAIL) || (cave_feat[cy][cx] >= FEAT_SLOPE_UP && cave_feat[cy][cx] <= FEAT_ESCAPE_PIT))
+							if (cave_feat[cy][cx] >= FEAT_PERM_EXTRA || cave_feat[cy][cx] == FEAT_LESS || cave_feat[cy][cx] == FEAT_MORE || (cave_feat[cy][cx] >= FEAT_DOOR_HEAD && cave_feat[cy][cx] <= FEAT_DOOR_TAIL) || (cave_feat[cy][cx] >= FEAT_SLOPE && cave_feat[cy][cx] <= FEAT_ESCAPE_PIT))
 							{
 								valid = FALSE;
 							}
@@ -1115,7 +1115,7 @@ static void build_streamer2(int feat, int killwall)
 					continue;
 				if (cave_feat[ty][tx] >= FEAT_DOOR_HEAD && cave_feat[ty][tx] <= FEAT_DOOR_TAIL)
 					continue;
-				if (cave_feat[ty][tx] >= FEAT_SLOPE_UP && cave_feat[ty][tx] <= FEAT_ESCAPE_PIT)
+				if (cave_feat[ty][tx] >= FEAT_SLOPE && cave_feat[ty][tx] <= FEAT_ESCAPE_PIT)
 					continue;
 				/* Clear previous contents, add proper vein type */
 				cave_feat[ty][tx] = feat;
@@ -4758,7 +4758,7 @@ static void place_traps_near_chests(int chance)
  * Utility to place border cliffs and guaranteed access points
  */
 static void apply_sector_borders_and_access(int y1, int x1, int y2, int x2,
-                                            int elev_check, int edge_feat, int access_feat1, int access_feat2)
+                                            int elev_check, int edge_feat)
 {
     int y, x, i;
 
@@ -4825,7 +4825,12 @@ static void apply_sector_borders_and_access(int y1, int x1, int y2, int x2,
         for (i = 0; i < to_convert; i++) {
             int cy = access_y[i];
             int cx = access_x[i];
-            cave_feat[cy][cx] = (rand_int(100) < 50) ? access_feat1 : access_feat2;
+
+            /* Unified transit features */
+            int roll = rand_int(100);
+            if (roll < 40) cave_feat[cy][cx] = FEAT_RAMP;
+            else if (roll < 70) cave_feat[cy][cx] = FEAT_LADDER;
+            else cave_feat[cy][cx] = FEAT_STAIRS;
 
             /* SAFETY PATH LOGIC: Clear 3x3 area around access point */
             for (int dy = -1; dy <= 1; dy++) {
@@ -4836,8 +4841,9 @@ static void apply_sector_borders_and_access(int y1, int x1, int y2, int x2,
                     /* Clear hazards on ground or plateau landings */
                     if (get_elevation(ny, nx) == ELEV_GROUND || get_elevation(ny, nx) == elev_check) {
                         if (cave_feat[ny][nx] != edge_feat &&
-                            cave_feat[ny][nx] != access_feat1 &&
-                            cave_feat[ny][nx] != access_feat2) {
+                            cave_feat[ny][nx] != FEAT_RAMP &&
+                            cave_feat[ny][nx] != FEAT_LADDER &&
+                            cave_feat[ny][nx] != FEAT_STAIRS) {
 
                             /* Maintain floor type depending on elevation */
                             if (get_elevation(ny, nx) == ELEV_LOW)
@@ -4947,17 +4953,17 @@ static void build_sector_populated(int y0, int x0)
             st.feat = FEAT_HILL_TOP;
             st.elev = ELEV_HIGH;
             universal_stamp(ty, tx, st);
-            apply_sector_borders_and_access(sy1, sx1, sy2, sx2, ELEV_HIGH, FEAT_CLIFF_UP, FEAT_STAIRS_UP, FEAT_LADDER_UP);
+            apply_sector_borders_and_access(sy1, sx1, sy2, sx2, ELEV_HIGH, FEAT_CLIFF_UP);
         } else if (s_type == 1) {
             st.feat = FEAT_PIT;
             st.elev = ELEV_LOW;
             universal_stamp(ty, tx, st);
-            apply_sector_borders_and_access(sy1, sx1, sy2, sx2, ELEV_LOW, FEAT_CLIFF_DOWN, FEAT_ESCAPE_PIT, FEAT_RAMP_UP);
+            apply_sector_borders_and_access(sy1, sx1, sy2, sx2, ELEV_LOW, FEAT_CLIFF_DOWN);
         } else {
             st.feat = FEAT_ROCKY_HILL;
             st.elev = ELEV_HIGH;
             universal_stamp(ty, tx, st);
-            apply_sector_borders_and_access(sy1, sx1, sy2, sx2, ELEV_HIGH, FEAT_CLIFF_UP, FEAT_STAIRS_UP, FEAT_LADDER_UP);
+            apply_sector_borders_and_access(sy1, sx1, sy2, sx2, ELEV_HIGH, FEAT_CLIFF_UP);
         }
     }
 
@@ -5041,9 +5047,9 @@ static void build_sector_populated(int y0, int x0)
                 cave_feat[y][x] != FEAT_ROCKY_HILL &&
                 cave_feat[y][x] != FEAT_SHAL_WATER &&
                 cave_feat[y][x] != FEAT_ESCAPE_PIT &&
-                cave_feat[y][x] != FEAT_LADDER_UP &&
-                cave_feat[y][x] != FEAT_STAIRS_UP &&
-                cave_feat[y][x] != FEAT_RAMP_UP) {
+                cave_feat[y][x] != FEAT_LADDER &&
+                cave_feat[y][x] != FEAT_STAIRS &&
+                cave_feat[y][x] != FEAT_RAMP) {
 
                 bool next_to_floor = FALSE;
                 for (int dyy = -1; dyy <= 1; dyy++) {

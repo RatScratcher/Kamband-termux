@@ -3212,8 +3212,8 @@ void update_flow(void)
 				if (diff >= 2) {
 					int feat = cave_feat[y][x];
 					/* Only allow if there is a valid way down */
-					if (feat != FEAT_RAMP_DOWN && feat != FEAT_STAIRS_DOWN &&
-						feat != FEAT_LADDER_DOWN && feat != FEAT_ROPE_DOWN &&
+					if (feat != FEAT_RAMP && feat != FEAT_STAIRS &&
+						feat != FEAT_LADDER && feat != FEAT_ROPE &&
 						feat != FEAT_JUMP_POINT) {
 						continue;
 					}
@@ -3988,18 +3988,18 @@ bool elev_allows_move(int sy, int sx, int dy, int dx, bool flying)
             int src_feat = cave_feat[sy][sx];
 
             /* Need stairs, ramp, or ladder (Bi-directional check) */
-            if (feat == FEAT_RAMP_DOWN || feat == FEAT_RAMP_UP ||
-                feat == FEAT_STAIRS_DOWN || feat == FEAT_STAIRS_UP ||
-                feat == FEAT_LADDER_DOWN || feat == FEAT_LADDER_UP ||
-                feat == FEAT_ROPE_DOWN || feat == FEAT_ROPE_UP ||
+            if (feat == FEAT_RAMP ||
+                feat == FEAT_STAIRS ||
+                feat == FEAT_LADDER ||
+                feat == FEAT_ROPE ||
                 feat == FEAT_JUMP_POINT || feat == FEAT_ESCAPE_PIT ||
-                feat == FEAT_CLIFF_DOWN || feat == FEAT_SLOPE_DOWN ||
-                src_feat == FEAT_RAMP_DOWN || src_feat == FEAT_RAMP_UP ||
-                src_feat == FEAT_STAIRS_DOWN || src_feat == FEAT_STAIRS_UP ||
-                src_feat == FEAT_LADDER_DOWN || src_feat == FEAT_LADDER_UP ||
-                src_feat == FEAT_ROPE_DOWN || src_feat == FEAT_ROPE_UP ||
+                feat == FEAT_CLIFF_DOWN || feat == FEAT_SLOPE ||
+                src_feat == FEAT_RAMP ||
+                src_feat == FEAT_STAIRS ||
+                src_feat == FEAT_LADDER ||
+                src_feat == FEAT_ROPE ||
                 src_feat == FEAT_ESCAPE_PIT ||
-                src_feat == FEAT_CLIFF_DOWN || src_feat == FEAT_SLOPE_DOWN) {
+                src_feat == FEAT_CLIFF_DOWN || src_feat == FEAT_SLOPE) {
                 return TRUE;
             }
             /* Can jump if not too far and destination is safe */
@@ -4020,16 +4020,16 @@ bool elev_allows_move(int sy, int sx, int dy, int dx, bool flying)
         int src_feat = cave_feat[sy][sx];
 
         /* Steep climb - need stairs/ramp/ladder (Bi-directional check) */
-        if (feat == FEAT_RAMP_UP || feat == FEAT_RAMP_DOWN ||
-            feat == FEAT_STAIRS_UP || feat == FEAT_STAIRS_DOWN ||
-            feat == FEAT_LADDER_UP || feat == FEAT_LADDER_DOWN ||
-            feat == FEAT_ROPE_UP || feat == FEAT_ROPE_DOWN ||
+        if (feat == FEAT_RAMP ||
+            feat == FEAT_STAIRS ||
+            feat == FEAT_LADDER ||
+            feat == FEAT_ROPE ||
             feat == FEAT_CLIMBABLE ||
             feat == FEAT_ESCAPE_PIT ||
-            src_feat == FEAT_LADDER_UP || src_feat == FEAT_LADDER_DOWN ||
-            src_feat == FEAT_ROPE_UP || src_feat == FEAT_ROPE_DOWN ||
-            src_feat == FEAT_STAIRS_UP || src_feat == FEAT_STAIRS_DOWN ||
-            src_feat == FEAT_RAMP_UP || src_feat == FEAT_RAMP_DOWN ||
+            src_feat == FEAT_LADDER ||
+            src_feat == FEAT_ROPE ||
+            src_feat == FEAT_STAIRS ||
+            src_feat == FEAT_RAMP ||
             src_feat == FEAT_ESCAPE_PIT) {
             return TRUE;
         }
@@ -4108,14 +4108,11 @@ byte elev_color(int y, int x, byte base_color)
     int feat = cave_feat[y][x];
 
     switch (feat) {
-        case FEAT_RAMP_UP:
-        case FEAT_RAMP_DOWN:    return TERM_YELLOW;
-        case FEAT_LADDER_UP:
-        case FEAT_LADDER_DOWN:  return TERM_UMBER;
+        case FEAT_RAMP:         return TERM_YELLOW;
+        case FEAT_LADDER:       return TERM_UMBER;
         case FEAT_CLIMBABLE:    return TERM_L_UMBER;
         case FEAT_JUMP_POINT:   return TERM_ORANGE;
-        case FEAT_ROPE_UP:
-        case FEAT_ROPE_DOWN:    return TERM_L_UMBER;
+        case FEAT_ROPE:         return TERM_L_UMBER;
         case FEAT_ESCAPE_PIT:   return TERM_GREEN;
     }
 
@@ -4140,21 +4137,17 @@ char elev_symbol(int y, int x, char base_sym)
     int feat = cave_feat[y][x];
 
     switch (feat) {
-        case FEAT_SLOPE_UP:     return '/';
-        case FEAT_SLOPE_DOWN:   return '\\';
+        case FEAT_SLOPE:        return '/';
         case FEAT_CLIFF_UP:     return '|';
         case FEAT_CLIFF_DOWN:   return '^';
         case FEAT_HILL_TOP:     return '*';
         case FEAT_PIT:          return '~';
         case FEAT_LEDGE:        return '=';
-        case FEAT_RAMP_UP:      return '/';
-        case FEAT_RAMP_DOWN:    return '\\';
-        case FEAT_LADDER_UP:    return '=';
-        case FEAT_LADDER_DOWN:  return '=';
+        case FEAT_RAMP:         return '/';
+        case FEAT_LADDER:       return '=';
         case FEAT_CLIMBABLE:    return ':';
         case FEAT_JUMP_POINT:   return 'v';
-        case FEAT_ROPE_UP:      return '|';
-        case FEAT_ROPE_DOWN:    return '|';
+        case FEAT_ROPE:         return '|';
         case FEAT_ESCAPE_PIT:   return '+';
         default:
            return base_sym;

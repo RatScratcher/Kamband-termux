@@ -4978,25 +4978,39 @@ static void build_sector_populated(int y0, int x0)
 
             /* Transform Pit Features */
             if (current_elev == ELEV_LOW && cave_feat[y][x] == FEAT_PIT) {
-                cave_feat[y][x] = pit_feat;
+                /* Check if we are not adjacent to a cliff/edge */
+                bool is_edge = FALSE;
+                for (int dy = -1; dy <= 1; dy++) {
+                    for (int dx = -1; dx <= 1; dx++) {
+                        int ny = y + dy;
+                        int nx = x + dx;
+                        if (in_bounds(ny, nx) && get_elevation(ny, nx) != ELEV_LOW) {
+                            is_edge = TRUE;
+                        }
+                    }
+                }
+
+                if (!is_edge) {
+                    cave_feat[y][x] = pit_feat;
+                }
 
                 /* Hazards, Monsters, Items in Pits */
                 int hazard = rand_int(3);
                 switch (hazard) {
                     case 0:
-                        if (rand_int(100) < 30 && pit_feat == FEAT_PIT) cave_feat[y][x] = FEAT_SHAL_WATER;
+                        if (!is_edge && rand_int(100) < 30 && pit_feat == FEAT_PIT) cave_feat[y][x] = FEAT_SHAL_WATER;
                         break;
                     case 1:
-                        if (rand_int(100) < 15) place_trap(y, x);
+                        if (!is_edge && rand_int(100) < 15) place_trap(y, x);
                         break;
                     case 2:
                         /* Disabled aggressive placement to avoid exceeding MAX_M_IDX */
-                        /* if (rand_int(100) < 20) place_monster(y, x, MON_ALLOC_SLEEP); */
+                        /* if (!is_edge && rand_int(100) < 20) place_monster(y, x, MON_ALLOC_SLEEP); */
                         break;
                 }
 
                 /* Special central loot for hazardous pits */
-                if (pit_feat != FEAT_PIT && rand_int(100) < 5) {
+                if (!is_edge && pit_feat != FEAT_PIT && rand_int(100) < 5) {
                     /* Disabled aggressive placement to avoid exceeding MAX_O_IDX */
                     /* place_object(y, x, FALSE, FALSE); */
                 }

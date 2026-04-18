@@ -703,7 +703,7 @@ N:192:patch of grass
 G:.:G
 
 N:193:swampy patch
-G:.:B
+G:^:B
 
 N:194:muddy patch
 G:.:u

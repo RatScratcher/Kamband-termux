@@ -4757,6 +4757,135 @@ static void place_traps_near_chests(int chance)
 /*
  * Utility to place border cliffs and guaranteed access points
  */
+
+/*
+ * Identify distinct connected components of target_elev and ensure each has at least one access point.
+ */
+static void ensure_elevation_access(int y1, int x1, int y2, int x2, int target_elev, int edge_feat)
+{
+    int y, x, dy, dx;
+    int **visited;
+
+    visited = (int **)malloc(DUNGEON_HGT * sizeof(int *));
+    for (y = 0; y < DUNGEON_HGT; y++) {
+        visited[y] = (int *)calloc(DUNGEON_WID, sizeof(int));
+    }
+
+    for (y = y1; y <= y2; y++) {
+        for (x = x1; x <= x2; x++) {
+            if (!in_bounds(y, x)) continue;
+
+            if (get_elevation(y, x) == target_elev && !visited[y][x]) {
+                /* New connected component found. We will collect all edge tiles for this component. */
+                int *edge_y = (int *)malloc(DUNGEON_HGT * DUNGEON_WID * sizeof(int));
+                int *edge_x = (int *)malloc(DUNGEON_HGT * DUNGEON_WID * sizeof(int));
+                int edge_count = 0;
+
+                int *q_y = (int *)malloc(DUNGEON_HGT * DUNGEON_WID * sizeof(int));
+                int *q_x = (int *)malloc(DUNGEON_HGT * DUNGEON_WID * sizeof(int));
+                int head = 0, tail = 0;
+
+                q_y[tail] = y;
+                q_x[tail] = x;
+                tail++;
+                visited[y][x] = 1;
+
+                int comp_size = 0;
+
+                while (head < tail) {
+                    int cy = q_y[head];
+                    int cx = q_x[head];
+                    head++;
+                    comp_size++;
+
+                    /* Check if this tile is an edge tile: has edge_feat and adjacent to ELEV_GROUND */
+                    if (cave_feat[cy][cx] == edge_feat) {
+                        bool adjacent_to_ground = FALSE;
+                        for (dy = -1; dy <= 1; dy++) {
+                            for (dx = -1; dx <= 1; dx++) {
+                                int ny = cy + dy, nx = cx + dx;
+                                if (in_bounds(ny, nx) && get_elevation(ny, nx) == ELEV_GROUND) {
+                                    adjacent_to_ground = TRUE;
+                                    break;
+                                }
+                            }
+                            if (adjacent_to_ground) break;
+                        }
+                        if (adjacent_to_ground) {
+                            edge_y[edge_count] = cy;
+                            edge_x[edge_count] = cx;
+                            edge_count++;
+                        }
+                    }
+
+                    /* Expand to neighbors (8-way connected) */
+                    for (dy = -1; dy <= 1; dy++) {
+                        for (dx = -1; dx <= 1; dx++) {
+                            if (dy == 0 && dx == 0) continue;
+                            int ny = cy + dy, nx = cx + dx;
+                            if (in_bounds(ny, nx) && ny >= y1 && ny <= y2 && nx >= x1 && nx <= x2) {
+                                if (get_elevation(ny, nx) == target_elev && !visited[ny][nx]) {
+                                    visited[ny][nx] = 1;
+                                    q_y[tail] = ny;
+                                    q_x[tail] = nx;
+                                    tail++;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                /* Now we have all edge tiles for this component. Pick one to carve access. */
+                if (comp_size > 1 && edge_count > 0) {
+                    int pick = rand_int(edge_count);
+                    int cy = edge_y[pick];
+                    int cx = edge_x[pick];
+
+                    /* Unified transit features */
+                    int roll = rand_int(100);
+                    if (roll < 40) cave_feat[cy][cx] = FEAT_RAMP;
+                    else if (roll < 70) cave_feat[cy][cx] = FEAT_LADDER;
+                    else cave_feat[cy][cx] = FEAT_STAIRS;
+
+                    /* Clear hazards on ground or plateau landings */
+                    for (dy = -1; dy <= 1; dy++) {
+                        for (dx = -1; dx <= 1; dx++) {
+                            int ny = cy + dy, nx = cx + dx;
+                            if (!in_bounds(ny, nx)) continue;
+
+                            if (get_elevation(ny, nx) == ELEV_GROUND || get_elevation(ny, nx) == target_elev) {
+                                if (cave_feat[ny][nx] != edge_feat &&
+                                    cave_feat[ny][nx] != FEAT_RAMP &&
+                                    cave_feat[ny][nx] != FEAT_LADDER &&
+                                    cave_feat[ny][nx] != FEAT_STAIRS) {
+
+                                    /* Maintain floor type depending on elevation */
+                                    if (get_elevation(ny, nx) == ELEV_LOW)
+                                        cave_feat[ny][nx] = FEAT_PIT; /* Pit landing */
+                                    else if (get_elevation(ny, nx) == ELEV_HIGH)
+                                        cave_feat[ny][nx] = FEAT_HILL_TOP; /* Hill landing */
+                                    else
+                                        cave_feat[ny][nx] = FEAT_FLOOR; /* Ground landing */
+                                }
+                            }
+                        }
+                    }
+                }
+
+                free(q_y);
+                free(q_x);
+                free(edge_y);
+                free(edge_x);
+            }
+        }
+    }
+
+    for (y = 0; y < DUNGEON_HGT; y++) {
+        free(visited[y]);
+    }
+    free(visited);
+}
+
 static void apply_sector_borders_and_access(int y1, int x1, int y2, int x2,
                                             int elev_check, int edge_feat)
 {
@@ -4781,83 +4910,6 @@ static void apply_sector_borders_and_access(int y1, int x1, int y2, int x2,
         }
     }
 
-    /* 2. Place Access Points (N, S, E, W) */
-    int dy_dir[4] = {1, -1, 0, 0};
-    int dx_dir[4] = {0, 0, 1, -1};
-    int start_y[4] = {y1, y2, (y1+y2)/2, (y1+y2)/2};
-    int start_x[4] = {(x1+x2)/2, (x1+x2)/2, x1, x2};
-
-    int access_y[4];
-    int access_x[4];
-    int found_count = 0;
-
-    for (i = 0; i < 4; i++) {
-        int cy = start_y[i], cx = start_x[i];
-        bool found = FALSE;
-        for (int step = 0; step < BLOCK_HGT; step++) {
-            if (!in_bounds(cy, cx)) break;
-            if (cave_feat[cy][cx] == edge_feat) {
-                access_y[found_count] = cy;
-                access_x[found_count] = cx;
-                found_count++;
-                break;
-            }
-            cy += dy_dir[i]; cx += dx_dir[i];
-        }
-    }
-
-    /* Convert 1 to 2 edges to access points */
-    if (found_count > 0) {
-        /* Limit to 1 or 2 access points per feature max */
-        int to_convert = rand_range(1, (found_count > 2 ? 2 : found_count));
-
-        /* Shuffle the found access points */
-        for (i = 0; i < found_count; i++) {
-            int swap_idx = rand_int(found_count);
-            int temp_y = access_y[i];
-            int temp_x = access_x[i];
-            access_y[i] = access_y[swap_idx];
-            access_x[i] = access_x[swap_idx];
-            access_y[swap_idx] = temp_y;
-            access_x[swap_idx] = temp_x;
-        }
-
-        for (i = 0; i < to_convert; i++) {
-            int cy = access_y[i];
-            int cx = access_x[i];
-
-            /* Unified transit features */
-            int roll = rand_int(100);
-            if (roll < 40) cave_feat[cy][cx] = FEAT_RAMP;
-            else if (roll < 70) cave_feat[cy][cx] = FEAT_LADDER;
-            else cave_feat[cy][cx] = FEAT_STAIRS;
-
-            /* SAFETY PATH LOGIC: Clear 3x3 area around access point */
-            for (int dy = -1; dy <= 1; dy++) {
-                for (int dx = -1; dx <= 1; dx++) {
-                    int ny = cy + dy, nx = cx + dx;
-                    if (!in_bounds(ny, nx)) continue;
-
-                    /* Clear hazards on ground or plateau landings */
-                    if (get_elevation(ny, nx) == ELEV_GROUND || get_elevation(ny, nx) == elev_check) {
-                        if (cave_feat[ny][nx] != edge_feat &&
-                            cave_feat[ny][nx] != FEAT_RAMP &&
-                            cave_feat[ny][nx] != FEAT_LADDER &&
-                            cave_feat[ny][nx] != FEAT_STAIRS) {
-
-                            /* Maintain floor type depending on elevation */
-                            if (get_elevation(ny, nx) == ELEV_LOW)
-                                cave_feat[ny][nx] = FEAT_PIT; /* Pit landing */
-                            else if (get_elevation(ny, nx) == ELEV_HIGH)
-                                cave_feat[ny][nx] = FEAT_HILL_TOP; /* Hill landing */
-                            else
-                                cave_feat[ny][nx] = FEAT_FLOOR; /* Ground landing */
-                        }
-                    }
-                }
-            }
-        }
-    }
 }
 
 
@@ -4865,6 +4917,12 @@ static void apply_sector_borders_and_access(int y1, int x1, int y2, int x2,
  * Stays within a specified radius to create a standalone feature.
  * This can be called multiple times within one sector.
  */
+
+
+/*
+ * Identify distinct connected components of target_elev and ensure each has at least one access point.
+ */
+
 
 static void ensure_connectivity(int y1, int x1, int y2, int x2);
 
@@ -4966,6 +5024,12 @@ static void build_sector_populated(int y0, int x0)
             apply_sector_borders_and_access(sy1, sx1, sy2, sx2, ELEV_HIGH, FEAT_CLIFF_UP);
         }
     }
+
+
+    /* 2.4 Clean up single tiles and Ensure Elevation Access */
+    clean_isolated_features(y1, x1, y2, x2);
+    ensure_elevation_access(y1, x1, y2, x2, ELEV_HIGH, FEAT_CLIFF_UP);
+    ensure_elevation_access(y1, x1, y2, x2, ELEV_LOW, FEAT_CLIFF_DOWN);
 
     /* 2.5 Secondary Pass: Monsters, Items, Hazards, and Walls */
     /* Pit types: 0=normal, 1=swamp, 2=oil, 3=shallow water, 4=lava */
@@ -5084,8 +5148,7 @@ static void build_sector_populated(int y0, int x0)
         }
     }
 
-    /* 3.5 Tidy up single tiles */
-    clean_isolated_features(y1, x1, y2, x2);
+    /* 3.5 Tidy up single tiles (now done earlier) */
 
     /* 4. Ensure Connectivity */
     ensure_connectivity(y1, x1, y2, x2);
@@ -5160,6 +5223,12 @@ static void build_sector_cavern(int y0, int x0)
 /*
  * Ensure connectivity of floor tiles in a sector
  */
+
+/*
+ * Identify distinct connected components of target_elev and ensure each has at least one access point.
+ */
+
+
 static void ensure_connectivity(int y1, int x1, int y2, int x2)
 {
 	int h = y2 - y1 + 1;

@@ -3482,18 +3482,15 @@ bool do_elevated_move(int dir, int pickup)
     /* Handle the elevation change */
     if (dst_elev < src_elev && src_elev - dst_elev >= 1) {
         /* Descending height */
-        if (feat != FEAT_RAMP_DOWN && feat != FEAT_RAMP_UP &&
-            feat != FEAT_STAIRS_DOWN && feat != FEAT_STAIRS_UP &&
-            feat != FEAT_LADDER_DOWN && feat != FEAT_LADDER_UP &&
-            feat != FEAT_ROPE_DOWN && feat != FEAT_ROPE_UP &&
-            feat != FEAT_JUMP_POINT && feat != FEAT_ESCAPE_PIT &&
-            feat != FEAT_SLOPE_DOWN &&
-            src_feat != FEAT_RAMP_DOWN && src_feat != FEAT_RAMP_UP &&
-            src_feat != FEAT_STAIRS_DOWN && src_feat != FEAT_STAIRS_UP &&
-            src_feat != FEAT_LADDER_DOWN && src_feat != FEAT_LADDER_UP &&
-            src_feat != FEAT_ROPE_DOWN && src_feat != FEAT_ROPE_UP &&
-            src_feat != FEAT_ESCAPE_PIT &&
-            src_feat != FEAT_SLOPE_DOWN) {
+        bool is_safe_transit = (feat == FEAT_RAMP || feat == FEAT_LADDER ||
+                                feat == FEAT_STAIRS || feat == FEAT_ROPE ||
+                                feat == FEAT_SLOPE || feat == FEAT_ESCAPE_PIT ||
+                                feat == FEAT_JUMP_POINT ||
+                                src_feat == FEAT_RAMP || src_feat == FEAT_LADDER ||
+                                src_feat == FEAT_STAIRS || src_feat == FEAT_ROPE ||
+                                src_feat == FEAT_SLOPE || src_feat == FEAT_ESCAPE_PIT);
+
+        if (!is_safe_transit) {
 
             /* Confirmation */
             if (src_elev - dst_elev == 1 && dst_elev == ELEV_LOW) {
@@ -3538,10 +3535,10 @@ bool do_elevated_move(int dir, int pickup)
             msg_print("You climb up the rough surface.");
             /* Takes more time */
             p_ptr->energy_use = 150;
-        } else if (feat == FEAT_LADDER_UP || feat == FEAT_ROPE_UP) {
+        } else if (feat == FEAT_LADDER || feat == FEAT_ROPE) {
             msg_print("You climb up.");
             p_ptr->energy_use = 120;
-        } else if (feat == FEAT_RAMP_UP || feat == FEAT_STAIRS_UP) {
+        } else if (feat == FEAT_RAMP || feat == FEAT_STAIRS || feat == FEAT_SLOPE) {
             msg_print("You make your way up.");
         }
     }
@@ -3633,8 +3630,8 @@ void do_cmd_climb(void)
 
         if (dst_elev > elev ||
             feat == FEAT_CLIMBABLE ||
-            feat == FEAT_LADDER_UP ||
-            feat == FEAT_ROPE_UP) {
+            feat == FEAT_LADDER ||
+            feat == FEAT_ROPE) {
             found = TRUE;
             dir = d;
         }

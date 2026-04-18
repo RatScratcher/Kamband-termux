@@ -3520,8 +3520,8 @@ static void process_monster(int m_idx)
 				if (get_elevation(oy, ox) > get_elevation(ny, nx)) {
 					int feat = cave_feat[ny][nx];
 					/* If not using a valid access feature, prevent the move */
-					if (feat != FEAT_RAMP_DOWN && feat != FEAT_STAIRS_DOWN &&
-						feat != FEAT_LADDER_DOWN && feat != FEAT_ROPE_DOWN &&
+					if (feat != FEAT_RAMP && feat != FEAT_STAIRS &&
+						feat != FEAT_LADDER && feat != FEAT_ROPE &&
 						feat != FEAT_JUMP_POINT) {
 						do_move = FALSE;
 					}

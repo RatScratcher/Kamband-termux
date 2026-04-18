@@ -3487,13 +3487,13 @@ bool do_elevated_move(int dir, int pickup)
             feat != FEAT_LADDER_DOWN && feat != FEAT_LADDER_UP &&
             feat != FEAT_ROPE_DOWN && feat != FEAT_ROPE_UP &&
             feat != FEAT_JUMP_POINT && feat != FEAT_ESCAPE_PIT &&
-            feat != FEAT_CLIFF_DOWN && feat != FEAT_SLOPE_DOWN &&
+            feat != FEAT_SLOPE_DOWN &&
             src_feat != FEAT_RAMP_DOWN && src_feat != FEAT_RAMP_UP &&
             src_feat != FEAT_STAIRS_DOWN && src_feat != FEAT_STAIRS_UP &&
             src_feat != FEAT_LADDER_DOWN && src_feat != FEAT_LADDER_UP &&
             src_feat != FEAT_ROPE_DOWN && src_feat != FEAT_ROPE_UP &&
             src_feat != FEAT_ESCAPE_PIT &&
-            src_feat != FEAT_CLIFF_DOWN && src_feat != FEAT_SLOPE_DOWN) {
+            src_feat != FEAT_SLOPE_DOWN) {
 
             /* Confirmation */
             if (src_elev - dst_elev == 1 && dst_elev == ELEV_LOW) {

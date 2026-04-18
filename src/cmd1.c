@@ -2209,7 +2209,8 @@ void move_player(int dir, int jumping)
 		monster_swap(py, px, y, x);
 
 		/* Check for a fall from ground to low elevation */
-		if (get_elevation(py, px) == ELEV_GROUND && get_elevation(y, x) == ELEV_LOW && !p_ptr->flying) {
+		/* Skip if player moved here intentionally (jumping handled in do_elevated_move) */
+		if (!jumping && get_elevation(py, px) == ELEV_GROUND && get_elevation(y, x) == ELEV_LOW && !p_ptr->flying) {
             int feat = cave_feat[y][x];
             int src_feat = cave_feat[py][px];
             if (feat != FEAT_SLOPE_DOWN && feat != FEAT_RAMP_DOWN &&

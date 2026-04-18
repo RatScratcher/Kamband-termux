@@ -4005,7 +4005,7 @@ bool elev_allows_move(int sy, int sx, int dy, int dx, bool flying)
             /* Can jump if not too far and destination is safe */
             if (feat == FEAT_FLOOR || feat == FEAT_GRASS ||
                 feat == FEAT_SHAL_WATER || feat == FEAT_MUD ||
-                feat == FEAT_SWAMP) {
+                feat == FEAT_SWAMP || feat == FEAT_PIT) {
                 return TRUE; /* Will take damage but allowed */
             }
             return FALSE;

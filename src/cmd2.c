@@ -3480,8 +3480,8 @@ bool do_elevated_move(int dir, int pickup)
     }
 
     /* Handle the elevation change */
-    if (dst_elev < src_elev && src_elev - dst_elev >= 2) {
-        /* Descending significant height */
+    if (dst_elev < src_elev && src_elev - dst_elev >= 1) {
+        /* Descending height */
         if (feat != FEAT_RAMP_DOWN && feat != FEAT_RAMP_UP &&
             feat != FEAT_STAIRS_DOWN && feat != FEAT_STAIRS_UP &&
             feat != FEAT_LADDER_DOWN && feat != FEAT_LADDER_UP &&
@@ -3496,28 +3496,37 @@ bool do_elevated_move(int dir, int pickup)
             src_feat != FEAT_CLIFF_DOWN && src_feat != FEAT_SLOPE_DOWN) {
 
             /* Confirmation */
-            if (!get_check("Really jump off the cliff?")) return FALSE;
-
-            /* Taking a fall */
-            int damage = elev_fall_damage(src_elev, dst_elev);
-
-            /* Safe Landing Logic */
-            int reduction = (adj_dex_safe[p_ptr->stat_ind[A_DEX]] / 2) + (p_ptr->skill_stl / 2);
-            if (reduction < 0) reduction = 0;
-            damage -= reduction;
-
-            if (damage > 0) {
-                msg_print("You jump down!");
-                msg_format("You take %d damage from the fall.", damage);
-                take_hit(damage, "a fall");
-
-                /* Check for items breaking */
-                if (rand_int(100) < damage) {
-                    msg_print("Some of your items were damaged!");
-                    /* Damage random inventory item */
-                }
+            if (src_elev - dst_elev == 1 && dst_elev == ELEV_LOW) {
+                if (!get_check("Really jump into the pit?")) return FALSE;
+            } else if (src_elev - dst_elev >= 2) {
+                if (!get_check("Really jump off the cliff?")) return FALSE;
             } else {
-                msg_print("You land safely.");
+                /* Let 1-level height drops (ELEV_HIGH -> ELEV_GROUND) happen seamlessly */
+            }
+            if (src_elev - dst_elev == 1 && dst_elev != ELEV_LOW) {
+                /* Taking a small fall seamlessly - no damage or check */
+            } else {
+                /* Taking a fall */
+                int damage = elev_fall_damage(src_elev, dst_elev);
+
+                /* Safe Landing Logic */
+                int reduction = (adj_dex_safe[p_ptr->stat_ind[A_DEX]] / 2) + (p_ptr->skill_stl / 2);
+                if (reduction < 0) reduction = 0;
+                damage -= reduction;
+
+                if (damage > 0) {
+                    msg_print("You jump down!");
+                    msg_format("You take %d damage from the fall.", damage);
+                    take_hit(damage, "a fall");
+
+                    /* Check for items breaking */
+                    if (rand_int(100) < damage) {
+                        msg_print("Some of your items were damaged!");
+                        /* Damage random inventory item */
+                    }
+                } else {
+                    msg_print("You land safely.");
+                }
             }
         } else {
             /* Using safe descent */

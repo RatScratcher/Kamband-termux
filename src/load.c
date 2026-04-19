@@ -1168,9 +1168,11 @@ static errr rd_dungeon(void)
 		cells_count = 0;
 		while (cells_count < cells_total)
 		{
+			u16b tmp16u;
+
 			/* Grab RLE info */
 			rd_byte(&count);
-			rd_byte(&tmp8u);
+			rd_u16b(&tmp16u);
 
 			if (count == 0)
 			{
@@ -1186,7 +1188,7 @@ static errr rd_dungeon(void)
 					int cur_y = cells_count / DUNGEON_WID;
 					int cur_x = cells_count % DUNGEON_WID;
 
-					cave_info[cur_y][cur_x] = tmp8u;
+					cave_info[cur_y][cur_x] = tmp16u;
 					cells_count++;
 				}
 			}

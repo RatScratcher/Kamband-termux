@@ -47,7 +47,7 @@
 
 #define KAM_VERSION_MAJOR 2
 #define KAM_VERSION_MINOR 1
-#define KAM_VERSION_PATCH 8
+#define KAM_VERSION_PATCH 9
 
 /*
  * Sector Types
@@ -2650,6 +2650,7 @@
 #define CAVE_VIEW	0x20 /* view flag */
 #define CAVE_TEMP	0x40 /* temp flag */
 #define CAVE_XTRA	0x80 /* misc flag */
+#define CAVE_ACTIVE	0x0100 /* Tile has dynamic behavior/scripts */
 
 
 

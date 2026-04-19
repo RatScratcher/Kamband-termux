@@ -952,6 +952,52 @@ static int get_sector_type(int y, int x)
 	return cave_sector[y][x];
 }
 
+
+/* Process all active tiles on the level */
+static void process_active_terrain(void) {
+    int y, x;
+    bool wall_moved = FALSE;
+
+    /* On a 400x400 map, we iterate only when needed */
+    for (y = 1; y < DUNGEON_HGT - 1; y++) {
+        for (x = 1; x < DUNGEON_WID - 1; x++) {
+            if (!(cave_info[y][x] & CAVE_ACTIVE)) continue;
+
+            int feat = cave_feat[y][x];
+
+            /* SHIFTING MAZE BEHAVIOR */
+            if (feat == FEAT_WALL_EXTRA) {
+                int dir = ddd[rand_int(8)];
+                int ny = y + ddy[dir];
+                int nx = x + ddx[dir];
+
+                /* Swap with adjacent floor only */
+                if (in_bounds(ny, nx) && cave_feat[ny][nx] == FEAT_FLOOR) {
+                    /* Swap Feature */
+                    cave_feat[ny][nx] = FEAT_WALL_EXTRA;
+                    cave_feat[y][x] = FEAT_FLOOR;
+
+                    /* Swap Flags */
+                    cave_info[ny][nx] |= CAVE_ACTIVE;
+                    cave_info[y][x] &= ~CAVE_ACTIVE;
+
+                    /* Visual Update */
+                    lite_spot(y, x);
+                    lite_spot(ny, nx);
+
+                    if (distance(y, x, p_ptr->py, p_ptr->px) < 25) {
+                        wall_moved = TRUE;
+                    }
+                }
+            }
+        }
+    }
+
+    if (wall_moved && rand_int(100) < 5) {
+        msg_print("You hear the grinding of stone nearby...");
+    }
+}
+
 /*
  * Handle certain things once every 10 game turns
  */
@@ -969,6 +1015,11 @@ static void process_world(void)
 	/* Every turn */
 	process_dread();
 	process_breathing_walls();
+
+    /* Shifting Maze Timer */
+    if (turn % 10 == 0) {
+        process_active_terrain();
+    }
 
     /* Pulse */
     pulse_timer++;

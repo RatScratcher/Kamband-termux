@@ -1,31 +1,61 @@
---- src/generate.c
-+++ src/generate.c
-@@ -4916,19 +4916,24 @@
-         st.overwrite = FALSE;
-         st.circular = TRUE;
+<<<<<<< SEARCH
+/*
+ * Swap the players/monsters (if any) at two locations XXX XXX XXX
+ */
+void monster_swap(int y1, int x1, int y2, int x2)
+=======
+/* Process terrain effects for a monster at (y, x) */
+void mon_process_terrain(int m_idx, int y, int x)
+{
+	monster_type *m_ptr = &m_list[m_idx];
+	monster_race *r_ptr = &r_info[m_ptr->r_idx];
+	int feat = cave_feat[y][x];
 
-+        int sy1 = (ty - rad - 2 < y1) ? y1 : ty - rad - 2;
-+        int sx1 = (tx - rad - 2 < x1) ? x1 : tx - rad - 2;
-+        int sy2 = (ty + rad + 2 > y2) ? y2 : ty + rad + 2;
-+        int sx2 = (tx + rad + 2 > x2) ? x2 : tx + rad + 2;
-+
-         if (s_type == 0) {
-             st.feat = FEAT_HILL_TOP;
-             st.elev = ELEV_HIGH;
-             universal_stamp(ty, tx, st);
--            apply_sector_borders_and_access(y1, x1, y2, x2, ELEV_HIGH, FEAT_CLIFF_UP, FEAT_STAIRS_UP, FEAT_LADDER_UP);
-+            apply_sector_borders_and_access(sy1, sx1, sy2, sx2, ELEV_HIGH, FEAT_CLIFF_UP, FEAT_STAIRS_UP, FEAT_LADDER_UP);
-         } else if (s_type == 1) {
-             st.feat = FEAT_PIT;
-             st.elev = ELEV_LOW;
-             universal_stamp(ty, tx, st);
--            apply_sector_borders_and_access(y1, x1, y2, x2, ELEV_LOW, FEAT_CLIFF_DOWN, FEAT_ESCAPE_PIT, FEAT_RAMP_UP);
-+            apply_sector_borders_and_access(sy1, sx1, sy2, sx2, ELEV_LOW, FEAT_CLIFF_DOWN, FEAT_ESCAPE_PIT, FEAT_RAMP_UP);
-         } else {
-             st.feat = FEAT_ROCKY_HILL;
-             st.elev = ELEV_HIGH;
-             universal_stamp(ty, tx, st);
--            apply_sector_borders_and_access(y1, x1, y2, x2, ELEV_HIGH, FEAT_CLIFF_UP, FEAT_STAIRS_UP, FEAT_LADDER_UP);
-+            apply_sector_borders_and_access(sy1, sx1, sy2, sx2, ELEV_HIGH, FEAT_CLIFF_UP, FEAT_STAIRS_UP, FEAT_LADDER_UP);
-         }
-     }
+	/* Flying monsters ignore ground hazards */
+	if (r_ptr->flags2 & RF2_FLY) return;
+
+	/* Handle Oil */
+	if (feat == FEAT_OIL)
+	{
+		/* Energy penalty: slower movement */
+		m_ptr->energy -= 50;
+
+		/* Slip check: 50% chance (increased for insects) */
+		int chance = 50;
+		if (strchr("aAsS", r_ptr->d_char)) chance = 80; /* Ants/Spiders hate oil */
+
+		if (rand_int(100) < chance)
+		{
+			if (m_ptr->ml && m_ptr->is_pet)
+			{
+				char m_name[80];
+				monster_desc(m_name, m_ptr, 0);
+				msg_format("The %s slips on the oil!", m_name);
+			}
+			/* 'Knock out' - heavy stun or temporary sleep */
+			m_ptr->stunned += 10 + rand_int(20);
+			if (m_ptr->stunned > 50) m_ptr->csleep = 5; /* Actually knocked out */
+		}
+	}
+
+	/* Handle Ice */
+	if (feat == FEAT_ICE)
+	{
+		if (rand_int(100) < 30 && !(r_ptr->flags3 & RF3_IM_COLD))
+		{
+			if (m_ptr->ml && m_ptr->is_pet)
+			{
+				char m_name[80];
+				monster_desc(m_name, m_ptr, 0);
+				msg_format("The %s loses its footing on the ice!", m_name);
+			}
+			m_ptr->stunned += rand_int(10);
+		}
+	}
+}
+
+/*
+ * Swap the players/monsters (if any) at two locations XXX XXX XXX
+ */
+void monster_swap(int y1, int x1, int y2, int x2)
+>>>>>>> REPLACE

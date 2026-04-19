@@ -600,6 +600,7 @@ extern void update_mon(int m_idx, bool full);
 extern void update_monsters(bool full);
 extern bool monster_check_cliff_move(int m_idx, int ny, int nx);
 extern void monster_swap(int y1, int x1, int y2, int x2);
+extern void mon_process_terrain(int m_idx, int y, int x);
 extern s16b player_place(int y, int x);
 extern s16b monster_place(int y, int x, monster_type * n_ptr);
 extern bool place_monster_aux(int y, int x, int r_idx, int flags);

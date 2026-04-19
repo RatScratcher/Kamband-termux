@@ -3104,6 +3104,9 @@ static void process_monster(int m_idx)
 	bool player_is_sacred = sacred_monster(r_ptr);
 	bool monster_is_smart = r_ptr->flags2 & RF2_SMART;
 
+	/* Process terrain hazard effects at the start of the monster's turn */
+	mon_process_terrain(m_idx, m_ptr->fy, m_ptr->fx);
+
 	bool did_open_door;
 	bool did_bash_door;
 	bool did_take_item;

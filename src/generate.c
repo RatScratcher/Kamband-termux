@@ -707,7 +707,11 @@ static void place_random_door(int y, int x)
  */
 static void alloc_stairs(int feat, int num, int walls, bool force_room)
 {
-	int y, x, i, j, flag;
+	int y, x, i, j;
+	bool placed;
+
+	/* The walls parameter is now unused, as stairs don't need to be near walls */
+	(void)walls;
 
     if (p_ptr->inside_special == SPECIAL_DREAM) {
         /* Only place one exit */
@@ -724,69 +728,59 @@ static void alloc_stairs(int feat, int num, int walls, bool force_room)
 	/* Place "num" stairs */
 	for (i = 0; i < num; i++)
 	{
-		/* Place some stairs */
-		for (flag = FALSE; !flag;)
+		placed = FALSE;
+
+		/* Try several times */
+		for (j = 0; j < 3000; j++)
 		{
-			/* Try several times, then decrease "walls" */
-			for (j = 0; !flag && j < 3000; j++)
+
+			/* Pick a random grid */
+			y = rand_int(DUNGEON_HGT);
+			x = rand_int(DUNGEON_WID);
+
+			/* Require "naked" floor grid */
+			if (!cave_naked_bold(y, x))
+				continue;
+
+			/* Force room if requested */
+			if (force_room && !(cave_info[y][x] & CAVE_ROOM))
+				continue;
+
+			/* Town -- must go down */
+			if (!p_ptr->depth)
 			{
-
-				/* Pick a random grid */
-				y = rand_int(DUNGEON_HGT);
-				x = rand_int(DUNGEON_WID);
-
-				/* Require "naked" floor grid */
-				if (!cave_naked_bold(y, x))
-					continue;
-
-				/* Force room if requested */
-				if (force_room && !(cave_info[y][x] & CAVE_ROOM))
-					continue;
-
-				/* Require a certain number of adjacent walls */
-				if (next_to_walls(y, x) < walls)
-					continue;
-
-				/* Town -- must go down */
-				if (!p_ptr->depth)
-				{
-					/* Clear previous contents, add down stairs */
-				  if (p_ptr->inside_special == SPECIAL_WILD) {
-				    cave_feat[y][x] = FEAT_SHAFT;
-				  } else {
-				    cave_feat[y][x] = FEAT_MORE;
-				  }
-				}
-
-				/* Quest -- must go up */
-				else if (p_ptr->inside_special == SPECIAL_QUEST ||
-					(p_ptr->depth >= MAX_DEPTH - 1))
-				{
-					/* Clear previous contents, add up stairs */
-					cave_feat[y][x] = FEAT_LESS;
-				}
-
-				/* Requested type */
-				else
-				{
-					/* Clear previous contents, add stairs */
-					cave_feat[y][x] = feat;
-				}
-
-				/* All done */
-				flag = TRUE;
+				/* Clear previous contents, add down stairs */
+			  if (p_ptr->inside_special == SPECIAL_WILD) {
+			    cave_feat[y][x] = FEAT_SHAFT;
+			  } else {
+			    cave_feat[y][x] = FEAT_MORE;
+			  }
 			}
 
-			/* Require fewer walls */
-			if (walls)
+			/* Quest -- must go up */
+			else if (p_ptr->inside_special == SPECIAL_QUEST ||
+				(p_ptr->depth >= MAX_DEPTH - 1))
 			{
-				walls--;
+				/* Clear previous contents, add up stairs */
+				cave_feat[y][x] = FEAT_LESS;
 			}
+
+			/* Requested type */
 			else
 			{
-				/* Failed to find a spot even with 0 walls required. Bail out to avoid infinite loop. */
-				return;
+				/* Clear previous contents, add stairs */
+				cave_feat[y][x] = feat;
 			}
+
+			/* All done */
+			placed = TRUE;
+			break;
+		}
+
+		if (!placed)
+		{
+			/* Failed to find a spot. Bail out to avoid infinite loop. */
+			return;
 		}
 	}
 }

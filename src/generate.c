@@ -398,12 +398,42 @@ static void rand_dir(int *rdir, int *cdir)
 
 
 /*
+ * Check if the area around a given coordinate is free of dangerous terrain.
+ */
+static bool is_safe_player_spot(int y, int x)
+{
+	int dy, dx;
+	for (dy = -2; dy <= 2; dy++)
+	{
+		for (dx = -2; dx <= 2; dx++)
+		{
+			int ny = y + dy;
+			int nx = x + dx;
+
+			/* Out of bounds is technically safe from terrain hazards, but let's just check valid bounds */
+			if (in_bounds(ny, nx))
+			{
+				int feat = cave_feat[ny][nx];
+				if (feat == FEAT_OIL || feat == FEAT_ACID ||
+				    feat == FEAT_SHAL_LAVA || feat == FEAT_DEEP_LAVA ||
+				    feat == FEAT_DEEP_WATER || feat == FEAT_OIL_BURNING)
+				{
+					return FALSE;
+				}
+			}
+		}
+	}
+	return TRUE;
+}
+
+/*
  * Returns random co-ordinates for player/monster/object
  */
 static void new_player_spot(void)
 {
 	int y = p_ptr->py, x = p_ptr->px;
 	int i;
+	int loops = 0;
 
 	/* Find level start (up stairs) to seed loot generation logic */
 	int start_feat = (!p_ptr->depth) ? FEAT_MORE : FEAT_LESS;
@@ -417,10 +447,13 @@ static void new_player_spot(void)
 		{
 			if (cave_feat[y][x] == start_feat && cave_naked_bold(y, x))
 			{
-				/* Save the location */
-				temp_y[temp_n] = y;
-				temp_x[temp_n] = x;
-				temp_n++;
+				if (is_safe_player_spot(y, x))
+				{
+					/* Save the location */
+					temp_y[temp_n] = y;
+					temp_x[temp_n] = x;
+					temp_n++;
+				}
 			}
 		}
 	}
@@ -440,6 +473,7 @@ static void new_player_spot(void)
 		/* Pick a legal spot */
 		y = rand_range(1, DUNGEON_HGT - 2);
 		x = rand_range(1, DUNGEON_WID - 2);
+		loops++;
 
 		/* Must be a "naked" floor grid, or a natural feature (grass, trees, mud, swamp) that is empty of monsters and items */
 		if (!cave_naked_bold(y, x))
@@ -461,6 +495,10 @@ static void new_player_spot(void)
 		if (cave_info[y][x] & (CAVE_ICKY))
 			continue;
 
+		/* Ensure the area is safe from dangerous terrain, but give up if we can't find one */
+		if (loops < 1000 && !is_safe_player_spot(y, x))
+			continue;
+
 		/* Done */
 		break;
 	}
@@ -477,11 +515,13 @@ static void old_player_spot(void)
 {
 	int y = p_ptr->py, x = p_ptr->px;
 	int d = 4;
+	int loops = 0;
 
 	/* Place the player */
 	while (1)
 	{
 		d++;
+		loops++;
 		scatter(&y, &x, p_ptr->py, p_ptr->px, d / 5, 0);
 
 		/* Must be a "naked" floor grid, or a natural feature */
@@ -502,6 +542,10 @@ static void old_player_spot(void)
 
 		/* Refuse to start on anti-teleport grids */
 		if (cave_info[y][x] & (CAVE_ICKY))
+			continue;
+
+		/* Ensure the area is safe from dangerous terrain, but give up if we can't find one */
+		if (loops < 1000 && !is_safe_player_spot(y, x))
 			continue;
 
 		/* Done */

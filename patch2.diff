@@ -1,0 +1,8 @@
+<<<<<<< SEARCH
+extern void monster_desc(char *desc, monster_type * m_ptr, int mode);
+extern void monster_swap(int y1, int x1, int y2, int x2);
+=======
+extern void monster_desc(char *desc, monster_type * m_ptr, int mode);
+extern void mon_process_terrain(int m_idx, int y, int x);
+extern void monster_swap(int y1, int x1, int y2, int x2);
+>>>>>>> REPLACE

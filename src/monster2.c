@@ -1402,6 +1402,57 @@ bool monster_check_cliff_move(int m_idx, int ny, int nx)
 	return TRUE;
 }
 
+/* Process terrain effects for a monster at (y, x) */
+void mon_process_terrain(int m_idx, int y, int x)
+{
+	monster_type *m_ptr = &m_list[m_idx];
+	monster_race *r_ptr = &r_info[m_ptr->r_idx];
+	int feat = cave_feat[y][x];
+
+	/* Flying monsters ignore ground hazards */
+	if (r_ptr->flags2 & RF2_FLY) return;
+
+	/* Handle Oil */
+	if (feat == FEAT_OIL)
+	{
+		/* Energy penalty: slower movement */
+		m_ptr->energy -= 50;
+
+		/* Slip check: 50% chance (increased for insects) */
+		int chance = 50;
+		if (strchr("aAsS", r_ptr->d_char)) chance = 80; /* Ants/Spiders hate oil */
+
+		if (rand_int(100) < chance)
+		{
+			if (m_ptr->ml && m_ptr->is_pet)
+			{
+				char m_name[80];
+				monster_desc(m_name, m_ptr, 0);
+				msg_format("%^s slips on the oil!", m_name);
+			}
+			/* 'Knock out' - heavy stun or temporary sleep */
+			m_ptr->stunned += 10 + rand_int(20);
+			if (m_ptr->stunned > 50) m_ptr->csleep = 5; /* Actually knocked out */
+		}
+	}
+
+	/* Handle Ice */
+	if (feat == FEAT_ICE)
+	{
+		if (rand_int(100) < 30 && !(r_ptr->flags3 & RF3_IM_COLD))
+		{
+			if (m_ptr->ml && m_ptr->is_pet)
+			{
+				char m_name[80];
+				monster_desc(m_name, m_ptr, 0);
+				msg_format("%^s loses its footing on the ice!", m_name);
+			}
+			m_ptr->stunned += rand_int(10);
+		}
+	}
+}
+
+
 /*
  * Swap the players/monsters (if any) at two locations XXX XXX XXX
  */

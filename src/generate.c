@@ -5480,6 +5480,15 @@ static void build_sector_shifting_maze(int y0, int x0)
         int ty = rand_range(y1 + 3, y2 - 3);
         int tx = rand_range(x1 + 3, x2 - 3);
         universal_stamp(ty, tx, wall_stamp);
+
+        /* NEW: Mark the sector's stamped walls as active */
+        for (y = y1; y <= y2; y++) {
+            for (x = x1; x <= x2; x++) {
+                if (cave_feat[y][x] == FEAT_WALL_EXTRA) {
+                    cave_info[y][x] |= CAVE_ACTIVE;
+                }
+            }
+        }
     }
 
     ensure_connectivity(y1, x1, y2, x2);

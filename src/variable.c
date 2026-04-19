@@ -363,7 +363,7 @@ s16b cave_elev[DUNGEON_HGT][DUNGEON_WID];
 /*
  * The array of cave grid info flags
  */
-byte cave_info[DUNGEON_HGT][DUNGEON_WID];
+u16b cave_info[DUNGEON_HGT][DUNGEON_WID];
 
 /*
  * The array of cave grid sector types

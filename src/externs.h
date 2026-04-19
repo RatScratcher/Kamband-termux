@@ -277,7 +277,7 @@ extern s16b cave_cost[DUNGEON_HGT][DUNGEON_WID];
 extern s16b cave_when[DUNGEON_HGT][DUNGEON_WID];
 extern cave_type cave[DUNGEON_HGT][DUNGEON_WID];
 extern s16b cave_elev[DUNGEON_HGT][DUNGEON_WID];
-extern byte cave_info[DUNGEON_HGT][DUNGEON_WID];
+extern u16b cave_info[DUNGEON_HGT][DUNGEON_WID];
 extern byte cave_sector[DUNGEON_HGT][DUNGEON_WID];
 extern byte cave_feat[DUNGEON_HGT][DUNGEON_WID];
 extern cover_data *cave_cover[DUNGEON_HGT][DUNGEON_WID];

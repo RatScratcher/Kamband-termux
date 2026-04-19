@@ -1034,26 +1034,28 @@ static void wr_dungeon(void)
 	/*** Simple "Run-Length-Encoding" of cave ***/
 
 	/* Note that this will induce two wasted bytes */
-	count = 0;
-	prev_char = 0;
-
-	/* Dump the cave */
-	for (y = 0; y < DUNGEON_HGT; y++)
 	{
-		for (x = 0; x < DUNGEON_WID; x++)
+		u16b prev_info = 0;
+		u16b tmp16u;
+		count = 0;
+
+		/* Dump the cave */
+		for (y = 0; y < DUNGEON_HGT; y++)
 		{
-			/* Extract a byte */
-			tmp8u = cave_info[y][x];
+			for (x = 0; x < DUNGEON_WID; x++)
+			{
+				/* Extract a u16b */
+				tmp16u = cave_info[y][x];
 
 			/* If the run is broken, or too full, flush it */
-			if ((tmp8u != prev_char) || (count == MAX_UCHAR))
+			if ((tmp16u != prev_info) || (count == MAX_UCHAR))
 			{
 				if (count)
 				{
 					wr_byte((byte) count);
-					wr_byte((byte) prev_char);
+					wr_u16b(prev_info);
 				}
-				prev_char = tmp8u;
+				prev_info = tmp16u;
 				count = 1;
 			}
 
@@ -1069,7 +1071,8 @@ static void wr_dungeon(void)
 	if (count)
 	{
 		wr_byte((byte) count);
-		wr_byte((byte) prev_char);
+		wr_u16b(prev_info);
+	}
 	}
 
 	/*** Simple "Run-Length-Encoding" of elevation ***/

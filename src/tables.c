@@ -2814,80 +2814,31 @@ cptr mutation_names[MAX_MUTS][3] = {
 
   /*-*-*/
 
-	{"Feeble Mind", "Your brain shrivels!",
-		"You regain normal intelligence."},
-
-	{"Atrophied musculature", "Your muscles are atrophied!",
-		"You regain normal strength."},
-
-	{"Artheosclerosis", "Your veins become blocked!",
-		"Your veins become unblocked."},
-
-	{"Closed-mindedness", "You become very closed-minded!",
-		"You stop being closed-minded."},
-
-	{"Skin infection", "Your skin becomes infected!",
-		"Your skin infection is cured."},
-
-	{"Shrunken nervous system", "Your reactions are now much slower!",
-		"Your nervous system regains former size."},
-
-	{"Short Legs", "Your legs become short and stubby!",
-		"Your legs return to former size."},
-
-	{"Foul Stench", "You emit a foul stench!",
-		"The foul stench dissipates."},
-
-	{"Magnetic field", "Your skin attracts sharp metal objects!",
-		"Your magnetic field disappears."},
-
 	{NULL, NULL, NULL},
-
-	{"Blindness", "You are permanently blind!",
-		"You can see again!"},
-
-	{"Cowardice", "You become extremely cowardly!",
-		"Your cowardice is cured."},
-
-	{"Hallucination", "You start randomly hallucinating!",
-		"Your hallucinations are cured."},
-
-	{"Immune deficiency", "You are extremely vulnerable to disease!",
-		"Your immune deficiency is cured."},
-
-	{"Confused", "You're disoriented!",
-		"Your disorientation is cured."},
-
-	{"Epilepsy", "You are epileptic!",
-		"Your epilepsy is cured."},
-
-	{"Hemophelia", "Your blood doesn't clot anymore!",
-		"Your hemophelia is cured."},
-
-	{"Tapeworms", "You grow parasitic worms in your stomach!",
-		"Your tapeworms die off."},
-
-	{"Concussions", "You are frequently stunned.",
-		"Your concussions are cured."},
-
-	{"Space discontinuum", "You feel lost!",
-		"You are now firmly grounded."},
-
-	{"Time discontinuum", "You memories fade...",
-		"You regain your memories."},
-
-	{"Mechanical stupidity", "You lose proficiency with devices!",
-		"You regain proficiency with devices."},
-
-	{"Mana magnet", "You are defenceless against magical attacks!",
-		"You regain your magical defences."},
-
-	{"Odor", "You start letting out a disgusting smell!",
-		"Your disgusting smell goes away."},
-
-	{"Stunted fingers",
-			"You're not as good with weapons as you used to be...",
-		"Your stunted fingers return to normal size."},
+	{NULL, NULL, NULL},
+	{NULL, NULL, NULL},
+	{NULL, NULL, NULL},
+	{NULL, NULL, NULL},
+	{NULL, NULL, NULL},
+	{NULL, NULL, NULL},
+	{NULL, NULL, NULL},
+	{NULL, NULL, NULL},
+	{NULL, NULL, NULL},
+	{NULL, NULL, NULL},
+	{NULL, NULL, NULL},
+	{NULL, NULL, NULL},
+	{NULL, NULL, NULL},
+	{NULL, NULL, NULL},
+	{NULL, NULL, NULL},
+	{NULL, NULL, NULL},
+	{NULL, NULL, NULL},
+	{NULL, NULL, NULL},
+	{NULL, NULL, NULL},
+	{NULL, NULL, NULL},
+	{NULL, NULL, NULL},
+	{NULL, NULL, NULL},
+	{NULL, NULL, NULL},
+	{NULL, NULL, NULL},
 
 	{"Echolocation Pulse",
 			"You feel a thrumming in your mind.",

@@ -1452,6 +1452,7 @@ int generate_mutation(bool silent)
 	while (looper)
 	{
 		which_mut = rand_int(MAX_MUTS);
+		if (which_mut >= MUT_MINUS_INT && which_mut <= MUT_MINUS_FIGHT) continue;
 		which_var = which_mut / 32;
 		which_flg = 1L << (which_mut % 32);
 

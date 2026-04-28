@@ -7046,7 +7046,14 @@ static void shuffle_unstable_scrolls(void);
 void generate_cave(void)
 {
 	int y, x, num;
+	int w, h;
+	const char *msg = "Generating level... please wait.";
 
+	/* Clear the screen and alert the player */
+	Term_clear();
+	Term_get_size(&w, &h);
+	Term_putstr((w - strlen(msg)) / 2, h / 2, -1, TERM_WHITE, msg);
+	Term_fresh();
 
 	/* The dungeon is not ready */
 	character_dungeon = FALSE;

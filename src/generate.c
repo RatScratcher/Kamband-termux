@@ -3186,10 +3186,16 @@ static void build_tunnel(int row1, int col1, int row2, int col2)
 	int row_dir, col_dir;
 	int start_row, start_col;
 	int main_loop_count = 0;
+	int dist, main_loop_max;
 
 	bool door_flag = FALSE;
 
+	/* Add early termination if rooms are close */
+	dist = ABS(row1 - row2) + ABS(col1 - col2);
+	if (dist < 5) return;  /* Too close, skip tunnel */
 
+	/* Reduce max iterations from 2000 to 500 for most tunnels */
+	main_loop_max = (dist < 30) ? 500 : 2000;
 
 	/* Reset the arrays */
 	dun->tunn_n = 0;
@@ -3206,7 +3212,7 @@ static void build_tunnel(int row1, int col1, int row2, int col2)
 	while ((row1 != row2) || (col1 != col2))
 	{
 		/* Mega-Hack -- Paranoia -- prevent infinite loops */
-		if (main_loop_count++ > 2000)
+		if (main_loop_count++ > main_loop_max)
 			break;
 
 		/* Allow bends in the tunnel */

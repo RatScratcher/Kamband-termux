@@ -174,7 +174,7 @@ static void universal_stamp(int y0, int x0, stamp_type s)
 /*
  * Dungeon generation values
  */
-#define DUN_ROOMS	400 /* Number of rooms to attempt */
+#define DUN_ROOMS	200 /* Number of rooms to attempt */
 #define DUN_UNUSUAL	200	/* Level/chance of unusual room */
 #define DUN_DEST	15 /* 1/chance of having a destroyed level */
 
@@ -6073,7 +6073,8 @@ static void cave_gen(void)
 	dun_data dun_body;
 
 	byte level_bg = FEAT_WALL_EXTRA;
-	s16b dun_rooms = DUN_ROOMS * 3;
+	int base_rooms = (p_ptr->depth < 10) ? DUN_ROOMS : (DUN_ROOMS + p_ptr->depth * 2);
+	s16b dun_rooms = base_rooms * 2;
 
 	/* Global data */
 	dun = &dun_body;

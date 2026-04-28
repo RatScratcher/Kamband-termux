@@ -1408,6 +1408,8 @@ static void build_type1(int yval, int xval)
 {
 	int y, x, y2, x2;
 	int y1, x1;
+	byte *feat_row;
+	u16b *info_row;
 
 	bool light;
 
@@ -1426,25 +1428,33 @@ static void build_type1(int yval, int xval)
 	/* Place a full floor under the room */
 	for (y = y1 - 1; y <= y2 + 1; y++)
 	{
+		feat_row = cave_feat[y];
+		info_row = cave_info[y];
 		for (x = x1 - 1; x <= x2 + 1; x++)
 		{
-			cave_feat[y][x] = FEAT_FLOOR;
-			cave_info[y][x] |= (CAVE_ROOM);
+			feat_row[x] = FEAT_FLOOR;
+			info_row[x] |= (CAVE_ROOM);
 			if (light)
-				cave_info[y][x] |= (CAVE_GLOW);
+				info_row[x] |= (CAVE_GLOW);
 		}
 	}
 
 	/* Walls around the room */
 	for (y = y1 - 1; y <= y2 + 1; y++)
 	{
-		cave_feat[y][x1 - 1] = FEAT_WALL_OUTER;
-		cave_feat[y][x2 + 1] = FEAT_WALL_OUTER;
+		feat_row = cave_feat[y];
+		feat_row[x1 - 1] = FEAT_WALL_OUTER;
+		feat_row[x2 + 1] = FEAT_WALL_OUTER;
 	}
-	for (x = x1 - 1; x <= x2 + 1; x++)
+
 	{
-		cave_feat[y1 - 1][x] = FEAT_WALL_OUTER;
-		cave_feat[y2 + 1][x] = FEAT_WALL_OUTER;
+		byte *feat_row_top = cave_feat[y1 - 1];
+		byte *feat_row_bottom = cave_feat[y2 + 1];
+		for (x = x1 - 1; x <= x2 + 1; x++)
+		{
+			feat_row_top[x] = FEAT_WALL_OUTER;
+			feat_row_bottom[x] = FEAT_WALL_OUTER;
+		}
 	}
 
 
@@ -1453,9 +1463,10 @@ static void build_type1(int yval, int xval)
 	{
 		for (y = y1; y <= y2; y += 2)
 		{
+			feat_row = cave_feat[y];
 			for (x = x1; x <= x2; x += 2)
 			{
-				cave_feat[y][x] = FEAT_WALL_INNER;
+				feat_row[x] = FEAT_WALL_INNER;
 			}
 		}
 	}
@@ -1465,13 +1476,19 @@ static void build_type1(int yval, int xval)
 	{
 		for (y = y1 + 2; y <= y2 - 2; y += 2)
 		{
-			cave_feat[y][x1] = FEAT_WALL_INNER;
-			cave_feat[y][x2] = FEAT_WALL_INNER;
+			feat_row = cave_feat[y];
+			feat_row[x1] = FEAT_WALL_INNER;
+			feat_row[x2] = FEAT_WALL_INNER;
 		}
-		for (x = x1 + 2; x <= x2 - 2; x += 2)
+
 		{
-			cave_feat[y1][x] = FEAT_WALL_INNER;
-			cave_feat[y2][x] = FEAT_WALL_INNER;
+			byte *feat_row_top_ragged = cave_feat[y1];
+			byte *feat_row_bottom_ragged = cave_feat[y2];
+			for (x = x1 + 2; x <= x2 - 2; x += 2)
+			{
+				feat_row_top_ragged[x] = FEAT_WALL_INNER;
+				feat_row_bottom_ragged[x] = FEAT_WALL_INNER;
+			}
 		}
 	}
 

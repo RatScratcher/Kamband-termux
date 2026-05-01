@@ -11,6 +11,58 @@
 #include "angband.h"
 
 
+#include <sys/time.h>
+#include <sys/resource.h>
+#if defined(__linux__) || defined(__linux) || defined(linux) || defined(__gnu_linux__)
+#include <unistd.h>
+#endif
+
+long get_current_rss_kb(void)
+{
+#if defined(__linux__) || defined(__linux) || defined(linux) || defined(__gnu_linux__)
+	FILE* fp = fopen("/proc/self/statm", "r");
+	long rss = 0;
+	if (fp)
+	{
+		long dummy;
+		if (fscanf(fp, "%ld %ld", &dummy, &rss) == 2)
+		{
+			rss *= (sysconf(_SC_PAGESIZE) / 1024);
+		}
+		fclose(fp);
+	}
+	return rss;
+#else
+	struct rusage usage;
+	getrusage(RUSAGE_SELF, &usage);
+	return usage.ru_maxrss;
+#endif
+}
+
+void log_metric(const char *event_type, long duration_ms)
+{
+	if (!arg_headless) return;
+
+	FILE *f = fopen("kamband_stats.csv", "a");
+	if (!f) return;
+
+	fseek(f, 0, SEEK_END);
+	if (ftell(f) == 0)
+	{
+		fprintf(f, "turn,event_type,duration_ms,mem_kb,depth,x,y,elevation\n");
+	}
+
+	long mem_kb = get_current_rss_kb();
+	int elev = get_elevation(p_ptr->py, p_ptr->px);
+
+	fprintf(f, "%ld,%s,%ld,%ld,%d,%d,%d,%d\n",
+			(long)turn, event_type, duration_ms, mem_kb,
+			(int)p_ptr->depth, (int)p_ptr->px, (int)p_ptr->py, elev);
+	fclose(f);
+}
+
+
+
 #ifndef HAS_MEMSET
 
 /*
@@ -1647,6 +1699,18 @@ char inkey(void)
 {
 	int v;
 
+	if (arg_headless)
+	{
+		int r = rand_int(100);
+		if (r < 20) return '\r';
+		if (r < 40) return 'y';
+		if (r < 50) return 'n';
+		if (r < 60) return ESCAPE;
+		if (r < 80) return '1' + rand_int(9);
+		return 'a' + rand_int(10);
+	}
+
+
 	char kk;
 
 	char ch = 0;
@@ -2265,6 +2329,12 @@ static void msg_flush(int x)
 {
 	byte a = TERM_L_BLUE;
 
+	if (arg_headless)
+	{
+		Term_erase(0, 0, 255);
+		return;
+	}
+
 	/* Pause for response */
 	Term_putstr(x, 0, -1, a, "-more-");
 
@@ -2321,6 +2391,8 @@ void msg_print(cptr msg)
 void mprint(byte priority, cptr msg)
 {
 	static int p = 0;
+	if (arg_headless && msg) { printf("%s\n", msg); }
+
 
 	int n;
 
@@ -2939,6 +3011,9 @@ bool get_check(cptr prompt)
 
 	char buf[80];
 
+	if (arg_headless) return TRUE;
+
+
 	/* Paranoia XXX XXX XXX */
 	msg_print(NULL);
 
@@ -3152,6 +3227,14 @@ void request_command(bool shopping)
 	int i;
 
 	char cmd;
+
+	if (arg_headless)
+	{
+		p_ptr->command_cmd = get_fuzz_command();
+		p_ptr->command_dir = 0;
+		return;
+	}
+
 
 	int mode;
 

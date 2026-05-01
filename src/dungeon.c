@@ -9,6 +9,7 @@
  */
 
 #include "angband.h"
+#include <sys/time.h>
 #include "lore.h"
 #include "pursuit.h"
 
@@ -3483,6 +3484,32 @@ static void dungeon(void)
 
 		/* Count game turns */
 		turn++;
+
+		if (arg_headless)
+		{
+			static struct timeval last_turn_time;
+			static bool first = TRUE;
+			struct timeval tv_end;
+
+			if (first)
+			{
+				gettimeofday(&last_turn_time, NULL);
+				first = FALSE;
+			}
+			else
+			{
+				gettimeofday(&tv_end, NULL);
+				long duration = (tv_end.tv_sec - last_turn_time.tv_sec) * 1000 + (tv_end.tv_usec - last_turn_time.tv_usec) / 1000;
+				log_metric("turn", duration);
+				last_turn_time = tv_end;
+			}
+
+			if (arg_headless_turns > 0 && turn >= arg_headless_turns)
+			{
+				p_ptr->is_dead = TRUE;
+				break;
+			}
+		}
 	}
 }
 
@@ -3546,6 +3573,27 @@ static bool granted_resurrection(void)
  * we mark successful loading using the "Rand_quick" flag.  This
  * is a hack but it optimizes loading of savefiles.  XXX XXX
  */
+
+
+/*
+ * Fuzz command generator for headless mode
+ */
+char get_fuzz_command(void)
+{
+	int r = rand_int(100);
+	if (r < 70)
+	{
+		const char moves[] = "12346789";
+		return moves[rand_int(8)];
+	}
+	else if (r < 80)
+	{
+		const char actions[] = "s<>R";
+		return actions[rand_int(4)];
+	}
+	return ESCAPE;
+}
+
 void play_game(bool new_game)
 {
 	/* Hack -- Increase "icky" depth */
@@ -3699,7 +3747,21 @@ void play_game(bool new_game)
 
 	/* Generate a dungeon level if needed */
 	if (!character_dungeon)
-		generate_cave();
+	{
+		if (arg_headless)
+		{
+			struct timeval tv_start, tv_end;
+			gettimeofday(&tv_start, NULL);
+			generate_cave();
+			gettimeofday(&tv_end, NULL);
+			long duration = (tv_end.tv_sec - tv_start.tv_sec) * 1000 + (tv_end.tv_usec - tv_start.tv_usec) / 1000;
+			log_metric("level_gen", duration);
+		}
+		else
+		{
+			generate_cave();
+		}
+	}
 
 	if (p_ptr->depth && new_game)
 		stair_creation();
@@ -3932,7 +3994,19 @@ void play_game(bool new_game)
 			break;
 
 		/* Make a new level */
+			if (arg_headless)
+	{
+		struct timeval tv_start, tv_end;
+		gettimeofday(&tv_start, NULL);
 		generate_cave();
+		gettimeofday(&tv_end, NULL);
+		long duration = (tv_end.tv_sec - tv_start.tv_sec) * 1000 + (tv_end.tv_usec - tv_start.tv_usec) / 1000;
+		log_metric("level_gen", duration);
+	}
+	else
+	{
+		generate_cave();
+	}
 	}
 
 	/* Hack -- update all info. */

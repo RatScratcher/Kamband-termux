@@ -52,6 +52,8 @@ u16b sf_saves; /* Number of "saves" during this life */
  */
 bool arg_fiddle; /* Command arg -- Request fiddle mode */
 bool arg_wizard; /* Command arg -- Request wizard mode */
+bool arg_headless; /* Command arg -- Request headless mode */
+int arg_headless_turns; /* Command arg -- Number of turns to run in headless mode */
 bool arg_sound;	/* Command arg -- Request special sounds */
 bool arg_graphics; /* Command arg -- Request graphics mode */
 bool arg_force_original; /* Command arg -- Request original keyset */

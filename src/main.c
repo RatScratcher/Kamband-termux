@@ -231,8 +231,39 @@ static void change_path(cptr info)
 }
 
 
+
+/*
+ * Dummy terminal hooks for headless mode
+ */
+static void Term_init_headless(term *t) {}
+static void Term_nuke_headless(term *t) {}
+static errr Term_user_headless(int n) { return 0; }
+static errr Term_xtra_headless(int n, int v) { return 0; }
+static errr Term_curs_headless(int x, int y) { return 0; }
+static errr Term_wipe_headless(int x, int y, int n) { return 0; }
+static errr Term_text_headless(int x, int y, int n, byte a, const term_char *s) { return 0; }
+static errr Term_pict_headless(int x, int y, int n, const byte *ap, const term_char *cp, const byte *tap, const term_char *tcp) { return 0; }
+
+static errr init_headless(void)
+{
+	term *t = ZNEW(term);
+	term_init(t, 80, 24, 256);
+	t->init_hook = Term_init_headless;
+	t->nuke_hook = Term_nuke_headless;
+	t->user_hook = Term_user_headless;
+	t->xtra_hook = Term_xtra_headless;
+	t->curs_hook = Term_curs_headless;
+	t->wipe_hook = Term_wipe_headless;
+	t->text_hook = Term_text_headless;
+	t->pict_hook = (void*)Term_pict_headless;
+	Term_activate(t);
+	angband_term[0] = t;
+	return 0;
+}
+
 /*
  * Simple "main" function for multiple platforms.
+
  *
  * Note the special "--" option which terminates the processing of
  * standard options.  All non-standard options (if any) are passed
@@ -346,6 +377,18 @@ int main(int argc, char *argv[])
 	/* Process the command line arguments */
 	for (i = 1; args && (i < argc); i++)
 	{
+		if (streq(argv[i], "--headless"))
+		{
+			arg_headless = TRUE;
+			continue;
+		}
+		if (streq(argv[i], "--turns") && (i + 1 < argc))
+		{
+			arg_headless_turns = atoi(argv[i+1]);
+			i++;
+			continue;
+		}
+
 		/* Require proper options */
 		if (argv[i][0] != '-') goto usage;
 
@@ -672,6 +715,12 @@ int main(int argc, char *argv[])
 	/* Grab privs (dropped above for X11) */
 	safe_setuid_grab();
 
+	if (arg_headless)
+	{
+		init_headless();
+		ANGBAND_SYS = "headless";
+		done = TRUE;
+	}
 
 	/* Make sure we have a display! */
 	if (!done) quit("Unable to prepare any 'display module'!");

@@ -93,6 +93,8 @@ extern u16b sf_lives;
 extern u16b sf_saves;
 extern bool arg_fiddle;
 extern bool arg_wizard;
+extern bool arg_headless;
+extern int arg_headless_turns;
 extern bool arg_sound;
 extern bool arg_graphics;
 extern bool arg_force_original;
@@ -914,6 +916,8 @@ extern bool get_com(cptr prompt, char *command);
 extern s16b get_quantity(cptr prompt, int max);
 extern void pause_line(int row);
 extern void request_command(bool shopping);
+extern void log_metric(const char *event_type, long duration_ms);
+extern char get_fuzz_command(void);
 extern bool is_a_vowel(int ch);
 
 /* xtra1.c */

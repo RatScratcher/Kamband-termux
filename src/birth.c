@@ -11,6 +11,121 @@
 #include "angband.h"
 
 
+/* Helper lambdas aren't allowed in legacy C, so define tiny wrappers: */
+static cptr get_sex_title(int i) { return sex_info[i].title; }
+static cptr get_race_title(int i) { return race_info[i].title; }
+static cptr get_class_title(int i) { return class_info[i].title; }
+
+/* Returns: 1 = yes, 0 = no, -1 = user pressed 'S' (restart) */
+static int prompt_yes_no(cptr prompt_text, cptr info_line1, cptr info_line2, cptr info_line3)
+{
+    char c;
+    Term_putstr(5, 15, -1, TERM_WHITE, info_line1);
+    if (info_line2) Term_putstr(5, 16, -1, TERM_WHITE, info_line2);
+    if (info_line3) Term_putstr(5, 17, -1, TERM_WHITE, info_line3);
+
+    while (TRUE)
+    {
+        put_str(prompt_text, 20, 2);
+        c = inkey();
+        if (c == 'Q') quit(NULL);
+        if (c == 'S') return -1;
+        if (c == ESCAPE) return 0;
+        if (c == 'y' || c == 'n') break;
+        if (c == '?') do_cmd_help();
+        else bell();
+    }
+    clear_from(15);
+    return (c == 'y') ? 1 : 0;
+}
+
+/* Returns: chosen index (0..max_opts-1), or -1 on 'S' (restart) */
+static int prompt_char_select(cptr category, cptr info_msg,
+                              int max_opts, byte prompt_row, byte opt_row_start,
+                              int columns, int col_width,
+                              cptr (*get_title)(int idx))
+{
+    int i, n = max_opts;
+    char buf[80], c;
+    char p2 = ')';
+
+    Term_putstr(5, 15, -1, TERM_WHITE, info_msg);
+
+    for (i = 0; i < n; i++)
+    {
+        sprintf(buf, "%c%c %s", I2A(i), p2, get_title(i));
+        put_str(buf, opt_row_start + (i / columns), 2 + col_width * (i % columns));
+    }
+
+    while (TRUE)
+    {
+        sprintf(buf, "Choose a %s (%c-%c):  ", category, I2A(0), I2A(n - 1));
+        put_str(buf, prompt_row, 2);
+        c = inkey();
+        if (c == 'Q') quit(NULL);
+        if (c == 'S') return -1;
+        int k = (islower(c) ? A2I(c) : -1);
+        if ((k >= 0) && (k < n))
+        {
+            clear_from(15);
+            return k;
+        }
+        if (c == '?') do_cmd_help();
+        else bell();
+    }
+}
+
+static void roll_and_validate_hp(void)
+{
+    int i, j;
+    int min_value, max_value;
+
+    min_value = (PY_MAX_LEVEL * (p_ptr->hitdie - 1) * 3) / 8 + PY_MAX_LEVEL;
+    max_value = (PY_MAX_LEVEL * (p_ptr->hitdie - 1) * 5) / 8 + PY_MAX_LEVEL;
+
+    p_ptr->player_hp[0] = p_ptr->hitdie;
+
+    while (TRUE)
+    {
+        for (i = 1; i < PY_MAX_LEVEL; i++)
+        {
+            j = randint(p_ptr->hitdie);
+            p_ptr->player_hp[i] = p_ptr->player_hp[i - 1] + j;
+        }
+
+        if (p_ptr->player_hp[PY_MAX_LEVEL - 1] >= min_value &&
+            p_ptr->player_hp[PY_MAX_LEVEL - 1] <= max_value)
+        {
+            break;
+        }
+    }
+}
+
+static int get_starting_history_chart(void)
+{
+    switch (p_ptr->prace)
+    {
+        case RACE_HUMAN: case RACE_DUNADAN: return 1;
+        case RACE_HALF_ELF: return 4;
+        case RACE_ELF: case RACE_HIGH_ELF: return 7;
+        case RACE_HOBBIT: return 10;
+        case RACE_GNOME: return 13;
+        case RACE_DWARF: return 16;
+        case RACE_HALF_ORC: return 19;
+        case RACE_HALF_TROLL: return 22;
+        case RACE_KOBOLD: return 24;
+        case RACE_MUTANT: return 33;
+        case RACE_GHOST: return 39;
+        case RACE_MUNCHKIN: return 43;
+        case RACE_GOLEM: return 44;
+        case RACE_LEPRECHAUN: return 67;
+        case RACE_MOLD: return 70;
+        case RACE_VORTEX: return 75;
+        default: return 0;
+    }
+}
+
+
 /*
  * Forward declare
  */
@@ -1141,30 +1256,8 @@ static void get_extra(void)
 	max_value = (PY_MAX_LEVEL * (p_ptr->hitdie - 1) * 5) / 8;
 	max_value += PY_MAX_LEVEL;
 
-	/* Pre-calculate level 1 hitdice */
-	p_ptr->player_hp[0] = p_ptr->hitdie;
-
 	/* Roll out the hitpoints */
-	while (TRUE)
-	{
-		/* Roll the hitpoint values */
-		for (i = 1; i < PY_MAX_LEVEL; i++)
-		{
-			j = randint(p_ptr->hitdie);
-			p_ptr->player_hp[i] = p_ptr->player_hp[i - 1] + j;
-		}
-
-		/* XXX Could also require acceptable "mid-level" hitpoints */
-
-		/* Require "valid" hitpoints at highest level */
-		if (p_ptr->player_hp[PY_MAX_LEVEL - 1] < min_value)
-			continue;
-		if (p_ptr->player_hp[PY_MAX_LEVEL - 1] > max_value)
-			continue;
-
-		/* Acceptable */
-		break;
-	}
+	roll_and_validate_hp();
 }
 
 
@@ -1193,115 +1286,7 @@ static void get_history(void)
 	social_class = randint(4);
 
 	/* Starting place */
-	switch (p_ptr->prace)
-	{
-		case RACE_HUMAN:
-		case RACE_DUNADAN:
-		{
-			chart = 1;
-			break;
-		}
-
-		case RACE_HALF_ELF:
-		{
-			chart = 4;
-			break;
-		}
-
-		case RACE_ELF:
-		case RACE_HIGH_ELF:
-		{
-			chart = 7;
-			break;
-		}
-
-		case RACE_HOBBIT:
-		{
-			chart = 10;
-			break;
-		}
-
-		case RACE_GNOME:
-		{
-			chart = 13;
-			break;
-		}
-
-		case RACE_DWARF:
-		{
-			chart = 16;
-			break;
-		}
-
-		case RACE_HALF_ORC:
-		{
-			chart = 19;
-			break;
-		}
-
-		case RACE_HALF_TROLL:
-		{
-			chart = 22;
-			break;
-		}
-
-			/* Added by GJW -KMW- */
-		case RACE_KOBOLD:
-		{
-			chart = 24;
-			break;
-		}
-
-			/* Mutant XXX */
-
-		case RACE_MUTANT:
-		{
-			chart = 33;	/* XXX !HACK! Cut out 31-32 to keep history short. */
-			break;
-		}
-
-		case RACE_GHOST:
-		{
-			chart = 39;
-			break;
-		}
-
-		case RACE_MUNCHKIN:
-		{
-			chart = 43;
-			break;
-		}
-
-		case RACE_GOLEM:
-		{
-			chart = 44;
-			break;
-		}
-
-		case RACE_LEPRECHAUN:
-		{
-			chart = 67;
-			break;
-		}
-
-		case RACE_MOLD:
-		{
-			chart = 70;
-			break;
-		}
-
-		case RACE_VORTEX:
-		{
-			chart = 75;
-			break;
-		}
-
-		default:
-		{
-			chart = 0;
-			break;
-		}
-	}
+	chart = get_starting_history_chart();
 
 
 	/* Process the history */
@@ -1938,260 +1923,58 @@ static bool player_birth_aux()
 
 
 	/*** Player sex ***/
-
-	/* Extra info */
-	Term_putstr(5, 15, -1, TERM_WHITE,
-		"Your 'sex' does not have any significant gameplay effects.");
-
-	/* Prompt for "Sex" */
-	for (n = 0; n < MAX_SEXES; n++)
-	{
-		/* Analyze */
-		p_ptr->psex = n;
-		sp_ptr = &sex_info[p_ptr->psex];
-		str = sp_ptr->title;
-
-		/* Display */
-		sprintf(buf, "%c%c %s", I2A(n), p2, str);
-		put_str(buf, 21 + (n / 5), 2 + 15 * (n % 5));
-	}
-
-	/* Choose */
-	while (1)
-	{
-		sprintf(buf, "Choose a sex (%c-%c): ", I2A(0), I2A(n - 1));
-		put_str(buf, 20, 2);
-		c = inkey();
-		if (c == 'Q')
-			quit(NULL);
-		if (c == 'S')
-			return (FALSE);
-		k = (islower(c) ? A2I(c) : -1);
-		if ((k >= 0) && (k < n))
-			break;
-		if (c == '?')
-			do_cmd_help();
-		else
-			bell();
-	}
-
-	/* Set sex */
+	k = prompt_char_select("sex",
+	                       "Your 'sex' does not have any significant gameplay effects.",
+	                       MAX_SEXES, 20, 21, 5, 15, get_sex_title);
+	if (k == -1) return FALSE;
 	p_ptr->psex = k;
 	sp_ptr = &sex_info[p_ptr->psex];
-	str = sp_ptr->title;
-
-	/* Display */
-	c_put_str(TERM_L_BLUE, str, 3, 15);
-
-	/* Clean up */
-	clear_from(15);
+	c_put_str(TERM_L_BLUE, sp_ptr->title, 3, 15);
 
 
 	/*** Player race ***/
-
-	/* Extra info */
-	Term_putstr(5, 15, -1, TERM_WHITE,
-		"Your 'race' determines various intrinsic factors and bonuses.");
-	Term_putstr(5, 16, -1, TERM_YELLOW,
-		"Warning: Only choose to play a munchkin if you're a cheater!");
-
-	/* Dump races */
-	for (n = 0; n < MAX_RACES; n++)
-	{
-		/* Analyze */
-		p_ptr->prace = n;
-		rp_ptr = &race_info[p_ptr->prace];
-		str = rp_ptr->title;
-
-		/* Display */
-		sprintf(buf, "%c%c %s", I2A(n), p2, str);
-		put_str(buf, 20 + (n / 5), 2 + 15 * (n % 5));
-	}
-
-	/* Choose */
-	while (1)
-	{
-		sprintf(buf, "Choose a race (%c-%c): ", I2A(0), I2A(n - 1));
-		put_str(buf, 19, 2);
-		c = inkey();
-		if (c == 'Q')
-			quit(NULL);
-		if (c == 'S')
-			return (FALSE);
-		k = (islower(c) ? A2I(c) : -1);
-		if ((k >= 0) && (k < n))
-			break;
-		if (c == '?')
-			do_cmd_help();
-		else
-			bell();
-	}
-
-	/* Set race */
+	k = prompt_char_select("race",
+	                       "Your 'race' determines various intrinsic factors and bonuses.",
+	                       MAX_RACES, 19, 20, 5, 15, get_race_title);
+	if (k == -1) return FALSE;
 	p_ptr->prace = k;
 	rp_ptr = &race_info[p_ptr->prace];
-	str = rp_ptr->title;
-
-	/* Display */
-	c_put_str(TERM_L_BLUE, str, 4, 15);
-
-
-	/* Clean up */
-	clear_from(15);
+	c_put_str(TERM_L_BLUE, rp_ptr->title, 4, 15);
 
 
 	/*** Player class ***/
-
-	/* Extra info */
-	Term_putstr(5, 15, -1, TERM_WHITE,
-		"Your 'class' determines various intrinsic abilities and bonuses.");
-
-	/* Dump classes */
-	for (n = 0; n < MAX_CLASS; n++)
-	{
-		cptr mod = "";
-
-		/* Analyze */
-		p_ptr->pclass = n;
-		cp_ptr = &class_info[p_ptr->pclass];
-		str = cp_ptr->title;
-
-		/* Display */
-		sprintf(buf, "%c%c %s%s", I2A(n), p2, str, mod);
-		put_str(buf, 18 + (n / 3), 2 + 20 * (n % 3));
-	}
-
-	/* Get a class */
-	while (1)
-	{
-		sprintf(buf, "Choose a class (%c-%c): ", I2A(0), I2A(n - 1));
-		put_str(buf, 17, 2);
-		c = inkey();
-		if (c == 'Q')
-			quit(NULL);
-		if (c == 'S')
-			return (FALSE);
-		k = (islower(c) ? A2I(c) : -1);
-		if ((k >= 0) && (k < n))
-			break;
-		if (c == '?')
-			do_cmd_help();
-		else
-			bell();
-	}
-
-	/* Set class */
+	k = prompt_char_select("class",
+	                       "Your 'class' determines various intrinsic abilities and bonuses.",
+	                       MAX_CLASS, 17, 18, 3, 20, get_class_title);
+	if (k == -1) return FALSE;
 	p_ptr->pclass = k;
 	cp_ptr = &class_info[p_ptr->pclass];
-	str = cp_ptr->title;
-
-	/* Display */
 	c_put_str(TERM_L_BLUE, cp_ptr->title, 5, 15);
-
-	/* Clean up */
-	clear_from(15);
 
 
 	/*** Maximize mode ***/
-
-	/* Extra info */
-	Term_putstr(5, 15, -1, TERM_WHITE,
-		"Using 'maximize' mode makes the game harder at the start,");
-	Term_putstr(5, 16, -1, TERM_WHITE,
-		"but often makes it easier to win.");
-
-	/* Ask about "maximize" mode */
-	while (1)
-	{
-		put_str("Use 'maximize' mode? (y/n) ", 20, 2);
-		c = inkey();
-		if (c == 'Q')
-			quit(NULL);
-		if (c == 'S')
-			return (FALSE);
-		if (c == ESCAPE)
-			break;
-		if ((c == 'y') || (c == 'n'))
-			break;
-		if (c == '?')
-			do_cmd_help();
-		else
-			bell();
-	}
-
-	/* Set "maximize" mode */
-	p_ptr->maximize = (c == 'y');
-
-	/* Clear */
-	clear_from(15);
+	int choice = prompt_yes_no("Use 'maximize' mode? (y/n) ",
+	                           "Using 'maximize' mode makes the game harder at the start,",
+	                           "but often makes it easier to win.", NULL);
+	if (choice == -1) return FALSE;
+	p_ptr->maximize = (choice == 1);
 
 
 	/*** Preserve mode ***/
-
-	/* Extra info */
-	Term_putstr(5, 15, -1, TERM_WHITE,
-		"Using 'preserve' mode makes it difficult to 'lose' artifacts,");
-	Term_putstr(5, 16, -1, TERM_WHITE,
-		"but eliminates the 'special' feelings about some levels.");
-
-	/* Ask about "preserve" mode */
-	while (1)
-	{
-		put_str("Use 'preserve' mode? (y/n) ", 20, 2);
-		c = inkey();
-		if (c == 'Q')
-			quit(NULL);
-		if (c == 'S')
-			return (FALSE);
-		if (c == ESCAPE)
-			break;
-		if ((c == 'y') || (c == 'n'))
-			break;
-		if (c == '?')
-			do_cmd_help();
-		else
-			bell();
-	}
-
-	/* Set "preserve" mode */
-	p_ptr->preserve = (c == 'y');
-
-	/* Clear */
-	clear_from(15);
+	choice = prompt_yes_no("Use 'preserve' mode? (y/n) ",
+	                       "Using 'preserve' mode makes it difficult to 'lose' artifacts,",
+	                       "but eliminates the 'special' feelings about some levels.", NULL);
+	if (choice == -1) return FALSE;
+	p_ptr->preserve = (choice == 1);
 
 
 	/**** Dungeon seed ****/
-
-	Term_putstr(5, 15, -1, TERM_WHITE,
-		"If you select 'yes', all dungeon generation will use "
-		"the same seed. ");
-	Term_putstr(5, 16, -1, TERM_WHITE,
-		"This means that the structure of each level will be "
-		"the same, though");
-	Term_putstr(5, 17, -1, TERM_WHITE, "monsters and items will change.");
-
-	/* Ask about dungeon seed */
-	while (1)
-	{
-		put_str("Generate persistent dungeons? (y/n) ", 20, 2);
-		c = inkey();
-		if (c == 'Q')
-			quit(NULL);
-		if (c == 'S')
-			return (FALSE);
-		if (c == ESCAPE)
-			break;
-		if ((c == 'y') || (c == 'n'))
-			break;
-		if (c == '?')
-			do_cmd_help();
-		else
-			bell();
-	}
-
-	/* Set dungeon seed */
-
-	if (c == 'y')
+	choice = prompt_yes_no("Generate persistent dungeons? (y/n) ",
+	                       "If you select 'yes', all dungeon generation will use the same seed. ",
+	                       "This means that the structure of each level will be the same, though",
+	                       "monsters and items will change.");
+	if (choice == -1) return FALSE;
+	if (choice == 1)
 	{
 		seed_dungeon = rand_int(0x10000000);
 	}
@@ -2200,32 +1983,13 @@ static bool player_birth_aux()
 		seed_dungeon = 0;
 	}
 
-	/* Clear */
-	clear_from(15);
-
 	/**** Select a town and an arena layout ****/
+	choice = prompt_yes_no("Select a random town layout? (y/n) ",
+	                       "Select 'yes' to generate a random town layout.",
+	                       NULL, NULL);
+	if (choice == -1) return FALSE;
 
-	while (TRUE)
-	{
-		put_str("Select a random town layout? (y/n) ", 20, 2);
-		c = inkey();
-
-		if (c == 'Q')
-			quit(NULL);
-		if (c == 'S')
-			return (FALSE);
-		if (c == ESCAPE)
-			break;
-		if ((c == 'y') || (c == 'n'))
-			break;
-		if (c == '?')
-			do_cmd_help();
-		else
-			bell();
-	}
-
-
-	if (c == 'n')
+	if (choice == 0)
 	{
 		int i;
 
@@ -2331,37 +2095,11 @@ static bool player_birth_aux()
 #ifdef ALLOW_AUTOROLLER
 
 	/*** Autoroll ***/
-
-	/* Extra info */
-	Term_putstr(5, 15, -1, TERM_WHITE,
-		"The 'autoroller' allows you to specify certain 'minimal' stats,");
-	Term_putstr(5, 16, -1, TERM_WHITE,
-		"but be warned that your various stats may not be independant!");
-
-	/* Ask about "auto-roller" mode */
-	while (1)
-	{
-		put_str("Use the Auto-Roller? (y/n) ", 20, 2);
-		c = inkey();
-		if (c == 'Q')
-			quit(NULL);
-		if (c == 'S')
-			return (FALSE);
-		if (c == ESCAPE)
-			break;
-		if ((c == 'y') || (c == 'n'))
-			break;
-		if (c == '?')
-			do_cmd_help();
-		else
-			bell();
-	}
-
-	/* Set "autoroll" */
-	autoroll = (c == 'y');
-
-	/* Clear */
-	clear_from(15);
+	choice = prompt_yes_no("Use the Auto-Roller? (y/n) ",
+	                       "The 'autoroller' allows you to specify certain 'minimal' stats,",
+	                       "but be warned that your various stats may not be independant!", NULL);
+	if (choice == -1) return FALSE;
+	autoroll = (choice == 1);
 
 
 	/* Initialize */

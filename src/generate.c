@@ -245,8 +245,8 @@ static void universal_stamp(int y0, int x0, stamp_type s)
  */
 #define CENT_MAX	1000
 #define DOOR_MAX	1000
-#define WALL_MAX	2000
-#define TUNN_MAX	9000
+#define WALL_MAX	8000
+#define TUNN_MAX	30000
 
 
 /*
@@ -3095,6 +3095,8 @@ static void build_tunnel_winding(int row1, int col1, int row2, int col2)
 		/* Pierce "outer" walls of rooms */
 		if (cave_feat[y][x] == FEAT_WALL_OUTER)
 		{
+			if (dun->wall_n >= WALL_MAX - 1) break;
+
             /* Check next step to avoid immediate re-entry? */
             /* Simplified: just mark as wall piercing */
 
@@ -3119,6 +3121,8 @@ static void build_tunnel_winding(int row1, int col1, int row2, int col2)
 		/* Tunnel through all other walls */
 		else if (cave_feat[y][x] >= FEAT_WALL_EXTRA)
 		{
+			if (dun->tunn_n >= TUNN_MAX - 1) break;
+
 			if (dun->tunn_n < TUNN_MAX)
 			{
 				dun->tunn[dun->tunn_n].y = y;
@@ -6087,14 +6091,15 @@ static void cave_gen(void)
 
 	bool lit_level = FALSE;
 
-	dun_data dun_body;
+	dun_data *dun_body = malloc(sizeof(dun_data));
+	if (!dun_body) return; /* safety fallback */
 
 	byte level_bg = FEAT_WALL_EXTRA;
 	int base_rooms = (p_ptr->depth < 10) ? DUN_ROOMS : (DUN_ROOMS + p_ptr->depth * 2);
 	s16b dun_rooms = base_rooms * 2;
 
 	/* Global data */
-	dun = &dun_body;
+	dun = dun_body;
 
 	/* Allow open levels. */
 
@@ -6763,6 +6768,8 @@ static void cave_gen(void)
 			}
 		}
 	}
+
+	free(dun_body);
 }
 
 

@@ -98,7 +98,7 @@ void do_cmd_go_down(void)
 
 	/* New level */
 	if (cave_feat[py][px] == FEAT_SHAFT) {
-	  p_ptr->depth += randint(3);
+	  p_ptr->depth += randint(5);
 
 	} else {
 	  p_ptr->depth++;

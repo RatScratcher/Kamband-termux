@@ -707,80 +707,84 @@ static void place_random_door(int y, int x)
  */
 static void alloc_stairs(int feat, int num, int walls, bool force_room)
 {
-	int y, x, i, j;
-	bool placed;
+	int y, x, j;
 
-	/* The walls parameter is now unused, as stairs don't need to be near walls */
+	/* The walls and num parameters are unused */
 	(void)walls;
+	(void)num;
 
     if (p_ptr->inside_special == SPECIAL_DREAM) {
         /* Only place one exit */
         if (feat == FEAT_LESS) return; /* No up stairs */
         if (feat == FEAT_MORE) {
              /* Place Dream Exit instead of down stairs */
-             /* We only want one, but alloc_stairs loops. */
-             /* Hack: only do it once. */
-             if (num > 1) num = 1;
              feat = FEAT_DREAM_EXIT;
         }
+
+        /* Place one randomly and exit */
+        for (j = 0; j < 3000; j++) {
+            y = rand_int(DUNGEON_HGT);
+            x = rand_int(DUNGEON_WID);
+            if (!cave_naked_bold(y, x)) continue;
+            cave_feat[y][x] = feat;
+            cave_info[y][x] |= CAVE_GLOW;
+            return;
+        }
+        return;
     }
 
-	/* Place "num" stairs */
-	for (i = 0; i < num; i++)
+	/* Allocate exactly 1 stair per 2x2 block sector */
+	int sy, sx;
+	for (sy = 0; sy < dun->row_rooms; sy += 2)
 	{
-		placed = FALSE;
-
-		/* Try several times */
-		for (j = 0; j < 3000; j++)
+		for (sx = 0; sx < dun->col_rooms; sx += 2)
 		{
+			int y1 = sy * BLOCK_HGT;
+			int x1 = sx * BLOCK_WID;
+			int y2 = y1 + (2 * BLOCK_HGT) - 1;
+			int x2 = x1 + (2 * BLOCK_WID) - 1;
 
-			/* Pick a random grid */
-			y = rand_int(DUNGEON_HGT);
-			x = rand_int(DUNGEON_WID);
+			/* Boundary check just in case */
+			if (y2 >= DUNGEON_HGT) y2 = DUNGEON_HGT - 1;
+			if (x2 >= DUNGEON_WID) x2 = DUNGEON_WID - 1;
 
-			/* Require "naked" floor grid */
-			if (!cave_naked_bold(y, x))
-				continue;
-
-			/* Force room if requested */
-			if (force_room && !(cave_info[y][x] & CAVE_ROOM))
-				continue;
-
-			/* Town -- must go down */
-			if (!p_ptr->depth)
+			for (j = 0; j < 200; j++)
 			{
-				/* Clear previous contents, add down stairs */
-			  if (p_ptr->inside_special == SPECIAL_WILD) {
-			    cave_feat[y][x] = FEAT_SHAFT;
-			  } else {
-			    cave_feat[y][x] = FEAT_MORE;
-			  }
+				y = rand_range(y1, y2);
+				x = rand_range(x1, x2);
+
+				if (!cave_naked_bold(y, x))
+					continue;
+
+				if (force_room && !(cave_info[y][x] & CAVE_ROOM))
+					continue;
+
+				/* Town -- must go down */
+				if (!p_ptr->depth)
+				{
+				  if (p_ptr->inside_special == SPECIAL_WILD) {
+				    cave_feat[y][x] = FEAT_SHAFT;
+				  } else {
+				    cave_feat[y][x] = FEAT_MORE;
+				  }
+				}
+				/* Quest -- must go up */
+				else if (p_ptr->inside_special == SPECIAL_QUEST ||
+					(p_ptr->depth >= MAX_DEPTH - 1))
+				{
+					cave_feat[y][x] = FEAT_LESS;
+				}
+				/* Requested type */
+				else
+				{
+					cave_feat[y][x] = feat;
+				}
+
+				/* Make stairs visible from afar */
+				cave_info[y][x] |= CAVE_GLOW;
+
+				break;
 			}
-
-			/* Quest -- must go up */
-			else if (p_ptr->inside_special == SPECIAL_QUEST ||
-				(p_ptr->depth >= MAX_DEPTH - 1))
-			{
-				/* Clear previous contents, add up stairs */
-				cave_feat[y][x] = FEAT_LESS;
-			}
-
-			/* Requested type */
-			else
-			{
-				/* Clear previous contents, add stairs */
-				cave_feat[y][x] = feat;
-			}
-
-			/* All done */
-			placed = TRUE;
-			break;
-		}
-
-		if (!placed)
-		{
-			/* Failed to find a spot. Bail out to avoid infinite loop. */
-			return;
 		}
 	}
 }
@@ -6607,11 +6611,11 @@ static void cave_gen(void)
 		if (rand_int(100) < 30) build_streamer2(FEAT_SHAL_LAVA, 0);
 	}
 
-	/* Place ~135 down stairs near some walls (approx 1 per screen) */
-	alloc_stairs(FEAT_MORE, rand_range(135, 140), 3, (level_bg == FEAT_FOG || level_bg == FEAT_CHAOS_FOG));
+	/* Place 1 down stairs per sector (approx 420 total) */
+	alloc_stairs(FEAT_MORE, 420, 0, (level_bg == FEAT_FOG || level_bg == FEAT_CHAOS_FOG));
 
-	/* Place ~135 up stairs near some walls (approx 1 per screen) */
-	alloc_stairs(FEAT_LESS, rand_range(135, 140), 3, (level_bg == FEAT_FOG || level_bg == FEAT_CHAOS_FOG));
+	/* Place 1 up stairs per sector (approx 420 total) */
+	alloc_stairs(FEAT_LESS, 420, 0, (level_bg == FEAT_FOG || level_bg == FEAT_CHAOS_FOG));
 
 	/* Find level start (up stairs) to seed loot generation logic */
 	{

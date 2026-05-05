@@ -1737,6 +1737,27 @@ static byte player_init[MAX_CLASS][3][2] = {
 };
 
 /*
+ * Helper to generate and assign starting gear to the player
+ */
+static void give_starting_item(int tval, int sval, int qty, bool mark_aware)
+{
+	object_type *i_ptr;
+
+	i_ptr = new_object();
+	object_prep(i_ptr, lookup_kind(tval, sval));
+
+	i_ptr->number = qty;
+	i_ptr->weight *= i_ptr->number;
+
+	if (mark_aware)
+	{
+		object_aware(i_ptr);
+	}
+	object_known(i_ptr);
+	(void) inven_carry(i_ptr);
+}
+
+/*
  * Init players with some belongings
  *
  * Having an item makes the player "aware" of its purpose.
@@ -1745,58 +1766,25 @@ static void player_outfit(void)
 {
 	int i, tv, sv;
 
-	object_type *i_ptr;
-
 	/* Hack -- Give the player some food */
 	/* Useless for vampires. */
 	if (p_ptr->pclass != CLASS_VAMPIRE)
 	{
-		i_ptr = new_object();
-
-		object_prep(i_ptr, lookup_kind(TV_FOOD, SV_FOOD_RATION));
-
-		i_ptr->number = rand_range(3, 7);
-		i_ptr->weight *= i_ptr->number;
-
-		object_aware(i_ptr);
-		object_known(i_ptr);
-		(void) inven_carry(i_ptr);
+		give_starting_item(TV_FOOD, SV_FOOD_RATION, rand_range(3, 7), TRUE);
 	}
 
 	/* Hack -- Give the player some torches */
 	/* Useless for ghosts & munchkins */
-
 	if (p_ptr->prace != RACE_GHOST && p_ptr->prace != RACE_MUNCHKIN &&
 	    p_ptr->prace != RACE_VORTEX)
 	{
-		int foo = rand_range(3, 7);
-		int i;
-
-		for (i = 0; i < foo; i++)
-		{
-			i_ptr = new_object();
-			object_prep(i_ptr, lookup_kind(TV_LITE, SV_LITE_TORCH));
-
-			apply_magic(i_ptr, 1, FALSE, FALSE, FALSE);
-			object_aware(i_ptr);
-			object_known(i_ptr);
-			(void) inven_carry(i_ptr);
-		}
+		give_starting_item(TV_LITE, SV_LITE_TORCH, rand_range(3, 7), TRUE);
 	}
 
 	/* Give ghosts id scrolls */
 	if (p_ptr->prace == RACE_GHOST)
 	{
-		i_ptr = new_object();
-
-		object_prep(i_ptr, lookup_kind(TV_SCROLL, SV_SCROLL_IDENTIFY));
-
-		i_ptr->number = rand_range(60, 100);
-		i_ptr->weight *= i_ptr->number;
-
-		object_aware(i_ptr);
-		object_known(i_ptr);
-		inven_carry(i_ptr);
+		give_starting_item(TV_SCROLL, SV_SCROLL_IDENTIFY, rand_range(60, 100), TRUE);
 	}
 
 	/* Hack -- Give the player three useful objects */
@@ -1806,13 +1794,7 @@ static void player_outfit(void)
 		tv = player_init[p_ptr->pclass][i][0];
 		sv = player_init[p_ptr->pclass][i][1];
 
-		i_ptr = new_object();
-
-		/* Hack -- Give the player an object */
-		object_prep(i_ptr, lookup_kind(tv, sv));
-		object_aware(i_ptr);
-		object_known(i_ptr);
-		(void) inven_carry(i_ptr);
+		give_starting_item(tv, sv, 1, TRUE);
 	}
 }
 

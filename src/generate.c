@@ -6617,6 +6617,24 @@ static void cave_gen(void)
 	/* Place 1 up stairs per sector (approx 420 total) */
 	alloc_stairs(FEAT_LESS, 420, 0, (level_bg == FEAT_FOG || level_bg == FEAT_CHAOS_FOG));
 
+	/* Place exactly 10 FEAT_SHAFTs for regular dungeon levels */
+	if (p_ptr->depth > 0 && p_ptr->inside_special != SPECIAL_WILD)
+	{
+		int i, j;
+		for (i = 0; i < 10; i++)
+		{
+			for (j = 0; j < 3000; j++)
+			{
+				int y = rand_int(DUNGEON_HGT);
+				int x = rand_int(DUNGEON_WID);
+				if (!cave_naked_bold(y, x)) continue;
+				cave_feat[y][x] = FEAT_SHAFT;
+				cave_info[y][x] |= CAVE_GLOW;
+				break;
+			}
+		}
+	}
+
 	/* Find level start (up stairs) to seed loot generation logic */
 	{
 		int sy, sx;

@@ -3050,22 +3050,14 @@ void forget_flow(void)
 
 #ifdef MONSTER_FLOW
 
-	int x, y;
 
 	/* Nothing to forget */
 	if (!flow_n)
 		return;
 
 	/* Check the entire dungeon */
-	for (y = 0; y < DUNGEON_HGT; y++)
-	{
-		for (x = 0; x < DUNGEON_WID; x++)
-		{
-			/* Forget the old data */
-			cave_cost[y][x] = 0;
-			cave_when[y][x] = 0;
-		}
-	}
+	memset(cave_cost, 0, sizeof(cave_cost));
+	memset(cave_when, 0, sizeof(cave_when));
 
 	/* Start over */
 	flow_n = 0;

@@ -7092,7 +7092,7 @@ void place_dungeon_merchant(int y, int x)
 static void shuffle_unstable_scrolls(void);
 void generate_cave(void)
 {
-	int y, x, num;
+	int num;
 	int w, h;
 	const char *msg = "Generating level... please wait.";
 
@@ -7130,27 +7130,13 @@ void generate_cave(void)
 		m_max = 1;
 
 		/* Start with a blank cave */
-		for (y = 0; y < DUNGEON_HGT; y++)
-		{
-			for (x = 0; x < DUNGEON_WID; x++)
-			{
-				/* No flags */
-				cave_info[y][x] = 0;
-
-				/* No objects */
-				cave_o_idx[y][x] = 0;
-
-				/* No monsters */
-				cave_m_idx[y][x] = 0;
-
+		memset(cave_info, 0, sizeof(cave_info));
+		memset(cave_o_idx, 0, sizeof(cave_o_idx));
+		memset(cave_m_idx, 0, sizeof(cave_m_idx));
 #ifdef MONSTER_FLOW
-				/* No flow */
-				cave_cost[y][x] = 0;
-				cave_when[y][x] = 0;
+		memset(cave_cost, 0, sizeof(cave_cost));
+		memset(cave_when, 0, sizeof(cave_when));
 #endif /* MONSTER_FLOW */
-
-			}
-		}
 
 
 		/* Hack -- illegal panel */

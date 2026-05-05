@@ -1727,16 +1727,8 @@ static bool item_tester_hook_sell(object_type * o_ptr)
  */
 static void clean_floor_items(void)
 {
-	int y, x;
-
 	/* Remove items on the floor. */
-	for (y = 0; y < DUNGEON_HGT; y++)
-	{
-		for (x = 0; x < DUNGEON_WID; x++)
-		{
-			cave_o_idx[y][x] = NULL;
-		}
-	}
+	memset(cave_o_idx, 0, sizeof(cave_o_idx));
 }
 
 

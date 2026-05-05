@@ -6508,7 +6508,7 @@ static void cave_gen(void)
 	for (i = 0; i < dun->cent_n; i++)
 	{
 		/* Connect the room to the previous room */
-        if (rand_int(100) < 75) /* 75% chance for winding tunnel */
+        if (rand_int(100) < 30) /* 30% chance for winding tunnel */
 		    build_tunnel_winding(dun->cent[i].y, dun->cent[i].x, y, x);
         else
             build_tunnel(dun->cent[i].y, dun->cent[i].x, y, x);

@@ -2167,17 +2167,17 @@
 #define MUT_PLUS_CHR  4
 #define MUT_PLUS_DEX  5
 
-#define MUT_PLUS_SPEED     6
+#define MUT_CENTAUR_BODY     6
 #define MUT_PLUS_STEALTH   7
 #define MUT_PLUS_AC        8
 #define MUT_ESP            9
 #define MUT_GLOW          10
-#define MUT_IMMATERIAL    11
+#define MUT_PHASE_WALKER    11
 
 #define MUT_FLYING        12
 #define MUT_VAMPIRIC      13
 #define MUT_WEIRD_ATTACKS 14
-#define MUT_MAPPING       15
+#define MUT_SUPERIOR_OCULARS       15
 
 #define MUT_IMM_FIRE      16
 #define MUT_IMM_ELEC      17
@@ -2188,7 +2188,7 @@
 #define MUT_FREE_ACT      21
 #define MUT_SLOW_DIGEST   22
 #define MUT_REGENERATE    23
-#define MUT_FEATHER_FALL  24
+#define MUT_HOLLOW_BONES  24
 #define MUT_HOLD_LIFE     25
 
 #define MUT_RES_BLIND     26
@@ -2239,8 +2239,8 @@
 #define MUT_MINUS_STEALTH 64
 #define MUT_MINUS_FIGHT   65
 #define MUT_ECHO_PULSE    66
-#define MUT_THICK_SKIN    67
-#define MUT_GILLS         68
+#define MUT_CHITINOUS_CARAPACE    67
+#define MUT_REACTIVE_GILLS         68
 
 
 /*

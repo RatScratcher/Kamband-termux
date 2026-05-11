@@ -2706,8 +2706,8 @@ cptr mutation_names[MAX_MUTS][3] = {
 	{"Expanded nervous system", "Your reactions are now much quicker.",
 		"Your reactions are not as quick as they used to be..."},
 
-	{"Second set of legs", "You grow a second set of legs.",
-		"Your second set of legs shrivels away."},
+	{"Centaur Body", "Your torso merges with a powerful equine frame (+3 Speed, 2-tile bulk).",
+		"Your equine lower body shrivels away."},
 
 	{"Sound distortion", "You now move more stealthily.",
 		"You don't move as stealthily as you used to."},
@@ -2721,8 +2721,8 @@ cptr mutation_names[MAX_MUTS][3] = {
 	{"Lunimescence", "Your skin starts to glow.",
 		"Your skin stops glowing."},
 
-	{"Shadow-form", "You turn into a ghost-like being.",
-		"You regain corporeal form."},
+	{"Phase-Walker", "Your body shimmers as you slip between dimensions (No scrolls, ring flicker).",
+		"Your physical form feels solid and anchored again."},
 
 	{"Wings", "You grow small wings.",
 		"Your wings shrivel away."},
@@ -2733,9 +2733,9 @@ cptr mutation_names[MAX_MUTS][3] = {
 	{"Chaos funnel", "You start channeling wild magic.",
 		"You stop channeling wild magic."},
 
-	{"Bird's eye view",
-			"You can sense the geography of the land around you.",
-		"You lose your superiour eye-sight."},
+	{"Superior Oculars",
+			"Your eyes multiply and bulge, granting total awareness (Photophobia, sensory overload).",
+		"Your vision narrows to a standard perspective."},
 
 	{"Fiery essence", "You are immune to fire.",
 		"You lose your fiery essence."},
@@ -2761,8 +2761,8 @@ cptr mutation_names[MAX_MUTS][3] = {
 	{"Regeneration", "You start regenerating.",
 		"You stop regenerating."},
 
-	{"Weightless", "You start weighing next to nothing.",
-		"You regain your weight."},
+	{"Hollow Bones", "Your bones become porous and incredibly light (+4 Speed, fragile).",
+		"Your bones feel dense and heavy once more."},
 
 	{"Anti-life leech", "You are protected against leeching attacks.",
 		"You lose your protection against leeching attacks."},
@@ -2844,11 +2844,11 @@ cptr mutation_names[MAX_MUTS][3] = {
 			"You feel a thrumming in your mind.",
 		"The thrumming in your mind stops."},
 
-	{"Thick Skin",
-			"Your skin is exceptionally thick and leathery (+15 AC, -1 DEX).",
-		"Your skin returns to normal."},
+	{"Chitinous Carapace",
+			"Your skin is an exceptionally thick carapace (+15 AC, inflexible).",
+		"Your protective shell softens and flakes away."},
 
-	{"Gills", "You grow a set of gills.",
+	{"Reactive Gills", "Slits open on your neck, allowing you to breathe fluid (Dehydration, water breathing).",
 		"Your gills merge back into your neck."}
 
 };

@@ -2424,7 +2424,7 @@ static void process_mutation(int mut)
 			p_ptr->stat_add[A_DEX] += 5;
 			break;
 
-		case MUT_PLUS_SPEED:
+		case MUT_CENTAUR_BODY:
 			p_ptr->pspeed += 10;
 			break;
 
@@ -2453,7 +2453,7 @@ static void process_mutation(int mut)
 			p_ptr->resist_confu = TRUE;
 			break;
 
-		case MUT_IMMATERIAL:
+		case MUT_PHASE_WALKER:
 			p_ptr->immaterial = TRUE;
 			break;
 
@@ -2469,7 +2469,7 @@ static void process_mutation(int mut)
 			p_ptr->weird_attack = TRUE;
 			break;
 
-		case MUT_MAPPING:
+		case MUT_SUPERIOR_OCULARS:
 			p_ptr->allseeing = TRUE;
 			break;
 
@@ -2505,7 +2505,7 @@ static void process_mutation(int mut)
 			p_ptr->regenerate = TRUE;
 			break;
 
-		case MUT_FEATHER_FALL:
+		case MUT_HOLLOW_BONES:
 			p_ptr->ffall = TRUE;
 			break;
 
@@ -2565,7 +2565,7 @@ static void process_mutation(int mut)
 			p_ptr->resist_nethr = TRUE;
 			break;
 
-		case MUT_THICK_SKIN:
+		case MUT_CHITINOUS_CARAPACE:
 			p_ptr->ac += 15;
 			p_ptr->dis_ac += 15;
 			p_ptr->stat_add[A_DEX] -= 1;

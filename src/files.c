@@ -2253,29 +2253,27 @@ errr file_character(cptr name)
 
 	/* Dump the mutations */
 
-	if (p_ptr->mutations1 || p_ptr->mutations2 || p_ptr->mutations3)
 	{
-		fprintf(fff, "  [Character Mutations]\n\n");
-
-		for (i = 0; i < 32; i++)
+		bool has_any = FALSE;
+		for (i = 0; i < MAX_MUTS; i++)
 		{
-			if (p_ptr->mutations1 & (1L << i))
-			{
-				fprintf(fff, "%s\n", mutation_names[i][0]);
-			}
-
-			if (p_ptr->mutations2 & (1L << i))
-			{
-				fprintf(fff, "%s\n", mutation_names[i + 32][0]);
-			}
-
-			if (p_ptr->mutations3 & (1L << i))
-			{
-				fprintf(fff, "%s\n", mutation_names[i + 64][0]);
-			}
+			if (has_mutation(i)) has_any = TRUE;
 		}
 
-		fprintf(fff, "\n\n");
+		if (has_any)
+		{
+			fprintf(fff, "  [Character Mutations]\n\n");
+
+			for (i = 0; i < MAX_MUTS; i++)
+			{
+				if (has_mutation(i))
+				{
+					fprintf(fff, "%s\n", mutation_info[i].name);
+				}
+			}
+
+			fprintf(fff, "\n\n");
+		}
 	}
 
 	/* Dump the random spells */

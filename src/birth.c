@@ -1078,13 +1078,11 @@ static void get_extra(void)
 		int i;
 		int j;
 
-		p_ptr->mutations1 = 0L;
-		p_ptr->mutations2 = 0L;
-		p_ptr->mutations3 = 0L;
+		for (i = 0; i < MAX_MUTS; i++) p_ptr->mutations[i] = FALSE;
 
 		if (p_ptr->pclass == CLASS_CORRUPTED)
 		{
-			p_ptr->mutations1 |= (1L << MUT_PLUS_INT);
+			p_ptr->mutations[MUT_PLUS_INT] = TRUE;
 			j = rand_range(1, 5);
 		}
 		else
@@ -1106,63 +1104,63 @@ static void get_extra(void)
 
 				/* Remove banned mutations */
 				/* Brain shrivels */
-				if (p_ptr->mutations2 & (1L << (MUT_MINUS_INT - 32)))
+				if (p_ptr->mutations[MUT_MINUS_INT])
 				{
-					p_ptr->mutations2 &= ~(1L << (MUT_MINUS_INT - 32));
+					p_ptr->mutations[MUT_MINUS_INT] = FALSE;
 					banned = TRUE;
 				}
 				/* Permanently blind */
-				if (p_ptr->mutations2 & (1L << (MUT_BLIND - 32)))
+				if (p_ptr->mutations[MUT_BLIND])
 				{
-					p_ptr->mutations2 &= ~(1L << (MUT_BLIND - 32));
+					p_ptr->mutations[MUT_BLIND] = FALSE;
 					banned = TRUE;
 				}
 				/* Randomly hallucinating */
-				if (p_ptr->mutations2 & (1L << (MUT_HALLUC - 32)))
+				if (p_ptr->mutations[MUT_HALLUC])
 				{
-					p_ptr->mutations2 &= ~(1L << (MUT_HALLUC - 32));
+					p_ptr->mutations[MUT_HALLUC] = FALSE;
 					banned = TRUE;
 				}
 				/* Disoriented */
-				if (p_ptr->mutations2 & (1L << (MUT_CONFUSED - 32)))
+				if (p_ptr->mutations[MUT_CONFUSED])
 				{
-					p_ptr->mutations2 &= ~(1L << (MUT_CONFUSED - 32));
+					p_ptr->mutations[MUT_CONFUSED] = FALSE;
 					banned = TRUE;
 				}
 				/* Epilepsy */
-				if (p_ptr->mutations2 & (1L << (MUT_PARALYZED - 32)))
+				if (p_ptr->mutations[MUT_PARALYZED])
 				{
-					p_ptr->mutations2 &= ~(1L << (MUT_PARALYZED - 32));
+					p_ptr->mutations[MUT_PARALYZED] = FALSE;
 					banned = TRUE;
 				}
 				/* Blood doesn't clot */
-				if (p_ptr->mutations2 & (1L << (MUT_BLEEDING - 32)))
+				if (p_ptr->mutations[MUT_BLEEDING])
 				{
-					p_ptr->mutations2 &= ~(1L << (MUT_BLEEDING - 32));
+					p_ptr->mutations[MUT_BLEEDING] = FALSE;
 					banned = TRUE;
 				}
 				/* Parasitic worms */
-				if (p_ptr->mutations2 & (1L << (MUT_PARASITES - 32)))
+				if (p_ptr->mutations[MUT_PARASITES])
 				{
-					p_ptr->mutations2 &= ~(1L << (MUT_PARASITES - 32));
+					p_ptr->mutations[MUT_PARASITES] = FALSE;
 					banned = TRUE;
 				}
 				/* Frequently stunned */
-				if (p_ptr->mutations2 & (1L << (MUT_STUNNED - 32)))
+				if (p_ptr->mutations[MUT_STUNNED])
 				{
-					p_ptr->mutations2 &= ~(1L << (MUT_STUNNED - 32));
+					p_ptr->mutations[MUT_STUNNED] = FALSE;
 					banned = TRUE;
 				}
 				/* Feeling lost */
-				if (p_ptr->mutations2 & (1L << (MUT_TELEPORT - 32)))
+				if (p_ptr->mutations[MUT_TELEPORT])
 				{
-					p_ptr->mutations2 &= ~(1L << (MUT_TELEPORT - 32));
+					p_ptr->mutations[MUT_TELEPORT] = FALSE;
 					banned = TRUE;
 				}
 				/* Lose memories */
-				if (p_ptr->mutations2 & (1L << (MUT_EXP_DRAIN - 32)))
+				if (p_ptr->mutations[MUT_EXP_DRAIN])
 				{
-					p_ptr->mutations2 &= ~(1L << (MUT_EXP_DRAIN - 32));
+					p_ptr->mutations[MUT_EXP_DRAIN] = FALSE;
 					banned = TRUE;
 				}
 
@@ -1172,7 +1170,7 @@ static void get_extra(void)
 				}
 				else if (mut_idx != -1)
 				{
-					mprint(MSG_WARNING, mutation_names[mut_idx][1]);
+					if (mutation_info[mut_idx].gain_msg) mprint(MSG_WARNING, mutation_info[mut_idx].gain_msg);
 					msg_print(NULL);
 				}
 			}

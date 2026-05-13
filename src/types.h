@@ -74,6 +74,57 @@ typedef struct player_class player_class;
 typedef struct player_other player_other;
 typedef struct player_type player_type;
 typedef struct cover_data cover_data;
+typedef struct mutation_type mutation_type;
+
+struct mutation_type
+{
+    int id;
+    cptr name;
+    cptr gain_msg;
+    cptr loss_msg;
+
+    int stat_mod[6];
+    int speed_bonus;
+    int ac_bonus;
+    int dis_ac_bonus;
+    int dis_to_a_bonus;
+    int skill_stl_bonus;
+    int to_a_bonus;
+
+    bool allseeing;
+    bool ffall;
+    bool flying;
+    bool free_act;
+    bool hold_life;
+    bool immaterial;
+    bool immune_acid;
+    bool immune_cold;
+    bool immune_elec;
+    bool immune_fire;
+    bool lite;
+    bool regenerate;
+    bool resist_acid;
+    bool resist_blind;
+    bool resist_chaos;
+    bool resist_confu;
+    bool resist_dark;
+    bool resist_disen;
+    bool resist_elec;
+    bool resist_fear;
+    bool resist_fire;
+    bool resist_lite;
+    bool resist_nethr;
+    bool resist_nexus;
+    bool resist_pois;
+    bool resist_shard;
+    bool resist_sound;
+    bool see_inv;
+    bool slow_digest;
+    bool telepathy;
+    bool vampiric;
+    bool weird_attack;
+};
+
 
 
 
@@ -1194,9 +1245,7 @@ struct player_type
 	s16b immov_cntr; /* Timed -- Last ``immovable'' command. */
 	s16b time_on_land; /* Counter for Gills mutation on land. */
 
-	u32b mutations1; /* Mutation flags 1 */
-	u32b mutations2; /* Mutation flags 2 */
-	u32b mutations3; /* Mutation flags 3 */
+	bool mutations[MAX_MUTS]; /* Active mutations */
 
 	s16b word_recall; /* Word of recall counter */
 	s16b scroll_delay; /* Unstable scroll delay */

@@ -3329,21 +3329,10 @@ static void do_cmd_knowledge_mutations(void)
 
 	for (i = 0; i < MAX_MUTS; i++)
 	{
-		u32b flag = 0;
-
-		if (i < 32)
-			flag = (p_ptr->mutations1 & (1L << i));
-		else if (i < 64)
-			flag = (p_ptr->mutations2 & (1L << (i - 32)));
-		else if (i < 96)
-			flag = (p_ptr->mutations3 & (1L << (i - 64)));
-		else
-			break; /* No more storage */
-
-		if (flag)
+		if (has_mutation(i))
 		{
-			if (mutation_names[i][0] && mutation_names[i][0][0])
-				fprintf(fff, "%s\n", mutation_names[i][0]);
+			if (mutation_info[i].name && mutation_info[i].name[0])
+				fprintf(fff, "%s\n", mutation_info[i].name);
 		}
 	}
 
@@ -4320,7 +4309,7 @@ void do_cmd_time(void)
 void do_cmd_echo_location(void)
 {
 	/* Check for the mutation */
-	if (!(p_ptr->mutations3 & (1L << 2))) /* MUT_ECHO_PULSE is 66 -> index 2 in mutations3 */
+	if (!has_mutation(MUT_ECHO_PULSE))
 	{
 		msg_print("You do not have the Echo Location mutation.");
 		return;

@@ -730,7 +730,7 @@ static void check_monster_environment(int m_idx, int y, int x)
 static void check_player_environment(void)
 {
 	int feat = cave_feat[p_ptr->py][p_ptr->px];
-	bool gills = (p_ptr->mutations3 & (1L << (MUT_REACTIVE_GILLS - 64))) ? TRUE : FALSE;
+	bool gills = has_mutation(MUT_REACTIVE_GILLS);
 
 	/* Gills Logic */
 	if (gills)

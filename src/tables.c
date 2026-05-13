@@ -2687,170 +2687,145 @@ shape shape_info[MAX_SHAPES] = {
  * This list hold the names and descriptions of mutations.
  */
 
-cptr mutation_names[MAX_MUTS][3] = {
-	{"Genius", "You grow a giant, pulsing brain.",
-		"Your brain returns to normal size."},
-
-	{"Bulging muscle", "You grow thick, ropey muscles.",
-		"Your muscles return to normal size."},
-
-	{"Double heart", "You grow a second heart in your chest.",
-		"Your second heart shrivels away."},
-
-	{"Mystical awareness", "You are aware of other dimensions.",
-		"You lose awareness of other dimensions."},
-
-	{"Hypnotic gaze", "Your gaze is hypnotic.",
-		"Your gaze is not nypnotic anymore."},
-
-	{"Expanded nervous system", "Your reactions are now much quicker.",
-		"Your reactions are not as quick as they used to be..."},
-
-	{"Centaur Body", "Your torso merges with a powerful equine frame (+3 Speed, 2-tile bulk).",
-		"Your equine lower body shrivels away."},
-
-	{"Sound distortion", "You now move more stealthily.",
-		"You don't move as stealthily as you used to."},
-
-	{"Distortion field", "You are protected.",
-		"Your distortion field disappears."},
-
-	{"Telepathy", "You sense intelligent life.",
-		"You lose telepathy."},
-
-	{"Lunimescence", "Your skin starts to glow.",
-		"Your skin stops glowing."},
-
-	{"Phase-Walker", "Your body shimmers as you slip between dimensions (No scrolls, ring flicker).",
-		"Your physical form feels solid and anchored again."},
-
-	{"Wings", "You grow small wings.",
-		"Your wings shrivel away."},
-
-	{"Life leech", "You gain vampiric abilities.",
-		"You lose your life-leeching abilities."},
-
-	{"Chaos funnel", "You start channeling wild magic.",
-		"You stop channeling wild magic."},
-
-	{"Superior Oculars",
-			"Your eyes multiply and bulge, granting total awareness (Photophobia, sensory overload).",
-		"Your vision narrows to a standard perspective."},
-
-	{"Fiery essence", "You are immune to fire.",
-		"You lose your fiery essence."},
-
-	{"Electrical essence", "You are immune to electricity.",
-		"You lose your electrical essence."},
-
-	{"Corrosive essence", "You are immune to acids.",
-		"You lose your corrosive essence."},
-
-	{"Frigid essence", "You are immune to cold.",
-		"You lose your frigid essence."},
-
-	{"See invisible", "You start sensing invisible creatures.",
-		"You stop sensing invisible creatures."},
-
-	{"Quicksilver", "You are immune to paralysis.",
-		"You are not immune to paralysis."},
-
-	{"Metabolic balance", "You start controlling you metabolism better.",
-		"You can't control your metabolism as well as you used to..."},
-
-	{"Regeneration", "You start regenerating.",
-		"You stop regenerating."},
-
-	{"Hollow Bones", "Your bones become porous and incredibly light (+4 Speed, fragile).",
-		"Your bones feel dense and heavy once more."},
-
-	{"Anti-life leech", "You are protected against leeching attacks.",
-		"You lose your protection against leeching attacks."},
-
-	{"Echolocation", "You can sense your surroundings without light.",
-		"You lose your echolocation abilities."},
-
-	{"Fearless", "You are fearless.",
-		"You stop being fearless."},
-
-	{"Clear-mindedness", "You are protected against confusion.",
-		"You lose protection against confusion."},
-
-	{"Heightened immunity", "You are protected against poisons.",
-		"You lose protection against poisons."},
-
-	{"Resist acid", "You resist acid.",
-		"You stop resisting acid."},
-
-	{"Resist electricity", "You resist electricity.",
-		"You stop resisting electricity."},
-
-	{"Resist fire", "You resist fire.",
-		"You stop resisting fire."},
-
-	{"Resist light", "You resist light.",
-		"You stop resisting light."},
-
-	{"Resist darkness", "You resist darkness.",
-		"You stop resisting darkness."},
-
-	{"Resist sound", "You resist sound.",
-		"You stop resisting sound."},
-
-	{"Resist chaos", "You resist chaos.",
-		"You stop resisting chaos."},
-
-	{"Resist disenchant", "You resist disenchantment.",
-		"You stop resisting disenchantment."},
-
-	{"Resist shards", "You resist shards.",
-		"You stop resisting shards."},
-
-	{"Resist nexus", "You resist nexus.",
-		"You stop resisting nexus."},
-
-	{"Resist nether", "You resist nether.",
-		"You stop resisting nether."},
-
-  /*-*-*/
-
-	{NULL, NULL, NULL},
-	{NULL, NULL, NULL},
-	{NULL, NULL, NULL},
-	{NULL, NULL, NULL},
-	{NULL, NULL, NULL},
-	{NULL, NULL, NULL},
-	{NULL, NULL, NULL},
-	{NULL, NULL, NULL},
-	{NULL, NULL, NULL},
-	{NULL, NULL, NULL},
-	{NULL, NULL, NULL},
-	{NULL, NULL, NULL},
-	{NULL, NULL, NULL},
-	{NULL, NULL, NULL},
-	{NULL, NULL, NULL},
-	{NULL, NULL, NULL},
-	{NULL, NULL, NULL},
-	{NULL, NULL, NULL},
-	{NULL, NULL, NULL},
-	{NULL, NULL, NULL},
-	{NULL, NULL, NULL},
-	{NULL, NULL, NULL},
-	{NULL, NULL, NULL},
-	{NULL, NULL, NULL},
-	{NULL, NULL, NULL},
-
-	{"Echolocation Pulse",
-			"You feel a thrumming in your mind.",
-		"The thrumming in your mind stops."},
-
-	{"Chitinous Carapace",
-			"Your skin is an exceptionally thick carapace (+15 AC, inflexible).",
-		"Your protective shell softens and flakes away."},
-
-	{"Reactive Gills", "Slits open on your neck, allowing you to breathe fluid (Dehydration, water breathing).",
-		"Your gills merge back into your neck."}
-
+const mutation_type mutation_info[MAX_MUTS] = {
+	/* MUT_PLUS_INT */
+	{ MUT_PLUS_INT, "Genius", "You grow a giant, pulsing brain.", "Your brain returns to normal size.", {0, 5, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_PLUS_STR */
+	{ MUT_PLUS_STR, "Bulging muscle", "You grow thick, ropey muscles.", "Your muscles return to normal size.", {5, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_PLUS_CON */
+	{ MUT_PLUS_CON, "Double heart", "You grow a second heart in your chest.", "Your second heart shrivels away.", {0, 0, 0, 0, 5, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_PLUS_WIS */
+	{ MUT_PLUS_WIS, "Mystical awareness", "You are aware of other dimensions.", "You lose awareness of other dimensions.", {0, 0, 5, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_PLUS_CHR */
+	{ MUT_PLUS_CHR, "Hypnotic gaze", "Your gaze is hypnotic.", "Your gaze is not nypnotic anymore.", {0, 0, 0, 0, 0, 5}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_PLUS_DEX */
+	{ MUT_PLUS_DEX, "Expanded nervous system", "Your reactions are now much quicker.", "Your reactions are not as quick as they used to be...", {0, 0, 0, 5, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_CENTAUR_BODY */
+	{ MUT_CENTAUR_BODY, "Centaur Body", "Your torso merges with a powerful equine frame (+3 Speed, 2-tile bulk).", "Your equine lower body shrivels away.", {0, 0, 0, 0, 0, 0}, 10, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_PLUS_STEALTH */
+	{ MUT_PLUS_STEALTH, "Sound distortion", "You now move more stealthily.", "You don't move as stealthily as you used to.", {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 10, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_PLUS_AC */
+	{ MUT_PLUS_AC, "Distortion field", "You are protected.", "Your distortion field disappears.", {0, 0, 0, 0, 0, 0}, 0, 0, 0, 25, 0, 25, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_ESP */
+	{ MUT_ESP, "Telepathy", "You sense intelligent life.", "You lose telepathy.", {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE },
+	/* MUT_GLOW */
+	{ MUT_GLOW, "Lunimescence", "Your skin starts to glow.", "Your skin stops glowing.", {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_PHASE_WALKER */
+	{ MUT_PHASE_WALKER, "Phase-Walker", "Your body shimmers as you slip between dimensions (No scrolls, ring flicker).", "Your physical form feels solid and anchored again.", {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_FLYING */
+	{ MUT_FLYING, "Wings", "You grow small wings.", "Your wings shrivel away.", {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_VAMPIRIC */
+	{ MUT_VAMPIRIC, "Life leech", "You gain vampiric abilities.", "You lose your life-leeching abilities.", {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE },
+	/* MUT_WEIRD_ATTACKS */
+	{ MUT_WEIRD_ATTACKS, "Chaos funnel", "You start channeling wild magic.", "You stop channeling wild magic.", {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE },
+	/* MUT_SUPERIOR_OCULARS */
+	{ MUT_SUPERIOR_OCULARS, "Superior Oculars", "Your eyes multiply and bulge, granting total awareness (Photophobia, sensory overload).", "Your vision narrows to a standard perspective.", {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_IMM_FIRE */
+	{ MUT_IMM_FIRE, "Fiery essence", "You are immune to fire.", "You lose your fiery essence.", {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_IMM_ELEC */
+	{ MUT_IMM_ELEC, "Electrical essence", "You are immune to electricity.", "You lose your electrical essence.", {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_IMM_ACID */
+	{ MUT_IMM_ACID, "Corrosive essence", "You are immune to acids.", "You lose your corrosive essence.", {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_IMM_COLD */
+	{ MUT_IMM_COLD, "Frigid essence", "You are immune to cold.", "You lose your frigid essence.", {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_SEE_INVIS */
+	{ MUT_SEE_INVIS, "See invisible", "You start sensing invisible creatures.", "You stop sensing invisible creatures.", {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_FREE_ACT */
+	{ MUT_FREE_ACT, "Quicksilver", "You are immune to paralysis.", "You are not immune to paralysis.", {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_SLOW_DIGEST */
+	{ MUT_SLOW_DIGEST, "Metabolic balance", "You start controlling you metabolism better.", "You can't control your metabolism as well as you used to...", {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE },
+	/* MUT_REGENERATE */
+	{ MUT_REGENERATE, "Regeneration", "You start regenerating.", "You stop regenerating.", {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_HOLLOW_BONES */
+	{ MUT_HOLLOW_BONES, "Hollow Bones", "Your bones become porous and incredibly light (+4 Speed, fragile).", "Your bones feel dense and heavy once more.", {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_HOLD_LIFE */
+	{ MUT_HOLD_LIFE, "Anti-life leech", "You are protected against leeching attacks.", "You lose your protection against leeching attacks.", {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_RES_BLIND */
+	{ MUT_RES_BLIND, "Echolocation", "You can sense your surroundings without light.", "You lose your echolocation abilities.", {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_RES_FEAR */
+	{ MUT_RES_FEAR, "Fearless", "You are fearless.", "You stop being fearless.", {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_RES_CONF */
+	{ MUT_RES_CONF, "Clear-mindedness", "You are protected against confusion.", "You lose protection against confusion.", {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_RES_POIS */
+	{ MUT_RES_POIS, "Heightened immunity", "You are protected against poisons.", "You lose protection against poisons.", {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_RES_ACID */
+	{ MUT_RES_ACID, "Resist acid", "You resist acid.", "You stop resisting acid.", {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_RES_ELEC */
+	{ MUT_RES_ELEC, "Resist electricity", "You resist electricity.", "You stop resisting electricity.", {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_RES_FIRE */
+	{ MUT_RES_FIRE, "Resist fire", "You resist fire.", "You stop resisting fire.", {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_RES_LIGHT */
+	{ MUT_RES_LIGHT, "Resist light", "You resist light.", "You stop resisting light.", {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_RES_DARK */
+	{ MUT_RES_DARK, "Resist darkness", "You resist darkness.", "You stop resisting darkness.", {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_RES_SOUND */
+	{ MUT_RES_SOUND, "Resist sound", "You resist sound.", "You stop resisting sound.", {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_RES_CHAOS */
+	{ MUT_RES_CHAOS, "Resist chaos", "You resist chaos.", "You stop resisting chaos.", {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_RES_DISEN */
+	{ MUT_RES_DISEN, "Resist disenchant", "You resist disenchantment.", "You stop resisting disenchantment.", {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_RES_SHARD */
+	{ MUT_RES_SHARD, "Resist shards", "You resist shards.", "You stop resisting shards.", {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_RES_NEXUS */
+	{ MUT_RES_NEXUS, "Resist nexus", "You resist nexus.", "You stop resisting nexus.", {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_RES_NETHER */
+	{ MUT_RES_NETHER, "Resist nether", "You resist nether.", "You stop resisting nether.", {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_MINUS_INT */
+	{ MUT_MINUS_INT, NULL, NULL, NULL, {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_MINUS_STR */
+	{ MUT_MINUS_STR, NULL, NULL, NULL, {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_MINUS_CON */
+	{ MUT_MINUS_CON, NULL, NULL, NULL, {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_MINUS_WIS */
+	{ MUT_MINUS_WIS, NULL, NULL, NULL, {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_MINUS_CHR */
+	{ MUT_MINUS_CHR, NULL, NULL, NULL, {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_MINUS_DEX */
+	{ MUT_MINUS_DEX, NULL, NULL, NULL, {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_MINUS_SPEED */
+	{ MUT_MINUS_SPEED, NULL, NULL, NULL, {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_AGGRAVATE */
+	{ MUT_AGGRAVATE, NULL, NULL, NULL, {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_MINUS_AC */
+	{ MUT_MINUS_AC, NULL, NULL, NULL, {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_LEGLESS */
+	{ MUT_LEGLESS, NULL, NULL, NULL, {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_BLIND */
+	{ MUT_BLIND, NULL, NULL, NULL, {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_COWARD */
+	{ MUT_COWARD, NULL, NULL, NULL, {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_HALLUC */
+	{ MUT_HALLUC, NULL, NULL, NULL, {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_POISONED */
+	{ MUT_POISONED, NULL, NULL, NULL, {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_CONFUSED */
+	{ MUT_CONFUSED, NULL, NULL, NULL, {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_PARALYZED */
+	{ MUT_PARALYZED, NULL, NULL, NULL, {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_BLEEDING */
+	{ MUT_BLEEDING, NULL, NULL, NULL, {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_PARASITES */
+	{ MUT_PARASITES, NULL, NULL, NULL, {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_STUNNED */
+	{ MUT_STUNNED, NULL, NULL, NULL, {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_TELEPORT */
+	{ MUT_TELEPORT, NULL, NULL, NULL, {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_EXP_DRAIN */
+	{ MUT_EXP_DRAIN, NULL, NULL, NULL, {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_MINUS_DEVICES */
+	{ MUT_MINUS_DEVICES, NULL, NULL, NULL, {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_MINUS_SAVE */
+	{ MUT_MINUS_SAVE, NULL, NULL, NULL, {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_MINUS_STEALTH */
+	{ MUT_MINUS_STEALTH, NULL, NULL, NULL, {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_MINUS_FIGHT */
+	{ MUT_MINUS_FIGHT, NULL, NULL, NULL, {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_ECHO_PULSE */
+	{ MUT_ECHO_PULSE, "Echolocation Pulse", "You feel a thrumming in your mind.", "The thrumming in your mind stops.", {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_CHITINOUS_CARAPACE */
+	{ MUT_CHITINOUS_CARAPACE, "Chitinous Carapace", "Your skin is an exceptionally thick carapace (+15 AC, inflexible).", "Your protective shell softens and flakes away.", {0, 0, 0, -1, 0, 0}, 0, 15, 15, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
+	/* MUT_REACTIVE_GILLS */
+	{ MUT_REACTIVE_GILLS, "Reactive Gills", "Slits open on your neck, allowing you to breathe fluid (Dehydration, water breathing).", "Your gills merge back into your neck.", {0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
 };
 
 

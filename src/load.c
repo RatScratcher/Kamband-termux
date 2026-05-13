@@ -829,23 +829,16 @@ static errr rd_extra(void)
 	rd_byte(&p_ptr->shape);
 	rd_s16b(&p_ptr->immov_cntr);
 
-	rd_u32b(&p_ptr->mutations1);
-	rd_u32b(&p_ptr->mutations2);
-	rd_u32b(&p_ptr->mutations3);
-
-	/* Clear removed mutations */
 	for (i = 0; i < MAX_MUTS; i++)
 	{
-		if (i >= 96) break;
+		byte m;
+		rd_byte(&m);
+		p_ptr->mutations[i] = (bool)m;
 
-		if (!mutation_names[i][0] || !mutation_names[i][0][0])
+		/* Clear removed mutations */
+		if (!mutation_info[i].name || !mutation_info[i].name[0])
 		{
-			if (i < 32)
-				p_ptr->mutations1 &= ~(1L << i);
-			else if (i < 64)
-				p_ptr->mutations2 &= ~(1L << (i - 32));
-			else
-				p_ptr->mutations3 &= ~(1L << (i - 64));
+			p_ptr->mutations[i] = FALSE;
 		}
 	}
 

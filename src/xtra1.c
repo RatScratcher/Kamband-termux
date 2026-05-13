@@ -2394,183 +2394,11 @@ static void god_effect(int god, int badness)
 }
 
 
-/* Apply bonuses based on a mutation. */
 
-static void process_mutation(int mut)
+bool has_mutation(int mut)
 {
-	switch (mut)
-	{
-		case MUT_PLUS_INT:
-			p_ptr->stat_add[A_INT] += 5;
-			break;
-
-		case MUT_PLUS_STR:
-			p_ptr->stat_add[A_STR] += 5;
-			break;
-
-		case MUT_PLUS_CON:
-			p_ptr->stat_add[A_CON] += 5;
-			break;
-
-		case MUT_PLUS_WIS:
-			p_ptr->stat_add[A_WIS] += 5;
-			break;
-
-		case MUT_PLUS_CHR:
-			p_ptr->stat_add[A_CHR] += 5;
-			break;
-
-		case MUT_PLUS_DEX:
-			p_ptr->stat_add[A_DEX] += 5;
-			break;
-
-		case MUT_CENTAUR_BODY:
-			p_ptr->pspeed += 10;
-			break;
-
-		case MUT_PLUS_STEALTH:
-			p_ptr->skill_stl += 10;
-			break;
-
-		case MUT_PLUS_AC:
-			p_ptr->to_a += 25;
-			p_ptr->dis_to_a += 25;
-			break;
-
-		case MUT_ESP:
-			p_ptr->telepathy = TRUE;
-			break;
-
-		case MUT_RES_FEAR:
-			p_ptr->resist_fear = TRUE;
-			break;
-
-		case MUT_GLOW:
-			p_ptr->lite = TRUE;
-			break;
-
-		case MUT_RES_CONF:
-			p_ptr->resist_confu = TRUE;
-			break;
-
-		case MUT_PHASE_WALKER:
-			p_ptr->immaterial = TRUE;
-			break;
-
-		case MUT_FLYING:
-			p_ptr->flying = TRUE;
-			break;
-
-		case MUT_VAMPIRIC:
-			p_ptr->vampiric = TRUE;
-			break;
-
-		case MUT_WEIRD_ATTACKS:
-			p_ptr->weird_attack = TRUE;
-			break;
-
-		case MUT_SUPERIOR_OCULARS:
-			p_ptr->allseeing = TRUE;
-			break;
-
-		case MUT_IMM_FIRE:
-			p_ptr->immune_fire = TRUE;
-			break;
-
-		case MUT_IMM_ELEC:
-			p_ptr->immune_elec = TRUE;
-			break;
-
-		case MUT_IMM_ACID:
-			p_ptr->immune_acid = TRUE;
-			break;
-
-		case MUT_IMM_COLD:
-			p_ptr->immune_cold = TRUE;
-			break;
-
-		case MUT_SEE_INVIS:
-			p_ptr->see_inv = TRUE;
-			break;
-
-		case MUT_FREE_ACT:
-			p_ptr->free_act = TRUE;
-			break;
-
-		case MUT_SLOW_DIGEST:
-			p_ptr->slow_digest = TRUE;
-			break;
-
-		case MUT_REGENERATE:
-			p_ptr->regenerate = TRUE;
-			break;
-
-		case MUT_HOLLOW_BONES:
-			p_ptr->ffall = TRUE;
-			break;
-
-		case MUT_HOLD_LIFE:
-			p_ptr->hold_life = TRUE;
-			break;
-
-		case MUT_RES_BLIND:
-			p_ptr->resist_blind = TRUE;
-			break;
-
-		case MUT_RES_POIS:
-			p_ptr->resist_pois = TRUE;
-			break;
-
-		case MUT_RES_ACID:
-			p_ptr->resist_acid = TRUE;
-			break;
-
-		case MUT_RES_ELEC:
-			p_ptr->resist_elec = TRUE;
-			break;
-
-		case MUT_RES_FIRE:
-			p_ptr->resist_fire = TRUE;
-			break;
-
-		case MUT_RES_LIGHT:
-			p_ptr->resist_lite = TRUE;
-			break;
-
-		case MUT_RES_DARK:
-			p_ptr->resist_dark = TRUE;
-			break;
-
-		case MUT_RES_SOUND:
-			p_ptr->resist_sound = TRUE;
-			break;
-
-		case MUT_RES_CHAOS:
-			p_ptr->resist_chaos = TRUE;
-			break;
-
-		case MUT_RES_DISEN:
-			p_ptr->resist_disen = TRUE;
-			break;
-
-		case MUT_RES_SHARD:
-			p_ptr->resist_shard = TRUE;
-			break;
-
-		case MUT_RES_NEXUS:
-			p_ptr->resist_nexus = TRUE;
-			break;
-
-		case MUT_RES_NETHER:
-			p_ptr->resist_nethr = TRUE;
-			break;
-
-		case MUT_CHITINOUS_CARAPACE:
-			p_ptr->ac += 15;
-			p_ptr->dis_ac += 15;
-			p_ptr->stat_add[A_DEX] -= 1;
-			break;
-	}
+    if (mut < 0 || mut >= MAX_MUTS) return FALSE;
+    return p_ptr->mutations[mut];
 }
 
 /* Apply bonuses based on current shape. */
@@ -3455,21 +3283,57 @@ static void calc_bonuses(void)
 
 	/* Analyze mutations */
 
-	for (i = 0; i < 32; i++)
+	for (i = 0; i < MAX_MUTS; i++)
 	{
-		if (p_ptr->mutations1 & (1L << i))
+		if (has_mutation(i))
 		{
-			process_mutation(i);
-		}
+			int s;
+			const mutation_type *m_ptr = &mutation_info[i];
 
-		if (p_ptr->mutations2 & (1L << i))
-		{
-			process_mutation(i + 32);
-		}
+			/* Stats */
+			for (s = 0; s < 6; s++) p_ptr->stat_add[s] += m_ptr->stat_mod[s];
 
-		if (p_ptr->mutations3 & (1L << i))
-		{
-			process_mutation(i + 64);
+			/* Numerics */
+			p_ptr->pspeed += m_ptr->speed_bonus;
+			p_ptr->ac += m_ptr->ac_bonus;
+			p_ptr->dis_ac += m_ptr->dis_ac_bonus;
+			p_ptr->dis_to_a += m_ptr->dis_to_a_bonus;
+			p_ptr->skill_stl += m_ptr->skill_stl_bonus;
+			p_ptr->to_a += m_ptr->to_a_bonus;
+
+			/* Booleans */
+			if (m_ptr->allseeing) p_ptr->allseeing = TRUE;
+			if (m_ptr->ffall) p_ptr->ffall = TRUE;
+			if (m_ptr->flying) p_ptr->flying = TRUE;
+			if (m_ptr->free_act) p_ptr->free_act = TRUE;
+			if (m_ptr->hold_life) p_ptr->hold_life = TRUE;
+			if (m_ptr->immaterial) p_ptr->immaterial = TRUE;
+			if (m_ptr->immune_acid) p_ptr->immune_acid = TRUE;
+			if (m_ptr->immune_cold) p_ptr->immune_cold = TRUE;
+			if (m_ptr->immune_elec) p_ptr->immune_elec = TRUE;
+			if (m_ptr->immune_fire) p_ptr->immune_fire = TRUE;
+			if (m_ptr->lite) p_ptr->lite = TRUE;
+			if (m_ptr->regenerate) p_ptr->regenerate = TRUE;
+			if (m_ptr->resist_acid) p_ptr->resist_acid = TRUE;
+			if (m_ptr->resist_blind) p_ptr->resist_blind = TRUE;
+			if (m_ptr->resist_chaos) p_ptr->resist_chaos = TRUE;
+			if (m_ptr->resist_confu) p_ptr->resist_confu = TRUE;
+			if (m_ptr->resist_dark) p_ptr->resist_dark = TRUE;
+			if (m_ptr->resist_disen) p_ptr->resist_disen = TRUE;
+			if (m_ptr->resist_elec) p_ptr->resist_elec = TRUE;
+			if (m_ptr->resist_fear) p_ptr->resist_fear = TRUE;
+			if (m_ptr->resist_fire) p_ptr->resist_fire = TRUE;
+			if (m_ptr->resist_lite) p_ptr->resist_lite = TRUE;
+			if (m_ptr->resist_nethr) p_ptr->resist_nethr = TRUE;
+			if (m_ptr->resist_nexus) p_ptr->resist_nexus = TRUE;
+			if (m_ptr->resist_pois) p_ptr->resist_pois = TRUE;
+			if (m_ptr->resist_shard) p_ptr->resist_shard = TRUE;
+			if (m_ptr->resist_sound) p_ptr->resist_sound = TRUE;
+			if (m_ptr->see_inv) p_ptr->see_inv = TRUE;
+			if (m_ptr->slow_digest) p_ptr->slow_digest = TRUE;
+			if (m_ptr->telepathy) p_ptr->telepathy = TRUE;
+			if (m_ptr->vampiric) p_ptr->vampiric = TRUE;
+			if (m_ptr->weird_attack) p_ptr->weird_attack = TRUE;
 		}
 	}
 

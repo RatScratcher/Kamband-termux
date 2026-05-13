@@ -936,9 +936,10 @@ static void wr_extra(void)
 	wr_byte(p_ptr->shape);
 	wr_s16b(p_ptr->immov_cntr);
 
-	wr_u32b(p_ptr->mutations1);
-	wr_u32b(p_ptr->mutations2);
-	wr_u32b(p_ptr->mutations3);
+	for (i = 0; i < MAX_MUTS; i++)
+	{
+		wr_byte(p_ptr->mutations[i]);
+	}
 
 	wr_byte(p_ptr->confusing);
 	wr_byte(p_ptr->searching);

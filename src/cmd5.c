@@ -1443,9 +1443,7 @@ finalize_spell:
 
 int generate_mutation(bool silent)
 {
-	int which_mut;
-	int which_var;
-	int which_flg;
+	int which_mut = 0;
 	int i = 0;
 	bool looper = TRUE;
 
@@ -1453,35 +1451,13 @@ int generate_mutation(bool silent)
 	{
 		which_mut = rand_int(MAX_MUTS);
 		if (which_mut >= MUT_MINUS_INT && which_mut <= MUT_MINUS_FIGHT) continue;
-		which_var = which_mut / 32;
-		which_flg = 1L << (which_mut % 32);
+        if (!mutation_info[which_mut].name || !mutation_info[which_mut].name[0]) { i++; continue; }
 
-		switch (which_var)
+		if (!has_mutation(which_mut))
 		{
-			case 0:
-				if (!(p_ptr->mutations1 & which_flg))
-				{
-					p_ptr->mutations1 |= which_flg;
-					looper = FALSE;
-				}
-				break;
-
-			case 1:
-				if (!(p_ptr->mutations2 & which_flg))
-				{
-					p_ptr->mutations2 |= which_flg;
-					looper = FALSE;
-				}
-				break;
-
-			case 2:
-				if (!(p_ptr->mutations3 & which_flg))
-				{
-					p_ptr->mutations3 |= which_flg;
-					if (which_mut == MUT_ECHO_PULSE) add_echo_pulse_spell();
-					looper = FALSE;
-				}
-				break;
+			p_ptr->mutations[which_mut] = TRUE;
+			if (which_mut == MUT_ECHO_PULSE) add_echo_pulse_spell();
+			looper = FALSE;
 		}
 
 		if (i > 25)
@@ -1502,8 +1478,11 @@ int generate_mutation(bool silent)
 
 	if (!silent)
 	{
-		mprint(MSG_WARNING, mutation_names[which_mut][1]);
-		msg_print(NULL);
+		msg_print("You change...");
+		if (mutation_info[which_mut].gain_msg && mutation_info[which_mut].gain_msg[0])
+		{
+			msg_format("%s", mutation_info[which_mut].gain_msg);
+		}
 	}
 
 	return (which_mut);
@@ -1516,47 +1495,27 @@ int generate_mutation(bool silent)
 void remove_mutation(void)
 {
 	int which_mut = 0;
-	int which_var;
-	int which_flg;
 	int i = 0;
 	bool looper = TRUE;
+	bool has_any = FALSE;
 
-	if (p_ptr->mutations1 == 0 && p_ptr->mutations2 == 0 &&
-		p_ptr->mutations3 == 0)
-		return;
+	for (i = 0; i < MAX_MUTS; i++)
+	{
+		if (has_mutation(i)) has_any = TRUE;
+	}
 
+	if (!has_any) return;
+
+    i = 0;
 	while (looper)
 	{
 		which_mut = rand_int(MAX_MUTS);
-		which_var = which_mut / 32;
-		which_flg = 1L << (which_mut % 32);
 
-		switch (which_var)
+		if (has_mutation(which_mut))
 		{
-			case 0:
-				if (p_ptr->mutations1 & which_flg)
-				{
-					p_ptr->mutations1 &= ~(which_flg);
-					looper = FALSE;
-				}
-				break;
-
-			case 1:
-				if (p_ptr->mutations2 & which_flg)
-				{
-					p_ptr->mutations2 &= ~(which_flg);
-					looper = FALSE;
-				}
-				break;
-
-			case 2:
-				if (p_ptr->mutations3 & which_flg)
-				{
-					p_ptr->mutations3 &= ~(which_flg);
-					if (which_mut == MUT_ECHO_PULSE) remove_echo_pulse_spell();
-					looper = FALSE;
-				}
-				break;
+			p_ptr->mutations[which_mut] = FALSE;
+            if (which_mut == MUT_ECHO_PULSE) remove_echo_pulse_spell();
+			looper = FALSE;
 		}
 
 		if (i > 25)
@@ -1572,7 +1531,10 @@ void remove_mutation(void)
 	p_ptr->redraw |= (PR_STATE | PR_MAP);
 	handle_stuff();
 
-	mprint(MSG_WARNING, mutation_names[which_mut][2]);
+    if (mutation_info[which_mut].loss_msg && mutation_info[which_mut].loss_msg[0])
+    {
+	    mprint(MSG_WARNING, mutation_info[which_mut].loss_msg);
+    }
 	msg_print(NULL);
 }
 

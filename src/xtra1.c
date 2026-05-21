@@ -2425,7 +2425,7 @@ static void process_mutation(int mut)
 			break;
 
 		case MUT_CENTAUR_BODY:
-			p_ptr->pspeed += 10;
+			p_ptr->pspeed += 3;
 			break;
 
 		case MUT_PLUS_STEALTH:
@@ -2507,6 +2507,7 @@ static void process_mutation(int mut)
 
 		case MUT_HOLLOW_BONES:
 			p_ptr->ffall = TRUE;
+			p_ptr->pspeed += 4;
 			break;
 
 		case MUT_HOLD_LIFE:

@@ -1,0 +1,26 @@
+rd_savefile_new: start
+Loading a 2.1.9 savefile...
+rd_extra: start
+rd_extra: seeds read
+rd_extra: death flag read
+Loaded Turn: 1
+Starting to restore Dungeon...
+Restoring Dungeon...
+Dungeon Header: Depth 29, PY 58, PX 365, YMAX 440, XMAX 462
+rd_dungeon: start RLE 1 (info)
+rd_dungeon: start RLE 2 (fire life)
+rd_dungeon: start RLE 3 (feat)
+rd_dungeon: start RLE 4 (sector)
+rd_savefile_new: start
+Loading a 2.1.9 savefile...
+rd_extra: start
+rd_extra: seeds read
+rd_extra: death flag read
+Loaded Turn: 1
+Starting to restore Dungeon...
+Restoring Dungeon...
+Dungeon Header: Depth 29, PY 58, PX 365, YMAX 440, XMAX 462
+rd_dungeon: start RLE 1 (info)
+rd_dungeon: start RLE 2 (fire life)
+rd_dungeon: start RLE 3 (feat)
+rd_dungeon: start RLE 4 (sector)

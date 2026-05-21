@@ -1,0 +1,14 @@
+--- src/cave.c
++++ src/cave.c
+@@ -2568,6 +2568,12 @@ void update_view(void)
+		over = MAX_SIGHT * 3 / 2;
+	}
+
++	/* Limit vision radius in SECTOR_DARK to 1 */
++	if (cave_sector[py][px] == SECTOR_DARK) {
++		full = 1;
++		over = 1;
++	}
++
+
+	/*** Step 0 -- Begin ***/

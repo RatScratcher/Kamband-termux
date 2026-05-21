@@ -1,0 +1,350 @@
+--- src/generate.c
++++ src/generate.c
+@@ -315,6 +315,9 @@
+	/* Array of which blocks are used */
+	bool room_map[MAX_ROOMS_ROW][MAX_ROOMS_COL];
+
++	/* Array of sector types for each block */
++	byte sector_map[MAX_ROOMS_ROW][MAX_ROOMS_COL];
++
+	/* Hack -- there is a pit/nest on this level */
+	bool crowded;
+ };
+@@ -707,9 +710,9 @@
+  */
+ static void alloc_stairs(int feat, int num, int walls, bool force_room)
+ {
+-	int y, x, j;
++	int y, x, j, sy, sx;
+
+-	/* The walls and num parameters are unused */
++	/* The walls and num parameters are mostly unused in the sector-based version */
+	(void)walls;
+	(void)num;
+
+@@ -734,7 +737,28 @@
+     }
+
++	/* Fallback for Town/Wilderness generation where 'dun' is not initialized */
++	if (!dun)
++	{
++		for (j = 0; j < 3000; j++)
++		{
++			y = rand_int(DUNGEON_HGT);
++			x = rand_int(DUNGEON_WID);
++			if (!cave_safe_bold(y, x)) continue;
++
++			if (!p_ptr->depth) {
++				if (p_ptr->inside_special == SPECIAL_WILD) cave_feat[y][x] = FEAT_SHAFT;
++				else cave_feat[y][x] = FEAT_MORE;
++			} else if (p_ptr->inside_special == SPECIAL_QUEST || (p_ptr->depth >= MAX_DEPTH - 1)) {
++				cave_feat[y][x] = FEAT_LESS;
++			} else {
++				cave_feat[y][x] = feat;
++			}
++			cave_info[y][x] |= CAVE_GLOW;
++			return;
++		}
++		return;
++	}
++
+	/* Allocate exactly 1 stair per 2x2 block sector */
+-	int sy, sx;
+	for (sy = 0; sy < dun->row_rooms; sy += 2)
+	{
+		for (sx = 0; sx < dun->col_rooms; sx += 2)
+@@ -953,11 +977,7 @@
+		/* Agent-based Drunkard's Walk */
+		int life = 500 + randint(1000);
+
+-		int by = y / BLOCK_HGT;
+-		int bx = x / BLOCK_WID;
+-		if (by >= MAX_ROOMS_ROW) by = MAX_ROOMS_ROW - 1;
+-		if (bx >= MAX_ROOMS_COL) bx = MAX_ROOMS_COL - 1;
+-		int current_sector = cave_sector[by][bx];
++		int current_sector = cave_sector[y][x];
+
+		int steps_between_blobs = rand_range(2, 10);
+		int blob_length_remaining = 0;
+@@ -1004,13 +1024,8 @@
+							}
+
+							/* Streams cannot cut through True Dark Mazes */
+-							if (valid)
++							if (valid && in_bounds(cy, cx) && cave_sector[cy][cx] == SECTOR_DARK)
+							{
+-								int s_y = cy / BLOCK_HGT;
+-								int s_x = cx / BLOCK_WID;
+-								if (s_y >= 0 && s_y < MAX_ROOMS_ROW && s_x >= 0 && s_x < MAX_ROOMS_COL && cave_sector[s_y][s_x] == SECTOR_DARK)
+-								{
+-									valid = FALSE;
+-								}
++								valid = FALSE;
+							}
+
+@@ -1036,11 +1051,7 @@
+
+			if (in_bounds(ny, nx))
+			{
+-				int nby = ny / BLOCK_HGT;
+-				int nbx = nx / BLOCK_WID;
+-				if (nby >= MAX_ROOMS_ROW) nby = MAX_ROOMS_ROW - 1;
+-				if (nbx >= MAX_ROOMS_COL) nbx = MAX_ROOMS_COL - 1;
+-				int next_sector = cave_sector[nby][nbx];
++				int next_sector = cave_sector[ny][nx];
+
+				/* Sector overflow check (40% chance to overflow, 60% to stay within sector) */
+				if (next_sector != current_sector)
+@@ -4395,12 +4406,15 @@
+   Rand_quick = TRUE;
+   Rand_value = HASH_LEVEL(p_ptr->wild_x, p_ptr->wild_y);
+
+-  /* Clear the rest of the level. */
+-  for (y = 2; y < DUNGEON_HGT - 2; y++) {
+-    for (x = 2; x < DUNGEON_WID - 2; x++) {
++	/* Clear the rest of the level and sector map. */
++	for (y = 0; y < DUNGEON_HGT; y++) {
++		for (x = 0; x < DUNGEON_WID; x++) {
++			cave_sector[y][x] = SECTOR_RUINS;
++			if (y >= 2 && y < DUNGEON_HGT - 2 && x >= 2 && x < DUNGEON_WID - 2) {
+
+       /* Create level background */
+       cave_feat[y][x] = level_bg;
++			}
+     }
+   }
+
+@@ -5523,58 +5537,78 @@
+     }
+ }
+
++/*
++ * Recursive helper to carve the Dark Maze
++ */
++static void carve_maze_dark(int y, int x, int y1, int x1, int y2, int x2)
++{
++    int i, d;
++    int dirs[4] = { 0, 1, 2, 3 };
++
++    /* Shuffle directions */
++    for (i = 0; i < 4; i++)
++    {
++        int j = rand_int(4);
++        int temp = dirs[i];
++        dirs[i] = dirs[j];
++        dirs[j] = temp;
++    }
++
++    for (i = 0; i < 4; i++)
++    {
++        int dy = 0, dx = 0;
++        d = dirs[i];
++        if (d == 0) dy = -2;
++        else if (d == 1) dy = 2;
++        else if (d == 2) dx = -2;
++        else if (d == 3) dx = 2;
++
++        int ny = y + dy;
++        int nx = x + dx;
++
++        /* Check bounds and ensure we only carve into un-carved Dark Maze walls */
++        if (ny > y1 && ny < y2 && nx > x1 && nx < x2 &&
++            cave_feat[ny][nx] == FEAT_WALL_INNER &&
++            cave_sector[ny][nx] == SECTOR_DARK)
++        {
++            cave_feat[ny][nx] = FEAT_FLOOR;
++            cave_feat[y + dy / 2][x + dx / 2] = FEAT_FLOOR;
++            carve_maze_dark(ny, nx, y1, x1, y2, x2);
++        }
++    }
++}
++
+ /*
+  * Build a Dark Maze Sector: A perfect geometric maze that restricts vision.
+  */
+ static void build_sector_dark(int y0, int x0)
+ {
+-    int y, x, i;
++    int y, x;
+     int y1 = y0 * BLOCK_HGT;
+     int x1 = x0 * BLOCK_WID;
+     int y2 = (y0 + 2) * BLOCK_HGT - 1;
+     int x2 = (x0 + 2) * BLOCK_WID - 1;
+
+-    /* 1. Fill area with Diggable Walls and 'Darkness' flags */
++    /* 1. Fill area with Walls and 'Darkness' flags */
+     for (y = y1; y <= y2; y++) {
+         for (x = x1; x <= x2; x++) {
+             if (!in_bounds(y, x)) continue;
+-            if (cave_info[y][x] & CAVE_ROOM) continue; /* Protect existing rooms */
++
++            /* Overwrite EVERYTHING to ensure a clean maze */
+             cave_feat[y][x] = FEAT_WALL_INNER;
+-            /* Outer boundary walls are diggable */
+-            if (y == y1 || y == y2 || x == x1 || x == x2) {
+-                cave_feat[y][x] = FEAT_MAGMA;
+-            }
+             cave_info[y][x] |= (CAVE_ROOM);
+             cave_info[y][x] &= ~(CAVE_GLOW | CAVE_MARK); /* Dark and Unmapped */
++            cave_sector[y][x] = SECTOR_DARK; /* Ensure tile-mapped sector */
+         }
+     }
+
+-    /* 2. Carve Maze using square universal stamps of floor */
+-    stamp_type floor_stamp;
+-    floor_stamp.feat = FEAT_FLOOR;
+-    floor_stamp.elev = ELEV_GROUND;
+-    floor_stamp.radius = 2;
+-    floor_stamp.threshold = 90; /* high chance to stamp floor */
+-    floor_stamp.roughness = 20;
+-    floor_stamp.overwrite = TRUE;
+-    floor_stamp.circular = FALSE; /* Square brush */
+-
+-    int num_stamps = rand_range(15, 25);
+-    for (i = 0; i < num_stamps; i++) {
+-        int ty = rand_range(y1 + 2, y2 - 2);
+-        int tx = rand_range(x1 + 2, x2 - 2);
+-        universal_stamp(ty, tx, floor_stamp);
+-    }
+-
+-    /* Ensure outer walls remain solid except at access points */
+-    for (y = y1; y <= y2; y++) {
+-        for (x = x1; x <= x2; x++) {
+-            if (!in_bounds(y, x)) continue;
+-            if (y == y1 || y == y2 || x == x1 || x == x2) {
+-                cave_feat[y][x] = FEAT_MAGMA;
+-            }
+-        }
+-    }
++    /* 2. Carve Maze using recursive backtracker */
++    /* Starting point: y1+1, x1+1 */
++    cave_feat[y1+1][x1+1] = FEAT_FLOOR;
++    carve_maze_dark(y1+1, x1+1, y1, x1, y2, x2);
+
+     /* 3. Add Monsters and Items in stamped areas */
+     for (y = y1 + 1; y < y2; y++) {
+@@ -5668,7 +5702,7 @@
+         /* Open one more on the opposite side to make a passage if possible */
+         if (top_opened || left_opened) {
+             cave_feat[y2][x2-1] = FEAT_FLOOR;
+-        } else {
++        } else if (bottom_opened || right_opened) {
+             cave_feat[y1][x1+1] = FEAT_FLOOR;
+         }
+     }
+@@ -5951,21 +5985,13 @@
+			if (cave_feat[y][x] > FEAT_WALL_SOLID) continue;
+
+			bool is_boundary = FALSE;
+-			int by = y / BLOCK_HGT;
+-			int bx = x / BLOCK_WID;
+-			if (by >= MAX_ROOMS_ROW) by = MAX_ROOMS_ROW - 1;
+-			if (bx >= MAX_ROOMS_COL) bx = MAX_ROOMS_COL - 1;
+-			int sect = cave_sector[by][bx];
+-
+-			int by_minus = (y - 1) / BLOCK_HGT;
+-			int bx_minus = (x - 1) / BLOCK_WID;
+-			int by_plus = (y + 1) / BLOCK_HGT;
+-			int bx_plus = (x + 1) / BLOCK_WID;
+-
+-			if (by_minus >= 0 && cave_sector[by_minus][bx] != sect) is_boundary = TRUE;
+-			if (by_plus < MAX_ROOMS_ROW && cave_sector[by_plus][bx] != sect) is_boundary = TRUE;
+-			if (bx_minus >= 0 && cave_sector[by][bx_minus] != sect) is_boundary = TRUE;
+-			if (bx_plus < MAX_ROOMS_COL && cave_sector[by][bx_plus] != sect) is_boundary = TRUE;
++			int sect = cave_sector[y][x];
++
++
++			if (cave_sector[y - 1][x] != sect) is_boundary = TRUE;
++			if (cave_sector[y + 1][x] != sect) is_boundary = TRUE;
++			if (cave_sector[y][x - 1] != sect) is_boundary = TRUE;
++			if (cave_sector[y][x + 1] != sect) is_boundary = TRUE;
+
+			if (is_boundary)
+			{
+@@ -6040,12 +6066,9 @@
+			for (x = 1; x < DUNGEON_WID - 1; x++)
+			{
+				int by = y / BLOCK_HGT;
+-				int bx = x / BLOCK_WID;
+-				if (by >= MAX_ROOMS_ROW) by = MAX_ROOMS_ROW - 1;
+-				if (bx >= MAX_ROOMS_COL) bx = MAX_ROOMS_COL - 1;
+
+				/* Only apply to SECTOR_CAVERN to maintain other sector structures */
+-				if (cave_sector[by][bx] != SECTOR_CAVERN) continue;
++				if (cave_sector[y][x] != SECTOR_CAVERN) continue;
+
+				/* Do not overwrite permanent features or stairs/doors */
+				if (cave_feat[y][x] >= FEAT_PERM_EXTRA || cave_feat[y][x] == FEAT_LESS || cave_feat[y][x] == FEAT_MORE || (cave_feat[y][x] >= FEAT_DOOR_HEAD && cave_feat[y][x] <= FEAT_DOOR_TAIL)) continue;
+@@ -6209,7 +6232,7 @@
+	/* Initialize Elevation */
+	init_elevation();
+
+-	/* Initialize Sector Map to RUINS by default */
++	/* Initialize Sector Map to RUINS by default for all blocks */
+	for (y = 0; y < dun->row_rooms; y++)
+	{
+		for (x = 0; x < dun->col_rooms; x++)
+@@ -6331,7 +6354,7 @@
+		if (room_build(y, x, 1))
+		{
+			/* If we successfully built a simple room in RUINS, try to cluster a neighborhood */
+-			if (cave_sector[y][x] == SECTOR_RUINS)
++			if (dun->sector_map[y][x] == SECTOR_RUINS)
+			{
+				int cy, cx;
+				for (cy = y - 1; cy <= y + 1; cy++)
+@@ -6376,17 +6399,26 @@
+				else if (roll < 80) sect_type = SECTOR_PIT;        /* 5% Pit */
+				else sect_type = SECTOR_CAVERN;                    /* 20% Cavern */
+
+-			/* Assign to 2x2 block */
+-			cave_sector[y][x] = sect_type;
+-			if (y + 1 < dun->row_rooms) cave_sector[y+1][x] = sect_type;
+-			if (x + 1 < dun->col_rooms) cave_sector[y][x+1] = sect_type;
+-			if (y + 1 < dun->row_rooms && x + 1 < dun->col_rooms) cave_sector[y+1][x+1] = sect_type;
++			/* Assign to all blocks in the 2x2 sector group */
++			dun->sector_map[y][x] = sect_type;
++			if (y + 1 < dun->row_rooms) dun->sector_map[y+1][x] = sect_type;
++			if (x + 1 < dun->col_rooms) dun->sector_map[y][x+1] = sect_type;
++			if (y + 1 < dun->row_rooms && x + 1 < dun->col_rooms) dun->sector_map[y+1][x+1] = sect_type;
+		}
+	}
+
+	/* No "crowded" rooms yet */
+	dun->crowded = FALSE;
+
++	/* Sync Sector Map to Global Cave Sector Map (Tile-mapped) */
++	for (y = 0; y < DUNGEON_HGT; y++)
++	{
++		for (x = 0; x < DUNGEON_WID; x++)
++		{
++			cave_sector[y][x] = dun->sector_map[y / BLOCK_HGT][x / BLOCK_WID];
++		}
++	}
++
+
+	/* No rooms yet */
+	dun->cent_n = 0;
+@@ -6396,7 +6428,7 @@
+	{
+		for (x = 0; x < dun->col_rooms; x += 2)
+		{
+-			int sect = cave_sector[y][x];
++			int sect = dun->sector_map[y][x];
+			if (sect == SECTOR_SHIFTING)
+				{
+					build_sector_shifting_maze(y, x);
+@@ -6643,6 +6675,7 @@
+		int start_feat = (!p_ptr->depth) ? FEAT_MORE : FEAT_LESS;
+		if (!p_ptr->depth && p_ptr->inside_special == SPECIAL_WILD) start_feat = FEAT_SHAFT;
+
++		int sy, sx;
+		for (sy = 0; sy < DUNGEON_HGT; sy++) {
+			for (sx = 0; sx < DUNGEON_WID; sx++) {
+				if (cave_feat[sy][sx] == start_feat) {
+@@ -6792,6 +6825,7 @@
+	}
+
+	free(dun_body);
++	dun = NULL;
+ }

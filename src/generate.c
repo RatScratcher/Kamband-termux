@@ -4716,30 +4716,24 @@ static void place_traps_near_doors(int chance)
 /*
  * Place traps near chests
  */
+
 static void place_traps_near_chests(int chance)
 {
-	int y, x;
-	int dy, dx;
+	int dy, dx, i;
+	object_type *o_ptr;
 
-	/* Scan dungeon for chests */
-	for (y = 0; y < DUNGEON_HGT; y++)
+	/* Iterate over all generated objects array to find chests */
+	for (i = 1; i < o_max; i++)
 	{
-		for (x = 0; x < DUNGEON_WID; x++)
+		o_ptr = &o_list[i];
+
+		/* Skip dead objects */
+		if (!o_ptr->k_idx) continue;
+
+		if (o_ptr->tval == TV_CHEST)
 		{
-			object_type *o_ptr;
-			bool is_chest = FALSE;
-
-			/* Check for chest */
-			for (o_ptr = cave_o_idx[y][x]; o_ptr; o_ptr = o_ptr->next)
-			{
-				if (o_ptr->tval == TV_CHEST)
-				{
-					is_chest = TRUE;
-					break;
-				}
-			}
-
-			if (!is_chest) continue;
+			int y = o_ptr->iy;
+			int x = o_ptr->ix;
 
 			/* Try adjacent grids */
 			for (dy = -1; dy <= 1; dy++)
@@ -4774,36 +4768,39 @@ static void place_traps_near_chests(int chance)
 /*
  * Identify distinct connected components of target_elev and ensure each has at least one access point.
  */
-static void ensure_elevation_access(int y1, int x1, int y2, int x2, int target_elev, int edge_feat)
+static void ensure_elevation_access(int y1, int x1, int y2, int x2)
 {
     int y, x, dy, dx;
-    int **visited;
-
-    visited = (int **)malloc(DUNGEON_HGT * sizeof(int *));
-    for (y = 0; y < DUNGEON_HGT; y++) {
-        visited[y] = (int *)calloc(DUNGEON_WID, sizeof(int));
+    int visited[24][24];
+    for (y = 0; y < 24; y++) {
+        for (x = 0; x < 24; x++) {
+            visited[y][x] = 0;
+        }
     }
 
     for (y = y1; y <= y2; y++) {
         for (x = x1; x <= x2; x++) {
+            int target_elev;
             if (!in_bounds(y, x)) continue;
 
-            if (get_elevation(y, x) == target_elev && !visited[y][x]) {
+            target_elev = get_elevation(y, x);
+            if ((target_elev == ELEV_HIGH || target_elev == ELEV_LOW) && !visited[y - y1][x - x1]) {
+                int edge_feat = (target_elev == ELEV_HIGH) ? FEAT_CLIFF_UP : FEAT_CLIFF_DOWN;
+
                 /* New connected component found. We will collect all edge tiles for this component. */
-                int *edge_y = (int *)malloc(DUNGEON_HGT * DUNGEON_WID * sizeof(int));
-                int *edge_x = (int *)malloc(DUNGEON_HGT * DUNGEON_WID * sizeof(int));
+                int edge_y[576];
+                int edge_x[576];
                 int edge_count = 0;
 
-                int *q_y = (int *)malloc(DUNGEON_HGT * DUNGEON_WID * sizeof(int));
-                int *q_x = (int *)malloc(DUNGEON_HGT * DUNGEON_WID * sizeof(int));
+                int q_y[576];
+                int q_x[576];
                 int head = 0, tail = 0;
+                int comp_size = 0;
 
                 q_y[tail] = y;
                 q_x[tail] = x;
                 tail++;
-                visited[y][x] = 1;
-
-                int comp_size = 0;
+                visited[y - y1][x - x1] = 1;
 
                 while (head < tail) {
                     int cy = q_y[head];
@@ -4837,8 +4834,8 @@ static void ensure_elevation_access(int y1, int x1, int y2, int x2, int target_e
                             if (dy == 0 && dx == 0) continue;
                             int ny = cy + dy, nx = cx + dx;
                             if (in_bounds(ny, nx) && ny >= y1 && ny <= y2 && nx >= x1 && nx <= x2) {
-                                if (get_elevation(ny, nx) == target_elev && !visited[ny][nx]) {
-                                    visited[ny][nx] = 1;
+                                if (get_elevation(ny, nx) == target_elev && !visited[ny - y1][nx - x1]) {
+                                    visited[ny - y1][nx - x1] = 1;
                                     q_y[tail] = ny;
                                     q_x[tail] = nx;
                                     tail++;
@@ -4884,33 +4881,24 @@ static void ensure_elevation_access(int y1, int x1, int y2, int x2, int target_e
                         }
                     }
                 }
-
-                free(q_y);
-                free(q_x);
-                free(edge_y);
-                free(edge_x);
             }
         }
     }
-
-    for (y = 0; y < DUNGEON_HGT; y++) {
-        free(visited[y]);
-    }
-    free(visited);
 }
 
 static void apply_sector_borders_and_access(int y1, int x1, int y2, int x2,
                                             int elev_check, int edge_feat)
 {
-    int y, x, i;
+    int y, x;
 
     /* 1. Identify Edges for Cliffs */
     for (y = y1; y <= y2; y++) {
         for (x = x1; x <= x2; x++) {
             if (get_elevation(y, x) == elev_check) {
                 bool is_edge = FALSE;
-                for (int dy = -1; dy <= 1; dy++) {
-                    for (int dx = -1; dx <= 1; dx++) {
+                int dy, dx;
+                for (dy = -1; dy <= 1; dy++) {
+                    for (dx = -1; dx <= 1; dx++) {
                         int ny = y + dy, nx = x + dx;
                         if (in_bounds(ny, nx) && get_elevation(ny, nx) == ELEV_GROUND) {
                             is_edge = TRUE; break;
@@ -5041,8 +5029,7 @@ static void build_sector_populated(int y0, int x0)
 
     /* 2.4 Clean up single tiles and Ensure Elevation Access */
     clean_isolated_features(y1, x1, y2, x2);
-    ensure_elevation_access(y1, x1, y2, x2, ELEV_HIGH, FEAT_CLIFF_UP);
-    ensure_elevation_access(y1, x1, y2, x2, ELEV_LOW, FEAT_CLIFF_DOWN);
+    ensure_elevation_access(y1, x1, y2, x2);
 
     /* 2.5 Secondary Pass: Monsters, Items, Hazards, and Walls */
     /* Pit types: 0=normal, 1=swamp, 2=oil, 3=shallow water, 4=lava */
@@ -5254,7 +5241,7 @@ static void ensure_connectivity(int y1, int x1, int y2, int x2)
 	int loop_safe = 0;
 
 	/* Loop until fully connected */
-	while (loop_safe++ < 100)
+	while (loop_safe++ < 30)
 	{
 		/* Reset comp map */
 		for (y = 0; y < h; y++)
@@ -5817,7 +5804,7 @@ static void scatter_ambient_detail(void)
 {
     int y, x, i;
     /* Increase density for a more lived-in feel */
-    int density = (DUNGEON_HGT * DUNGEON_WID) / 50;
+    int density = (DUNGEON_HGT * DUNGEON_WID) / 200;
 
     for (i = 0; i < density; i++)
     {
@@ -6027,7 +6014,20 @@ static void smooth_caverns(void)
 {
 	int i, y, x;
 	int dir;
+	bool has_cavern = FALSE;
 	byte temp_feat[DUNGEON_HGT][DUNGEON_WID];
+
+	/* Early exit if no SECTOR_CAVERN exists */
+	for (y = 1; y < DUNGEON_HGT - 1; y++) {
+		for (x = 1; x < DUNGEON_WID - 1; x++) {
+			if (cave_sector[y][x] == SECTOR_CAVERN) {
+				has_cavern = TRUE;
+				break;
+			}
+		}
+		if (has_cavern) break;
+	}
+	if (!has_cavern) return;
 
 	/* Run for 2 iterations */
 	for (i = 0; i < 2; i++)
@@ -6045,8 +6045,6 @@ static void smooth_caverns(void)
 		{
 			for (x = 1; x < DUNGEON_WID - 1; x++)
 			{
-				int by = y / BLOCK_HGT;
-
 				/* Only apply to SECTOR_CAVERN to maintain other sector structures */
 				if (cave_sector[y][x] != SECTOR_CAVERN) continue;
 
@@ -6090,16 +6088,13 @@ static void smooth_caverns(void)
 	}
 }
 
-static void cave_gen(void)
+static void cave_gen(dun_data *dun_body)
 {
 	int i, k, y, x, y1, x1;
 
 	bool destroyed = FALSE;
 
 	bool lit_level = FALSE;
-
-	dun_data *dun_body = malloc(sizeof(dun_data));
-	if (!dun_body) return; /* safety fallback */
 
 	byte level_bg = FEAT_WALL_EXTRA;
 	int base_rooms = (p_ptr->depth < 10) ? DUN_ROOMS : (DUN_ROOMS + p_ptr->depth * 2);
@@ -6724,11 +6719,11 @@ static void cave_gen(void)
 	}
 
 	/* Place some small gold piles */
-	for (i = 0; i < 200; i++)
+	for (i = 0; i < 100; i++)
 	{
 		int y, x;
 		int d = 0;
-		while (d < 1000)
+		while (d < 200)
 		{
 			d++;
 			y = rand_int(DUNGEON_HGT);
@@ -6803,7 +6798,6 @@ static void cave_gen(void)
 		}
 	}
 
-	free(dun_body);
 	dun = NULL;
 }
 
@@ -7108,6 +7102,7 @@ void generate_cave(void)
 	int num;
 	int w, h;
 	const char *msg = "Generating level... please wait.";
+	dun_data *dun_body;
 
 	/* Clear the screen and alert the player */
 	Term_clear();
@@ -7128,6 +7123,9 @@ void generate_cave(void)
 		Rand_quick = TRUE;
 		Rand_value = seed_dungeon + p_ptr->depth;
 	}
+
+	dun_body = malloc(sizeof(dun_data));
+	if (!dun_body) return;
 
 	/* Generate */
 	for (num = 0; TRUE; num++)
@@ -7231,13 +7229,13 @@ void generate_cave(void)
                 /* Let's use terrain_gen for a "wild" feel, or cave_gen with modified room generation. */
                 /* Simple hack: cave_gen but only "unusual" rooms? */
                 /* For now, just standard cave_gen but forced "open" maybe. */
-                cave_gen();
+                cave_gen(dun_body);
             }
 
 			/* Build a real level */
 			else
 			{
-			  cave_gen();
+			  cave_gen(dun_body);
 			}
 		}
 

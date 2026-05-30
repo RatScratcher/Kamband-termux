@@ -2515,6 +2515,15 @@ static int mon_will_run(int m_idx)
 	if (m_ptr->monfear)
 		return (TRUE);
 
+	/* Flee if HP is below 30% */
+	if (m_ptr->hp <= m_ptr->maxhp * 3 / 10)
+	{
+		int pct = (m_ptr->hp * 100) / m_ptr->maxhp;
+		int chance_to_flee = 100 - (pct * 50 / 30);
+		if (rand_int(100) < chance_to_flee)
+			return (TRUE);
+	}
+
 #ifdef ALLOW_TERROR
 
 	/* Nearby monsters will not become terrified */
@@ -3092,6 +3101,13 @@ static void process_monster(int m_idx)
 	monster_race *r_ptr = &r_info[m_ptr->r_idx];
 
 	int i, d, oy, ox, ny, nx;
+
+	/* Calming down retaliating dumb monsters */
+	if ((m_ptr->mflag & MFLAG_RETALIATE) && rand_int(100) < 5)
+	{
+		m_ptr->is_pet = FALSE;
+		m_ptr->mflag &= ~MFLAG_RETALIATE;
+	}
 
 	int mm[5];
 

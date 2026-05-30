@@ -893,7 +893,7 @@ void monster_desc(char *desc, monster_type * m_ptr, int mode)
 		}
 
 		/* Show pets */
-		if (m_ptr->is_pet)
+		if (m_ptr->is_pet && !(m_ptr->mflag & MFLAG_RETALIATE))
 		{
 			strcat(desc, " (pet)");
 		}
@@ -1675,7 +1675,7 @@ void maintain_pet_limit(void)
 
 		if (!m_ptr->r_idx) continue;
 
-		if (m_ptr->is_pet)
+		if (m_ptr->is_pet && !(m_ptr->mflag & MFLAG_RETALIATE))
 		{
 			pet_count++;
 			if (m_ptr->cdis > max_dist)

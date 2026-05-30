@@ -5798,6 +5798,15 @@ static bool project_m(int who, int r, int y, int x, int dam, int typ)
 			/* Hack -- Pain message */
 			else if (dam > 0 && seen)
 				message_pain(cave_m_idx[y][x], dam);
+
+			/* Retaliate if dumb monster hit by smart monster */
+			if (!m_ptr->is_pet &&
+			    (r_info[m_list[who].r_idx].flags2 & RF2_SMART) &&
+			    !(r_info[m_ptr->r_idx].flags2 & RF2_SMART))
+			{
+				m_ptr->is_pet = TRUE;
+				m_ptr->mflag |= MFLAG_RETALIATE;
+			}
 		}
 	}
 

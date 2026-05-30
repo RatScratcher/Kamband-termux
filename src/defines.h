@@ -2903,6 +2903,7 @@
 #define MFLAG_OIL_SOAKED  0x1000 /* Monster is soaked in oil */
 #define MFLAG_ON_FIRE     0x2000 /* Monster is on fire */
 #define MFLAG_STRUGGLING  0x4000 /* Monster is struggling in current environment */
+#define MFLAG_RETALIATE   0x8000 /* Dumb monster retaliating */
 
 
 /*

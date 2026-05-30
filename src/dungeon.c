@@ -862,6 +862,17 @@ static void process_environment(void)
 							int dam = damroll(2, 2) + p_ptr->depth / 5;
 							mon_take_hit(m_idx, dam, &fear, " melts.", FALSE, FALSE);
 						}
+						else if (feat == FEAT_OIL) {
+							if (randint(2) == 1) {
+								if (m_ptr->ml && m_ptr->is_pet) {
+									char m_name[80];
+									monster_desc(m_name, m_ptr, 0);
+									msg_format("%^s slips on the oil.", m_name);
+								}
+								/* Add slip stun effect */
+								m_ptr->stunned += rand_range(1, 10);
+							}
+						}
 						else if (feat == FEAT_OIL_BURNING) {
 							bool fear = FALSE;
 							int dam = damroll(2, 2) + p_ptr->depth / 5;

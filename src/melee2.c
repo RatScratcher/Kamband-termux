@@ -3534,7 +3534,7 @@ static void process_monster(int m_idx)
 			/* Pet AI: Avoid burning oil */
 			if (m_ptr->is_pet && !(r_ptr->flags2 & RF2_FLY)) {
 				int f = cave_feat[ny][nx];
-				if (f == FEAT_OIL_BURNING && !(r_ptr->flags3 & RF3_IM_FIRE) && !(r_ptr->flags4 & RF4_BR_FIRE)) {
+				if ((f == FEAT_OIL_BURNING && !(r_ptr->flags3 & RF3_IM_FIRE) && !(r_ptr->flags4 & RF4_BR_FIRE)) || f == FEAT_OIL) {
 					do_move = FALSE;
 				}
 			}
@@ -3543,7 +3543,7 @@ static void process_monster(int m_idx)
 			if ((r_ptr->flags2 & RF2_SMART) && !(r_ptr->flags2 & RF2_FLY))
 			{
 				int f = cave_feat[ny][nx];
-				if (f == FEAT_SHAL_LAVA || f == FEAT_DEEP_LAVA || f == FEAT_ACID || f == FEAT_ICE)
+				if (f == FEAT_SHAL_LAVA || f == FEAT_DEEP_LAVA || f == FEAT_ACID || f == FEAT_ICE || f == FEAT_OIL || f == FEAT_OIL_BURNING)
 				{
 					do_move = FALSE;
 				}
@@ -3984,6 +3984,8 @@ static void process_monster(int m_idx)
 
 			/* Move the monster */
 			monster_swap(oy, ox, ny, nx);
+
+			mon_process_terrain(m_idx, ny, nx);
 
 			/* Possible disturb */
 			if (m_ptr->ml && (disturb_move ||

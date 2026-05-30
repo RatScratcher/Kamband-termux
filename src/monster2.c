@@ -1450,6 +1450,29 @@ void mon_process_terrain(int m_idx, int y, int x)
 			m_ptr->stunned += rand_int(10);
 		}
 	}
+
+		/* Handle Deep Water */
+		if (feat == FEAT_DEEP_WATER)
+		{
+			/* Non-aquatic/non-swimming monsters find deep water difficult */
+			if (!(r_ptr->flags2 & RF2_AQUATIC) && !(r_ptr->flags2 & RF2_SWIM))
+			{
+				/* Energy penalty: 20% slower */
+				m_ptr->energy -= 20;
+			}
+		}
+
+		/* Handle Deep Lava */
+		if (feat == FEAT_DEEP_LAVA)
+		{
+			/* Non-fire-immune, non-deep-lava monsters take damage */
+			if (!(r_ptr->flags3 & RF3_IM_FIRE) && !(r_ptr->flags2 & RF2_DEEPLAVA))
+			{
+				bool fear = FALSE;
+				int dam = damroll(2, 2) + p_ptr->depth / 5;
+				mon_take_hit(m_idx, dam, &fear, " is burned by the deep lava.", FALSE, FALSE);
+			}
+		}
 }
 
 

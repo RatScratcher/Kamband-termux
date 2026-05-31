@@ -744,6 +744,7 @@ extern bool inc_stat(int stat);
 extern bool dec_stat(int stat, int amount, int permanent);
 extern bool res_stat(int stat);
 extern bool apply_disenchant(int mode);
+extern void emit_noise(int y, int x, int noise_level);
 extern bool project(int who, int rad, int y, int x, int dam, int typ,
 	u32b flg);
 extern void ghost_data(void);

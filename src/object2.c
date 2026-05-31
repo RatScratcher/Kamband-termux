@@ -2436,6 +2436,7 @@ static void make_corpse(object_type * o_ptr, byte depth)
 	}
 
 	o_ptr->pval = r_idx;
+	o_ptr->turn_of_death = turn;
 
 	/* Undo the filtering. */
 	get_mon_num_hook = NULL;

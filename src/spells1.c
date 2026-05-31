@@ -8296,6 +8296,121 @@ static void project_genocide_aux(void)
  * effects to them.
  */
 
+/*
+ * Emit noise from a specific grid to trigger nearby smart AI tracking.
+ * This is performed on-demand when a loud event occurs.
+ * Uses a localized flood-fill / Dijkstra map approach so sound can
+ * travel around corners instead of being strictly line-of-sight.
+ */
+void emit_noise(int y, int x, int noise_level)
+{
+	int i, m_idx;
+	int local_r = noise_level; /* Max radius of noise based on intensity */
+	monster_type *m_ptr;
+	monster_race *r_ptr;
+
+	/* Max radius of 20 to fit safely on the stack */
+	if (local_r > 20) local_r = 20;
+
+	int dim = (local_r * 2) + 1;
+	int *noise_map;
+	int *queue_y;
+	int *queue_x;
+	int head = 0, tail = 0;
+	int d, curr_y, cur_x, dist;
+	int ny, nx;
+
+	/* Dynamically allocate small local maps on the heap instead of large stack arrays */
+	C_MAKE(noise_map, dim * dim, int);
+	C_MAKE(queue_y, dim * dim, int);
+	C_MAKE(queue_x, dim * dim, int);
+
+	/* Initialize noise map to -1 */
+	for (i = 0; i < dim * dim; i++) noise_map[i] = -1;
+
+	/* Set epicenter */
+	noise_map[local_r * dim + local_r] = local_r;
+	queue_y[tail] = y;
+	queue_x[tail] = x;
+	tail++;
+
+	/* Directions for BFS (8-way) */
+	int ddy[] = { -1, -1, -1, 0, 0, 1, 1, 1 };
+	int ddx[] = { -1, 0, 1, -1, 1, -1, 0, 1 };
+
+	/* Flood fill / Dijkstra loop */
+	while (head < tail)
+	{
+		curr_y = queue_y[head];
+		cur_x = queue_x[head];
+		head++;
+
+		/* Get localized coordinates */
+		int ly = curr_y - (y - local_r);
+		int lx = cur_x - (x - local_r);
+		dist = noise_map[ly * dim + lx];
+
+		if (dist <= 0) continue;
+
+		for (d = 0; d < 8; d++)
+		{
+			ny = curr_y + ddy[d];
+			nx = cur_x + ddx[d];
+
+			/* Bound check map */
+			if (!in_bounds(ny, nx)) continue;
+
+			int nly = ny - (y - local_r);
+			int nlx = nx - (x - local_r);
+
+			/* Bound check local grid */
+			if (nly < 0 || nly >= dim || nlx < 0 || nlx >= dim) continue;
+
+			/* Only process if unvisited */
+			if (noise_map[nly * dim + nlx] == -1)
+			{
+				/* Check if sound is blocked. Using cave_floor_bold to see if it's solid rock */
+				if (!cave_floor_bold(ny, nx) && cave_feat[ny][nx] != FEAT_DOOR_HEAD && cave_feat[ny][nx] != FEAT_DOOR_TAIL)
+				{
+					/* Heavy dampening for thick walls */
+					noise_map[nly * dim + nlx] = 0;
+				}
+				else
+				{
+					/* Normal degradation */
+					noise_map[nly * dim + nlx] = dist - 1;
+					queue_y[tail] = ny;
+					queue_x[tail] = nx;
+					tail++;
+				}
+
+				/* Check for monsters at this valid sound-reaching tile */
+				if (noise_map[nly * dim + nlx] > 0)
+				{
+					m_idx = cave_m_idx[ny][nx];
+					if (m_idx > 0)
+					{
+						m_ptr = &m_list[m_idx];
+						r_ptr = &r_info[m_ptr->r_idx];
+
+						/* Smart monsters only */
+						if (r_ptr->flags2 & RF2_SMART)
+						{
+							m_ptr->smart_ai.state = STATE_TRACK_SCENT;
+							m_ptr->smart_ai.target_y = y;
+							m_ptr->smart_ai.target_x = x;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	FREE(noise_map, int);
+	FREE(queue_y, int);
+	FREE(queue_x, int);
+}
+
 bool project(int who, int rad, int y, int x, int dam, int typ, u32b flg)
 {
 	/* Mega-Hack -- Starting number of grids. This allows nested ``project''

@@ -473,6 +473,7 @@ static void wr_item(object_type * o_ptr)
 	wr_byte(o_ptr->discount);
 	wr_byte(o_ptr->number);
 	wr_s16b(o_ptr->weight);
+	wr_s32b(o_ptr->turn_of_death);
 	wr_s16b(o_ptr->chp);
 	wr_s16b(o_ptr->mhp);
 
@@ -533,6 +534,14 @@ static void wr_monster(int m_idx)
 	wr_byte(m_ptr->fate);
 	wr_s16b(m_ptr->random_name_idx);
 	wr_s16b(m_ptr->mflag);
+
+	/* Write smart AI state */
+	wr_s16b(m_ptr->target_idx);
+	wr_s32b(m_ptr->smart_ai.state);
+	wr_s16b(m_ptr->smart_ai.target_x);
+	wr_s16b(m_ptr->smart_ai.target_y);
+	wr_u32b(m_ptr->smart_ai.observed_player_resists);
+	wr_s32b(m_ptr->smart_ai.patience_timer);
 
 	for (o_ptr = m_ptr->inventory; o_ptr != NULL; o_ptr = o_ptr->next)
 	{

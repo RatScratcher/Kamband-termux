@@ -51,7 +51,24 @@ typedef struct monster_race monster_race;
 typedef struct dungeon_info dungeon_info;
 typedef struct vault_type vault_type;
 typedef struct object_type object_type;
+typedef struct smart_ai_meta_t smart_ai_meta_t;
 typedef struct monster_type monster_type;
+
+typedef enum {
+    STATE_WANDER,
+    STATE_TRACK_SCENT,
+    STATE_STALK,      /* Waiting for the right moment */
+    STATE_ATTACK,
+    STATE_RETREAT
+} ai_state_t;
+
+struct smart_ai_meta_t {
+    ai_state_t state;
+    s16b target_x, target_y; /* Last known or suspected location */
+    u32b observed_player_resists;
+    int patience_timer;     /* For stalking before striking */
+};
+
 typedef struct alloc_entry alloc_entry;
 typedef struct quest quest;
 typedef struct recipe recipe;
@@ -530,6 +547,8 @@ struct object_type
 
 	s16b weight; /* Item weight */
 
+	s32b turn_of_death; /* Turn this corpse was created */
+
 	s16b chp; /* Current hitpoints. */
 	s16b mhp; /* Max hitpoints. */
 	/* Note: Fractional hp isn't handled. Maybe later, if it's worthwhile. */
@@ -652,6 +671,10 @@ struct monster_type
 
 	byte ty; /* Y location of target */
 	byte tx; /* X location of target */
+
+	s16b target_idx; /* Target monster index (or 0 for player) */
+
+	smart_ai_meta_t smart_ai; /* New smart AI state and memory */
 
 	byte t_dur;	/* How long are we tracking */
 

@@ -2275,6 +2275,7 @@ void monster_death(int m_idx)
 		o_ptr = new_object();
 		object_prep(o_ptr, lookup_kind(TV_CORPSE, sval));
 		o_ptr->pval = m_ptr->r_idx;
+		o_ptr->turn_of_death = turn;
 
 		if (m_ptr->fate == FATE_SACRIFICE) {
 		  o_ptr->fate = FATE_SACRIFICE;

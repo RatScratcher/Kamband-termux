@@ -1376,6 +1376,12 @@ check_spell:
 		{
 			cast = TRUE;
 
+			/* Emit noise depending on spell type (rough heuristic based on level for now) */
+			if (s_ptr->level >= 10)
+			{
+				emit_noise(p_ptr->py, p_ptr->px, s_ptr->level / 2);
+			}
+
 			/* Other stuff */
 			if (s_ptr->untried)
 			{

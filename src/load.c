@@ -204,6 +204,14 @@ static void rd_item_body(object_type *o_ptr)
 	rd_byte(&o_ptr->discount);
 	rd_byte(&o_ptr->number);
 	rd_s16b(&o_ptr->weight);
+
+	/* Read turn_of_death only if savefile is at least v2.1.10 */
+	if ((sf_major > 2) || ((sf_major == 2) && (sf_minor > 1)) || ((sf_major == 2) && (sf_minor == 1) && (sf_patch >= 10))) {
+		rd_s32b(&o_ptr->turn_of_death);
+	} else {
+		o_ptr->turn_of_death = 0;
+	}
+
 	rd_s16b(&o_ptr->chp);
 	rd_s16b(&o_ptr->mhp);
 
@@ -394,6 +402,27 @@ static void rd_monster(monster_type * m_ptr, monster_guard_data **guard_out)
 	rd_byte(&m_ptr->fate);
 	rd_s16b(&m_ptr->random_name_idx);
 	rd_s16b(&m_ptr->mflag);
+
+	/* Read smart AI state */
+	if ((sf_major > 2) || ((sf_major == 2) && (sf_minor > 1)) || ((sf_major == 2) && (sf_minor == 1) && (sf_patch >= 10))) {
+		s32b tmp_state;
+		s32b tmp_patience;
+		rd_s16b(&m_ptr->target_idx);
+		rd_s32b(&tmp_state);
+		m_ptr->smart_ai.state = (ai_state_t)tmp_state;
+		rd_s16b(&m_ptr->smart_ai.target_x);
+		rd_s16b(&m_ptr->smart_ai.target_y);
+		rd_u32b(&m_ptr->smart_ai.observed_player_resists);
+		rd_s32b(&tmp_patience);
+		m_ptr->smart_ai.patience_timer = (int)tmp_patience;
+	} else {
+		m_ptr->target_idx = 0;
+		m_ptr->smart_ai.state = STATE_WANDER;
+		m_ptr->smart_ai.target_x = 0;
+		m_ptr->smart_ai.target_y = 0;
+		m_ptr->smart_ai.observed_player_resists = 0;
+		m_ptr->smart_ai.patience_timer = 0;
+	}
 
     /* Read guard data */
     rd_byte(&has_guard);

@@ -1,0 +1,30 @@
+--- src/monster2.c
++++ src/monster2.c
+@@ -2240,6 +2240,11 @@
+	int r_idx;
+	monster_race *r_ptr;
+	bool ret = FALSE;
++
++	/* Prevent overflow */
++	if (m_max >= MAX_M_IDX - 100) {
++		return FALSE;
++	}
+
+	/* Set the aquatic hook */
+	if (flags & MON_ALLOC_AQUATIC)
+@@ -2391,11 +2396,10 @@
+
+	int rnd = randint(100);
+
+-	/* Check that the buffers do not overflow if generating for
+-	 * the wilderness. */
+-
+-	if (p_ptr->inside_special == SPECIAL_WILD &&
+-	    m_max >= (MAX_M_IDX * 3) / 4) {
++	/* Check that the buffers do not overflow. We need to leave a bit
++	 * of a buffer so that other generation logic does not trigger the
++	 * hard error when checking `m_max >= MAX_M_IDX`. */
++	if (m_max >= MAX_M_IDX - 100) {
+
+	  return FALSE;
+	}

@@ -1,0 +1,15 @@
+Usage: angband [options] [-- subopts]
+  -n       Start a new character
+  -f       Request fiddle mode
+  -w       Request wizard mode
+  -v       Request sound mode
+  -g       Request graphics mode
+  -o       Request original keyset
+  -r       Request rogue-like keyset
+  -xnn     Request nn width screen. Defaults to 80.
+  -ynn     Request nn line screen. Normally 25.
+           This option defaults to 50 lines.
+  -s<num>  Show <num> high scores
+  -u<who>  Use your <who> savefile
+  -m<sys>  Force 'main-<sys>.c' usage
+  -d<def>  Define a 'lib' dir sub-path

@@ -1072,8 +1072,8 @@ void update_mon(int m_idx, bool full)
 	/* Seen by vision */
 	bool easy = FALSE;
 
-	/* Hidden. This is like invisibility, except only works on long 
-	 * ranges. 
+	/* Hidden. This is like invisibility, except only works on long
+	 * ranges.
 	 * Currently only used for aquatic monsters in deep water. */
 	bool hidden = FALSE;
 
@@ -1528,7 +1528,7 @@ void monster_swap(int y1, int x1, int y2, int x2)
 		/* Window stuff */
 		/* It's probably not a good idea to recalculate the
 		 * overhead view each turn.
-		 
+
 		 p_ptr->window |= (PW_OVERHEAD);
 		 */
 	}
@@ -1565,7 +1565,7 @@ void monster_swap(int y1, int x1, int y2, int x2)
 		/* Window stuff */
 		/* It's probably not a good idea to recalculate the
 		 * overhead view each turn.
-		 
+
 		 p_ptr->window |= (PW_OVERHEAD);
 		 */
 	}
@@ -2162,7 +2162,7 @@ bool place_monster_aux(int y, int x, int r_idx, int flags)
 		{
 			int nx, ny, z, d = 3;
 			int flags2 = flags;
-			
+
 			/* Pick a location */
 			scatter(&ny, &nx, y, x, d, 0);
 
@@ -2243,11 +2243,6 @@ bool place_monster(int y, int x, int flags)
 	int r_idx;
 	monster_race *r_ptr;
 	bool ret = FALSE;
-
-	/* Prevent overflow */
-	if (m_max >= MAX_M_IDX - 100) {
-		return FALSE;
-	}
 
 	/* Set the aquatic hook */
 	if (flags & MON_ALLOC_AQUATIC)
@@ -2393,10 +2388,11 @@ bool alloc_monster(int dis, int flags)
 
 	int rnd = randint(100);
 
-	/* Check that the buffers do not overflow. We need to leave a bit
-	 * of a buffer so that other generation logic does not trigger the
-	 * hard error when checking `m_max >= MAX_M_IDX`. */
-	if (m_max >= MAX_M_IDX - 100) {
+	/* Check that the buffers do not overflow if generating for
+	 * the wilderness. */
+
+	if (p_ptr->inside_special == SPECIAL_WILD &&
+	    m_max >= (MAX_M_IDX * 3) / 4) {
 
 	  return FALSE;
 	}
@@ -3206,7 +3202,7 @@ bool monster_saves(int mlev, int plev)
 
 
 /*
- * Return true if a monster race is aligned with the 
+ * Return true if a monster race is aligned with the
  * specified god alignment.
  */
 
@@ -3223,7 +3219,7 @@ static bool monster_aligned_aux(monster_race * r_ptr, int galign)
 
 	switch (galign) {
 	case GA_NIGHT:
-	  if (r_ptr->flags3 & RF3_IM_COLD || r_ptr->flags3 & RF3_NO_SLEEP || 
+	  if (r_ptr->flags3 & RF3_IM_COLD || r_ptr->flags3 & RF3_NO_SLEEP ||
 	      r_ptr->flags4 & RF4_BR_COLD ||
 	      r_ptr->flags4 & RF4_BR_DARK || r_ptr->flags5 & RF5_BA_COLD ||
 	      r_ptr->flags5 & RF5_BA_DARK ||

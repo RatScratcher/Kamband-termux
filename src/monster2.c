@@ -1405,6 +1405,7 @@ bool monster_check_cliff_move(int m_idx, int ny, int nx)
 /* Process terrain effects for a monster at (y, x) */
 void mon_process_terrain(int m_idx, int y, int x)
 {
+	bool fear;
 	monster_type *m_ptr = &m_list[m_idx];
 	monster_race *r_ptr = &r_info[m_ptr->r_idx];
 	int feat = cave_feat[y][x];
@@ -1433,6 +1434,69 @@ void mon_process_terrain(int m_idx, int y, int x)
 			/* 'Knock out' - heavy stun or temporary sleep */
 			m_ptr->stunned += 10 + rand_int(20);
 			if (m_ptr->stunned > 50) m_ptr->csleep = 5; /* Actually knocked out */
+		}
+	}
+
+
+	/* Handle Brambles */
+	if (feat == FEAT_BRAMBLE)
+	{
+		m_ptr->energy -= 10; /* Speed penalty applied by draining energy */
+		if (rand_int(10) == 0)
+		{
+			if (m_ptr->ml)
+			{
+				char m_name[80];
+				monster_desc(m_name, m_ptr, 0);
+				msg_format("%^s gets cut by the brambles!", m_name);
+			}
+			/* Deal some damage to represent cuts/bleeding */
+			mon_take_hit(m_idx, rand_range(5, 15), &fear, " is cut by brambles.", FALSE, FALSE);
+		}
+	}
+
+	/* Handle Swamp */
+	if (feat == FEAT_SWAMP)
+	{
+		m_ptr->energy -= 5;
+		if (rand_int(2) == 0)
+		{
+			/* Only permanent trap if it's "dumb" and not dextrous (but we don't have exact monster stats, so we use SMART flag or general level) */
+			bool is_dumb = !(r_ptr->flags2 & RF2_SMART);
+			if (is_dumb && rand_int(5) == 0)
+			{
+				if (m_ptr->ml)
+				{
+					char m_name[80];
+					monster_desc(m_name, m_ptr, 0);
+					msg_format("%^s sinks into the swamp and drowns!", m_name);
+				}
+				mon_take_hit(m_idx, m_ptr->hp + 1, &fear, " drowns.", FALSE, FALSE);
+			}
+			else
+			{
+				/* Just stuck for a turn */
+				m_ptr->energy -= 100;
+			}
+		}
+	}
+
+	/* Handle Deep Water Drowning */
+	if (feat == FEAT_DEEP_WATER)
+	{
+		/* Smart monsters, aquatic monsters, and fliers avoid drowning */
+		bool is_dumb = !(r_ptr->flags2 & RF2_SMART);
+		bool aquatic = (r_ptr->flags2 & RF2_AQUATIC);
+
+		if (is_dumb && !aquatic)
+		{
+			if (m_ptr->ml)
+			{
+				char m_name[80];
+				monster_desc(m_name, m_ptr, 0);
+				msg_format("%^s struggles in the deep water and drowns!", m_name);
+			}
+			mon_take_hit(m_idx, m_ptr->hp + 1, &fear, " drowns.", FALSE, FALSE);
 		}
 	}
 

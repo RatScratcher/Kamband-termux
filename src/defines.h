@@ -1061,6 +1061,7 @@
 #define FEAT_SMOKE              236 /* Created by fire/magic, provides concealment */
 #define FEAT_TALL_GRASS         237 /* Light cover, stealth bonus */
 #define FEAT_REEDS              238 /* Water cover, light */
+#define FEAT_BRAMBLE            239 /* Brambles */
 
 /*
  * Cover system constants

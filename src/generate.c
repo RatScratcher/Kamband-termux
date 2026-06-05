@@ -6088,6 +6088,215 @@ static void smooth_caverns(void)
 	}
 }
 
+
+static void generate_special_terrain(int special_type)
+{
+    int y, x, i, j;
+    if (special_type == 1) {
+        /* Open Areas Level */
+        int iters;
+        for (y = 0; y < DUNGEON_HGT; y++) {
+            for (x = 0; x < DUNGEON_WID; x++) {
+                cave_feat[y][x] = FEAT_WALL_EXTRA;
+                cave_info[y][x] |= CAVE_ROOM;
+            }
+        }
+        for (y = 1; y < DUNGEON_HGT - 1; y++) {
+            for (x = 1; x < DUNGEON_WID - 1; x++) {
+                if (rand_int(100) < 45) {
+                    cave_feat[y][x] = FEAT_FLOOR;
+                }
+            }
+        }
+        byte *temp_feat = malloc(DUNGEON_HGT * DUNGEON_WID);
+        for (iters = 0; iters < 4; iters++) {
+            for (y = 1; y < DUNGEON_HGT - 1; y++) {
+                for (x = 1; x < DUNGEON_WID - 1; x++) {
+                    int count = 0;
+                    for (i = -1; i <= 1; i++) {
+                        for (j = -1; j <= 1; j++) {
+                            if (i == 0 && j == 0) continue;
+                            if (cave_feat[y+i][x+j] == FEAT_WALL_EXTRA || cave_feat[y+i][x+j] == FEAT_PERM_SOLID) {
+                                count++;
+                            }
+                        }
+                    }
+                    if (count >= 5) {
+                        temp_feat[y * DUNGEON_WID + x] = FEAT_WALL_EXTRA;
+                    } else if (count <= 2) {
+                        temp_feat[y * DUNGEON_WID + x] = FEAT_FLOOR;
+                    } else {
+                        temp_feat[y * DUNGEON_WID + x] = cave_feat[y][x];
+                    }
+                }
+            }
+            for (y = 1; y < DUNGEON_HGT - 1; y++) {
+                for (x = 1; x < DUNGEON_WID - 1; x++) {
+                    cave_feat[y][x] = temp_feat[y * DUNGEON_WID + x];
+                }
+            }
+        }
+        free(temp_feat);
+        for (i = 0; i < 300; i++) {
+            y = rand_range(1, DUNGEON_HGT - 2);
+            x = rand_range(1, DUNGEON_WID - 2);
+            if (cave_floor_bold(y, x)) {
+                cave_feat[y][x] = FEAT_BOULDER;
+            }
+        }
+    } else if (special_type == 2) {
+        /* Maze Level */
+        for (y = 0; y < DUNGEON_HGT; y++) {
+            for (x = 0; x < DUNGEON_WID; x++) {
+                cave_feat[y][x] = FEAT_WALL_EXTRA;
+                cave_info[y][x] |= CAVE_ROOM;
+            }
+        }
+        y = DUNGEON_HGT / 2;
+        x = DUNGEON_WID / 2;
+        cave_feat[y][x] = FEAT_FLOOR;
+        int paths;
+        for (paths = 0; paths < 15000; paths++) {
+            int d = rand_int(4);
+            int dist = rand_range(5, 20);
+            int dy = 0, dx = 0;
+            if (d == 0) dy = -1;
+            else if (d == 1) dy = 1;
+            else if (d == 2) dx = -1;
+            else dx = 1;
+            int step;
+            for (step = 0; step < dist; step++) {
+                if (y + dy > 0 && y + dy < DUNGEON_HGT - 1 && x + dx > 0 && x + dx < DUNGEON_WID - 1) {
+                    int count = 0;
+                    for (i = -1; i <= 1; i++) {
+                        for (j = -1; j <= 1; j++) {
+                            if (cave_feat[y+dy+i][x+dx+j] == FEAT_FLOOR) count++;
+                        }
+                    }
+                    if (count <= 2 || rand_int(10) == 0) {
+                        y += dy;
+                        x += dx;
+                        cave_feat[y][x] = FEAT_FLOOR;
+                    } else {
+                        break;
+                    }
+                } else {
+                    break;
+                }
+            }
+            if (rand_int(3) == 0) {
+                int tries;
+                for (tries = 0; tries < 1000; tries++) {
+                    int ty = rand_range(1, DUNGEON_HGT - 2);
+                    int tx = rand_range(1, DUNGEON_WID - 2);
+                    if (cave_feat[ty][tx] == FEAT_FLOOR) {
+                        y = ty;
+                        x = tx;
+                        break;
+                    }
+                }
+            }
+        }
+    } else if (special_type == 3) {
+        /* Forest Level */
+        for (y = 0; y < DUNGEON_HGT; y++) {
+            for (x = 0; x < DUNGEON_WID; x++) {
+                cave_feat[y][x] = FEAT_GRASS;
+                cave_info[y][x] |= CAVE_ROOM;
+            }
+        }
+        for (y = 1; y < DUNGEON_HGT - 1; y++) {
+            for (x = 1; x < DUNGEON_WID - 1; x++) {
+                if (rand_int(100) < 60) {
+                    cave_feat[y][x] = FEAT_TREES;
+                }
+            }
+        }
+        int num_ponds = rand_range(10, 20);
+        for (i = 0; i < num_ponds; i++) {
+            int py = rand_range(10, DUNGEON_HGT - 10);
+            int px = rand_range(10, DUNGEON_WID - 10);
+            int r = rand_range(5, 12);
+            byte water_type = (rand_int(2) == 0) ? FEAT_SHAL_WATER : FEAT_DEEP_WATER;
+            for (y = py - r; y <= py + r; y++) {
+                for (x = px - r; x <= px + r; x++) {
+                    if (distance(py, px, y, x) <= r && y > 0 && y < DUNGEON_HGT-1 && x > 0 && x < DUNGEON_WID-1) {
+                        cave_feat[y][x] = water_type;
+                    }
+                }
+            }
+            for (y = py - r - 2; y <= py + r + 2; y++) {
+                for (x = px - r - 2; x <= px + r + 2; x++) {
+                    int dist = distance(py, px, y, x);
+                    if (dist > r && dist <= r + 2 && y > 0 && y < DUNGEON_HGT-1 && x > 0 && x < DUNGEON_WID-1) {
+                        if (rand_int(100) < 50) {
+                            cave_feat[y][x] = FEAT_GRASS;
+                        }
+                    }
+                }
+            }
+        }
+        for (i = 0; i < 40; i++) {
+            int py = rand_range(10, DUNGEON_HGT - 10);
+            int px = rand_range(10, DUNGEON_WID - 10);
+            int r = rand_range(4, 8);
+            byte feat_type = (rand_int(2) == 0) ? FEAT_BRAMBLE : FEAT_SWAMP;
+            for (y = py - r; y <= py + r; y++) {
+                for (x = px - r; x <= px + r; x++) {
+                    if (distance(py, px, y, x) <= r && y > 0 && y < DUNGEON_HGT-1 && x > 0 && x < DUNGEON_WID-1) {
+                        if (cave_feat[y][x] != FEAT_SHAL_WATER && cave_feat[y][x] != FEAT_DEEP_WATER) {
+                            cave_feat[y][x] = feat_type;
+                        }
+                    }
+                }
+            }
+            if (feat_type == FEAT_BRAMBLE) {
+                for (y = py - r - 2; y <= py + r + 2; y++) {
+                    for (x = px - r - 2; x <= px + r + 2; x++) {
+                        int dist = distance(py, px, y, x);
+                        if (dist > r && dist <= r + 2 && y > 0 && y < DUNGEON_HGT-1 && x > 0 && x < DUNGEON_WID-1) {
+                            if (rand_int(100) < 50) {
+                                cave_feat[y][x] = FEAT_GRASS;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        for (i = 0; i < 30; i++) {
+            y = rand_range(2, DUNGEON_HGT - 3);
+            x = rand_range(2, DUNGEON_WID - 3);
+            int d = rand_int(4);
+            int dist = rand_range(40, 100);
+            int dy = 0, dx = 0;
+            if (d == 0) dy = -1;
+            else if (d == 1) dy = 1;
+            else if (d == 2) dx = -1;
+            else dx = 1;
+            for (j = 0; j < dist; j++) {
+                if (y > 2 && y < DUNGEON_HGT - 3 && x > 2 && x < DUNGEON_WID - 3) {
+                    cave_feat[y][x] = FEAT_GRASS;
+                    cave_feat[y+1][x] = FEAT_GRASS;
+                    cave_feat[y][x+1] = FEAT_GRASS;
+                    cave_feat[y+1][x+1] = FEAT_GRASS;
+                    if (dy == 0) x += (rand_int(2) == 0) ? 1 : -1;
+                    if (dx == 0) y += (rand_int(2) == 0) ? 1 : -1;
+                    y += dy;
+                    x += dx;
+                }
+            }
+        }
+    }
+    for (y = 0; y < DUNGEON_HGT; y++) {
+        cave_feat[y][0] = FEAT_PERM_SOLID;
+        cave_feat[y][DUNGEON_WID-1] = FEAT_PERM_SOLID;
+    }
+    for (x = 0; x < DUNGEON_WID; x++) {
+        cave_feat[0][x] = FEAT_PERM_SOLID;
+        cave_feat[DUNGEON_HGT-1][x] = FEAT_PERM_SOLID;
+    }
+}
+
 static void cave_gen(dun_data *dun_body)
 {
 	int i, k, y, x, y1, x1;
@@ -6200,6 +6409,19 @@ static void cave_gen(dun_data *dun_body)
 	dun->row_rooms = DUNGEON_HGT / BLOCK_HGT;
 	dun->col_rooms = DUNGEON_WID / BLOCK_WID;
 
+
+    int special_level = 0;
+    if (rand_int(100) < 10) special_level = rand_int(3) + 1;
+    if (special_level > 0) {
+        generate_special_terrain(special_level);
+        if (special_level == 1) {
+            alloc_stairs(FEAT_LESS, rand_range(10, 20), 0, FALSE);
+            alloc_stairs(FEAT_MORE, rand_range(10, 20), 0, FALSE);
+        } else {
+            alloc_stairs(FEAT_LESS, 420, 0, FALSE);
+            alloc_stairs(FEAT_MORE, 420, 0, FALSE);
+        }
+    } else {
 	/* Initialize the room table */
 	for (y = 0; y < dun->row_rooms; y++)
 	{
@@ -6566,6 +6788,8 @@ static void cave_gen(dun_data *dun_body)
 
 
 
+    } /* End of else block for special_level */
+    if (special_level == 0) {
 	/* Hack -- Add some magma streamers */
 
 	if (level_bg == FEAT_WALL_EXTRA)
@@ -6623,12 +6847,15 @@ static void cave_gen(dun_data *dun_body)
 		if (rand_int(100) < 30) build_streamer2(FEAT_SHAL_LAVA, 0);
 	}
 
+    } /* End if special_level == 0 for streamers */
+    if (special_level == 0) {
 	/* Place 1 down stairs per sector (approx 420 total) */
 	alloc_stairs(FEAT_MORE, 420, 0, (level_bg == FEAT_FOG || level_bg == FEAT_CHAOS_FOG));
 
 	/* Place 1 up stairs per sector (approx 420 total) */
 	alloc_stairs(FEAT_LESS, 420, 0, (level_bg == FEAT_FOG || level_bg == FEAT_CHAOS_FOG));
 
+    } /* End if special_level == 0 for stairs */
 	/* Place exactly 10 FEAT_SHAFTs for regular dungeon levels */
 	if (p_ptr->depth > 0 && p_ptr->inside_special != SPECIAL_WILD)
 	{
@@ -7102,6 +7329,294 @@ void place_dungeon_merchant(int y, int x)
  * Allow quasi-persistent dungeons using a seeded RNG.
  */
 static void shuffle_unstable_scrolls(void);
+
+
+static void cave_gen_open_areas(dun_data *dun_body)
+{
+    int y, x, i, j, iters;
+
+    /* Initialize with solid rock */
+    for (y = 0; y < DUNGEON_HGT; y++) {
+        for (x = 0; x < DUNGEON_WID; x++) {
+            cave_feat[y][x] = FEAT_WALL_EXTRA;
+            cave_info[y][x] |= CAVE_ROOM;
+        }
+    }
+
+    /* Randomize for cellular automata (45% floor initially) */
+    for (y = 1; y < DUNGEON_HGT - 1; y++) {
+        for (x = 1; x < DUNGEON_WID - 1; x++) {
+            if (rand_int(100) < 45) {
+                cave_feat[y][x] = FEAT_FLOOR;
+            }
+        }
+    }
+
+    /* Run cellular automata smoothing */
+    byte *temp_feat = malloc(DUNGEON_HGT * DUNGEON_WID);
+    for (iters = 0; iters < 4; iters++) {
+        for (y = 1; y < DUNGEON_HGT - 1; y++) {
+            for (x = 1; x < DUNGEON_WID - 1; x++) {
+                int count = 0;
+                for (i = -1; i <= 1; i++) {
+                    for (j = -1; j <= 1; j++) {
+                        if (i == 0 && j == 0) continue;
+                        if (cave_feat[y+i][x+j] == FEAT_WALL_EXTRA || cave_feat[y+i][x+j] == FEAT_PERM_SOLID) {
+                            count++;
+                        }
+                    }
+                }
+
+                if (count >= 5) {
+                    temp_feat[y * DUNGEON_WID + x] = FEAT_WALL_EXTRA;
+                } else if (count <= 2) {
+                    temp_feat[y * DUNGEON_WID + x] = FEAT_FLOOR;
+                } else {
+                    temp_feat[y * DUNGEON_WID + x] = cave_feat[y][x];
+                }
+            }
+        }
+
+        for (y = 1; y < DUNGEON_HGT - 1; y++) {
+            for (x = 1; x < DUNGEON_WID - 1; x++) {
+                cave_feat[y][x] = temp_feat[y * DUNGEON_WID + x];
+            }
+        }
+    }
+    free(temp_feat);
+
+    /* Ensure borders are wall */
+    for (y = 0; y < DUNGEON_HGT; y++) {
+        cave_feat[y][0] = FEAT_PERM_SOLID;
+        cave_feat[y][DUNGEON_WID-1] = FEAT_PERM_SOLID;
+    }
+    for (x = 0; x < DUNGEON_WID; x++) {
+        cave_feat[0][x] = FEAT_PERM_SOLID;
+        cave_feat[DUNGEON_HGT-1][x] = FEAT_PERM_SOLID;
+    }
+
+    /* Allocate stairs */
+    /* Since we are using cellular automata, we will use alloc_stairs properly across the full map */
+    alloc_stairs(FEAT_LESS, 420, 0, FALSE);
+    alloc_stairs(FEAT_MORE, 420, 0, FALSE);
+
+    /* Place some boulders for cover */
+    for (i = 0; i < 300; i++) {
+        y = rand_range(1, DUNGEON_HGT - 2);
+        x = rand_range(1, DUNGEON_WID - 2);
+        if (cave_floor_bold(y, x)) {
+            cave_feat[y][x] = FEAT_BOULDER;
+        }
+    }
+}
+
+
+static void cave_gen_maze(dun_data *dun_body)
+{
+    int y, x;
+
+    /* Initialize with solid rock */
+    for (y = 0; y < DUNGEON_HGT; y++) {
+        for (x = 0; x < DUNGEON_WID; x++) {
+            cave_feat[y][x] = FEAT_WALL_EXTRA;
+            cave_info[y][x] |= CAVE_ROOM;
+        }
+    }
+
+    /* Recursive Backtracker logic: simple version using random walks to carve */
+    /* Start at center */
+    y = DUNGEON_HGT / 2;
+    x = DUNGEON_WID / 2;
+    cave_feat[y][x] = FEAT_FLOOR;
+
+    /* Perform a bunch of drunken walks to create maze-like paths */
+    int paths;
+    for (paths = 0; paths < 15000; paths++) {
+        int d = rand_int(4);
+        int dist = rand_range(5, 20);
+        int dy = 0, dx = 0;
+        if (d == 0) dy = -1;
+        else if (d == 1) dy = 1;
+        else if (d == 2) dx = -1;
+        else dx = 1;
+
+        int step;
+        for (step = 0; step < dist; step++) {
+            if (y + dy > 0 && y + dy < DUNGEON_HGT - 1 && x + dx > 0 && x + dx < DUNGEON_WID - 1) {
+                /* Check to make sure we don't open too wide */
+                int count = 0;
+                int i, j;
+                for (i = -1; i <= 1; i++) {
+                    for (j = -1; j <= 1; j++) {
+                        if (cave_feat[y+dy+i][x+dx+j] == FEAT_FLOOR) count++;
+                    }
+                }
+                if (count <= 2 || rand_int(10) == 0) { /* Allow some intersections */
+                    y += dy;
+                    x += dx;
+                    cave_feat[y][x] = FEAT_FLOOR;
+                } else {
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+
+        /* Occasionally pick a new random floor spot to branch from */
+        if (rand_int(3) == 0) {
+            int tries;
+            for (tries = 0; tries < 1000; tries++) {
+                int ty = rand_range(1, DUNGEON_HGT - 2);
+                int tx = rand_range(1, DUNGEON_WID - 2);
+                if (cave_feat[ty][tx] == FEAT_FLOOR) {
+                    y = ty;
+                    x = tx;
+                    break;
+                }
+            }
+        }
+    }
+
+    /* Ensure borders are wall */
+    for (y = 0; y < DUNGEON_HGT; y++) {
+        cave_feat[y][0] = FEAT_PERM_SOLID;
+        cave_feat[y][DUNGEON_WID-1] = FEAT_PERM_SOLID;
+    }
+    for (x = 0; x < DUNGEON_WID; x++) {
+        cave_feat[0][x] = FEAT_PERM_SOLID;
+        cave_feat[DUNGEON_HGT-1][x] = FEAT_PERM_SOLID;
+    }
+
+    alloc_stairs(FEAT_LESS, 420, 0, FALSE);
+    alloc_stairs(FEAT_MORE, 420, 0, FALSE);
+}
+
+
+static void cave_gen_forest(dun_data *dun_body)
+{
+    int y, x, i, j;
+
+    /* Initialize with grass */
+    for (y = 0; y < DUNGEON_HGT; y++) {
+        for (x = 0; x < DUNGEON_WID; x++) {
+            cave_feat[y][x] = FEAT_GRASS;
+            cave_info[y][x] |= CAVE_ROOM;
+        }
+    }
+
+    /* Add trees */
+    for (y = 1; y < DUNGEON_HGT - 1; y++) {
+        for (x = 1; x < DUNGEON_WID - 1; x++) {
+            if (rand_int(100) < 60) {
+                cave_feat[y][x] = FEAT_TREES;
+            }
+        }
+    }
+
+    /* Add ponds */
+    int num_ponds = rand_range(10, 20);
+    for (i = 0; i < num_ponds; i++) {
+        int py = rand_range(10, DUNGEON_HGT - 10);
+        int px = rand_range(10, DUNGEON_WID - 10);
+        int r = rand_range(5, 12);
+        byte water_type = (rand_int(2) == 0) ? FEAT_SHAL_WATER : FEAT_DEEP_WATER;
+
+        for (y = py - r; y <= py + r; y++) {
+            for (x = px - r; x <= px + r; x++) {
+                if (distance(py, px, y, x) <= r && y > 0 && y < DUNGEON_HGT-1 && x > 0 && x < DUNGEON_WID-1) {
+                    cave_feat[y][x] = water_type;
+                }
+            }
+        }
+
+        /* Clear paths around ponds (at least 50% circumference) */
+        for (y = py - r - 2; y <= py + r + 2; y++) {
+            for (x = px - r - 2; x <= px + r + 2; x++) {
+                int dist = distance(py, px, y, x);
+                if (dist > r && dist <= r + 2 && y > 0 && y < DUNGEON_HGT-1 && x > 0 && x < DUNGEON_WID-1) {
+                    if (rand_int(100) < 50) {
+                        cave_feat[y][x] = FEAT_GRASS;
+                    }
+                }
+            }
+        }
+    }
+
+    /* Add brambles and swamps */
+    for (i = 0; i < 40; i++) {
+        int py = rand_range(10, DUNGEON_HGT - 10);
+        int px = rand_range(10, DUNGEON_WID - 10);
+        int r = rand_range(4, 8);
+        byte feat_type = (rand_int(2) == 0) ? FEAT_BRAMBLE : FEAT_SWAMP;
+
+        for (y = py - r; y <= py + r; y++) {
+            for (x = px - r; x <= px + r; x++) {
+                if (distance(py, px, y, x) <= r && y > 0 && y < DUNGEON_HGT-1 && x > 0 && x < DUNGEON_WID-1) {
+                    /* Don't overwrite water */
+                    if (cave_feat[y][x] != FEAT_SHAL_WATER && cave_feat[y][x] != FEAT_DEEP_WATER) {
+                        cave_feat[y][x] = feat_type;
+                    }
+                }
+            }
+        }
+
+        /* Clear paths around brambles/swamps (at least 50% circumference) */
+        if (feat_type == FEAT_BRAMBLE) {
+            for (y = py - r - 2; y <= py + r + 2; y++) {
+                for (x = px - r - 2; x <= px + r + 2; x++) {
+                    int dist = distance(py, px, y, x);
+                    if (dist > r && dist <= r + 2 && y > 0 && y < DUNGEON_HGT-1 && x > 0 && x < DUNGEON_WID-1) {
+                        if (rand_int(100) < 50) {
+                            cave_feat[y][x] = FEAT_GRASS;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /* Cut a few wide paths */
+    for (i = 0; i < 30; i++) {
+        y = rand_range(2, DUNGEON_HGT - 3);
+        x = rand_range(2, DUNGEON_WID - 3);
+        int d = rand_int(4);
+        int dist = rand_range(40, 100);
+        int dy = 0, dx = 0;
+        if (d == 0) dy = -1;
+        else if (d == 1) dy = 1;
+        else if (d == 2) dx = -1;
+        else dx = 1;
+
+        for (j = 0; j < dist; j++) {
+            if (y > 2 && y < DUNGEON_HGT - 3 && x > 2 && x < DUNGEON_WID - 3) {
+                /* Path width */
+                cave_feat[y][x] = FEAT_GRASS;
+                cave_feat[y+1][x] = FEAT_GRASS;
+                cave_feat[y][x+1] = FEAT_GRASS;
+                cave_feat[y+1][x+1] = FEAT_GRASS;
+                if (dy == 0) x += (rand_int(2) == 0) ? 1 : -1;
+                if (dx == 0) y += (rand_int(2) == 0) ? 1 : -1;
+                y += dy;
+                x += dx;
+            }
+        }
+    }
+
+    /* Ensure borders are wall */
+    for (y = 0; y < DUNGEON_HGT; y++) {
+        cave_feat[y][0] = FEAT_PERM_SOLID;
+        cave_feat[y][DUNGEON_WID-1] = FEAT_PERM_SOLID;
+    }
+    for (x = 0; x < DUNGEON_WID; x++) {
+        cave_feat[0][x] = FEAT_PERM_SOLID;
+        cave_feat[DUNGEON_HGT-1][x] = FEAT_PERM_SOLID;
+    }
+
+    alloc_stairs(FEAT_LESS, 420, 0, FALSE);
+    alloc_stairs(FEAT_MORE, 420, 0, FALSE);
+}
+
 void generate_cave(void)
 {
 	int num;
@@ -7240,7 +7755,14 @@ void generate_cave(void)
 			/* Build a real level */
 			else
 			{
-			  cave_gen(dun_body);
+			  if (rand_int(100) < 10) {
+			      int r = rand_int(3);
+			      if (r == 0) cave_gen_open_areas(dun_body);
+			      else if (r == 1) cave_gen_maze(dun_body);
+			      else cave_gen_forest(dun_body);
+			  } else {
+			      cave_gen(dun_body);
+			  }
 			}
 		}
 

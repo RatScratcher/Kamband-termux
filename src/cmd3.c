@@ -302,7 +302,7 @@ void do_cmd_wield(void)
 	o_ptr =
 		get_item("Wear/wield which item",
 		"You have nothing you can " "wear or wield.", p_ptr->py, p_ptr->px,
-		(USE_INVEN));
+		(USE_INVEN | USE_FLOOR | USE_JUST_ONE | USE_REMOVE));
 
 	if (!o_ptr)
 		return;

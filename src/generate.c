@@ -711,6 +711,8 @@ static void place_random_door(int y, int x)
 static void alloc_stairs(int feat, int num, int walls, bool force_room)
 {
 	int y, x, j, sy, sx;
+	int row_rooms = DUNGEON_HGT / BLOCK_HGT;
+	int col_rooms = DUNGEON_WID / BLOCK_WID;
 
 	/* The walls and num parameters are mostly unused in the sector-based version */
 	(void)walls;
@@ -737,9 +739,9 @@ static void alloc_stairs(int feat, int num, int walls, bool force_room)
     }
 
 	/* Allocate exactly 1 stair per 2x2 block sector */
-	for (sy = 0; sy < dun->row_rooms; sy += 2)
+	for (sy = 0; sy < row_rooms; sy += 2)
 	{
-		for (sx = 0; sx < dun->col_rooms; sx += 2)
+		for (sx = 0; sx < col_rooms; sx += 2)
 		{
 			int y1 = sy * BLOCK_HGT;
 			int x1 = sx * BLOCK_WID;
@@ -7648,7 +7650,7 @@ void generate_cave(void)
 	if (!dun_body) return;
 
 	/* Generate */
-	for (num = 0; TRUE; num++)
+	for (num = 0; num < 5; num++)
 	{
 		bool okay = TRUE;
 		bool load = FALSE;
@@ -7967,6 +7969,10 @@ void generate_cave(void)
 
 	execute_staircase_pursuit();
 	execute_recall_ambush();
+
+	if (dun_body) {
+		free(dun_body);
+	}
 }
 
 /*

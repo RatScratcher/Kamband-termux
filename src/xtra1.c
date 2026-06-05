@@ -3662,6 +3662,13 @@ static void calc_bonuses(void)
 	/* Searching slows the player down */
 	if (p_ptr->searching)
 		p_ptr->pspeed -= 10;
+	/* Terrain penalties */
+	if (cave_feat[p_ptr->py][p_ptr->px] == FEAT_BRAMBLE) {
+		p_ptr->pspeed -= 10;
+	} else if (cave_feat[p_ptr->py][p_ptr->px] == FEAT_SWAMP) {
+		p_ptr->pspeed -= 5;
+	}
+
 
 
 	/*** Apply modifier bonuses ***/

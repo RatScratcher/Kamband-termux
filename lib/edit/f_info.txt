@@ -703,7 +703,7 @@ N:192:patch of grass
 G:.:G
 
 N:193:swampy patch
-G:^:B
+G:^:g
 
 N:194:muddy patch
 G:.:u
@@ -803,3 +803,6 @@ G:.:w
 
 N:223:ruin door
 G:+:y
+
+N:239:brambles
+G:":G

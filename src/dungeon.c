@@ -753,6 +753,39 @@ static void check_player_environment(void)
 		}
 	}
 
+	/* Brambles Logic */
+	if (feat == FEAT_BRAMBLE)
+	{
+		if (!p_ptr->flying && rand_int(10) == 0) {
+			msg_print("The brambles cut you!");
+			set_cut(p_ptr->cut + rand_range(5, 15));
+		}
+	}
+
+	/* Swamp Logic */
+	if (feat == FEAT_SWAMP)
+	{
+		if (!p_ptr->flying) {
+			if (p_ptr->stat_use[A_DEX] < 12) {
+				if (rand_int(2) == 0) {
+					msg_print("You are stuck in the swamp!");
+					p_ptr->energy -= 100; /* Lose a turn */
+
+					/* Instant death chance if stuck */
+					if (rand_int(5) == 0) {
+						msg_print("You sink into the swamp and drown!");
+						take_hit(9999, "drowning in a swamp");
+					}
+				}
+			} else {
+				if (rand_int(5) == 0) {
+					msg_print("You are stuck in the swamp!");
+					p_ptr->energy -= 500; /* Lose 5 turns */
+				}
+			}
+		}
+	}
+
 	/* Drowning Logic */
 	if (feat == FEAT_DEEP_WATER)
 	{

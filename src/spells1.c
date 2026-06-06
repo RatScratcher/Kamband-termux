@@ -1711,20 +1711,6 @@ static void apply_nexus(monster_type * m_ptr)
 
 
 /*
- * Split the damage between physical/mental and apply it.
- */
-
-static void apply_weird_damage(int dam, cptr killer)
-{
-	int perc = randint(100);
-	int sand = perc * dam / 100;
-
-	take_sanity_hit(sand, killer);
-	take_hit(dam - sand, killer);
-}
-
-
-/*
  * Twiddle the terrain up/down one level.
  */
 static void twiddle_terrain(int y, int x)
@@ -6200,7 +6186,7 @@ static bool project_p(int who, int r, int y, int x, int dam, int typ)
 					lose_exp(200 + (p_ptr->exp / 100) * MON_DRAIN_LIFE);
 				}
 			}
-			apply_weird_damage(dam, killer);
+			take_hit(dam, killer);
 			break;
 		}
 
@@ -6269,7 +6255,7 @@ static bool project_p(int who, int r, int y, int x, int dam, int typ)
 				}
 			}
 
-			apply_weird_damage(dam, killer);
+			take_hit(dam, killer);
 			break;
 		}
 
@@ -6363,7 +6349,7 @@ static bool project_p(int who, int r, int y, int x, int dam, int typ)
 					break;
 				apply_nexus(m_ptr);
 			}
-			apply_weird_damage(dam, killer);
+				take_hit(dam, killer);
 			break;
 		}
 
@@ -6525,7 +6511,7 @@ static bool project_p(int who, int r, int y, int x, int dam, int typ)
 					break;
 				}
 			}
-			apply_weird_damage(dam, killer);
+				take_hit(dam, killer);
 			break;
 		}
 
@@ -6554,7 +6540,7 @@ static bool project_p(int who, int r, int y, int x, int dam, int typ)
 			{
 				mprint(MSG_WARNING,
 					"The molecules of your body scramble!");
-				apply_weird_damage(dam, killer);
+					take_hit(dam, killer);
 			}
 			break;
 		}

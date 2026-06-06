@@ -6423,6 +6423,9 @@ static void cave_gen(dun_data *dun_body)
             alloc_stairs(FEAT_LESS, 420, 0, FALSE);
             alloc_stairs(FEAT_MORE, 420, 0, FALSE);
         }
+
+        /* Boost the rating to prevent autoscum from discarding special levels */
+        rating += 200;
     } else {
 	/* Initialize the room table */
 	for (y = 0; y < dun->row_rooms; y++)
